@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model areas_production {
+  id_area     Int        @id
+  name        String     @db.VarChar
+  description String     @db.VarChar
+  active      Boolean    @default(true)
+  products    products[]
+}
+
+model commands {
+  id_command     Int              @id
+  table_id       Int
+  waiter_id      Int
+  date_creation  DateTime         @db.Timestamptz(6)
+  status         String           @db.VarChar
+  tables         tables           @relation(fields: [table_id], references: [id_table], onDelete: NoAction, onUpdate: NoAction, map: "table_id_fk")
+  users          users            @relation(fields: [waiter_id], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "waiter_id_fk")
+  commands_items commands_items[]
+}
+
+model commands_items {
+  id_item    Int
+  command_id Int
+  product_id Int
+  quantity   Int
+  status     String   @db.VarChar
+  commands   commands @relation(fields: [command_id], references: [id_command], onDelete: NoAction, onUpdate: NoAction, map: "command_id_fk")
+  products   products @relation(fields: [product_id], references: [id_product], onDelete: NoAction, onUpdate: NoAction, map: "product_id_fk")
+
+  @@id([id_item, command_id])
+}
+
+model products {
+  id_product       Int              @id
+  name             String           @db.VarChar
+  price            Float
+  area_id          Int
+  active           Boolean?         @default(true)
+  commands_items   commands_items[]
+  areas_production areas_production @relation(fields: [area_id], references: [id_area], onDelete: NoAction, onUpdate: NoAction, map: "area_id_fk")
+}
+
+model roles {
+  id_rol      Int     @id
+  name        String  @db.VarChar
+  description String  @db.VarChar
+  users       users[]
+}
+
+model tables {
+  id_table Int        @id
+  number   Int        @db.SmallInt
+  status   String?    @db.VarChar
+  commands commands[]
+}
+
+model users {
+  id_user  Int        @id @default(autoincrement())
+  name     String     @db.VarChar
+  user     String     @db.VarChar
+  password String     @db.VarChar
+  rol_id   Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  status   Boolean    @default(true)
+  commands commands[]
+  roles    roles      @relation(fields: [rol_id], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "rol_id_fk")
+}
