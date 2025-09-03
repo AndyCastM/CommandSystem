@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
+import { UserLoginDto } from "../dto/user-login.dto";
 import { encrypt } from "src/libs/bcrypt";
 
 @Injectable()
@@ -32,6 +33,26 @@ export class UsersService {
         createdAt,
         updatedAt,
         }));
+    }
+
+    async findOne(username: string): Promise<UserLoginDto> {
+        const user = await this.prisma.users.findFirst({
+            where: { user: username },
+        });
+
+        if (!user) {
+            throw new Error(`Usuario con username "${username}" no encontrado`);
+        }
+
+        // Mapear al DTO solo con estos datos
+        const userResponse: UserLoginDto = {
+            id: user.id_user,
+            name: user.name,
+            password: user.password,
+            rol_id: user.rol_id,
+        };
+
+        return userResponse;
     }
 }
 
