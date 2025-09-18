@@ -1,0 +1,74 @@
+<div class="min-h-screen bg-white">
+  <!-- Barra superior con logo -->
+  <header class="max-w-6xl mx-auto px-6 py-6 flex items-center gap-3">
+    <img
+      [src]="logoSrc"
+      (error)="onLogoError($event)"
+      alt="CommandSystem"
+      class="w-10 h-10 rounded-full ring-1 ring-sky-200"
+    />
+    <span class="text-xl md:text-2xl font-bold text-gray-900">CommandSystem</span>
+  </header>
+
+  <!-- Contenido -->
+  <main class="max-w-6xl mx-auto px-6 pb-12 grid grid-cols-1 md:grid-cols-2 gap-10">
+    <!-- Ilustración -->
+    <section class="order-2 md:order-1">
+      <div class="p-2">
+        <img
+          [src]="illustrationSrc"
+          (error)="onIllusError($event)"
+          alt="Ilustración mesero"
+          class="w-[110%] max-w-none h-auto object-contain"
+        />
+      </div>
+    </section>
+
+    <!-- Texto + tarjeta de login -->
+    <section class="order-1 md:order-2">
+      <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+            Bienvenido de nuevo
+        </h1>
+        <p class="text-gray-500 mb-6">
+            Optimiza las operaciones de tu restaurante <br class="hidden md:block" />
+            con nuestro sistema integral de comandas
+        </p>
+        </div>
+      <div class="rounded-2xl border border-sky-200 bg-white shadow-xl p-8">
+        <h2 class="text-xl font-bold text-gray-900 text-center">Iniciar Sesión</h2>
+        <p class="text-center text-gray-500 mt-1 mb-6">Ingresa tu usuario y contraseña</p>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+            <input
+              type="text"
+              formControlName="usuario"
+              placeholder="Ingrese el usuario"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <input
+              type="password"
+              formControlName="contrasena"
+              placeholder="Ingrese la contraseña"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full py-2.5 rounded-xl font-semibold text-white shadow-md
+                   bg-gradient-to-b from-sky-400 to-sky-500 hover:opacity-95 transition"
+          >
+            Iniciar Sesión
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>

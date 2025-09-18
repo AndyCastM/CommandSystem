@@ -4,6 +4,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserLoginDto } from "../dto/user-login.dto";
 import { encrypt } from "src/libs/bcrypt";
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -13,35 +14,42 @@ export class UsersService {
         const hashedPassword = await encrypt(dto.password);
         const user = await this.prisma.users.create({ 
             data: {
+                id_role: dto.id_role,
+                id_branch: dto.id_branch,
                 name: dto.name,
-                user: dto.user,
-                password: hashedPassword,
-                rol_id: dto.rol_id,
+                last_name: dto.last_name,
+                username: dto.username,
+                password: hashedPassword
             }
         });
-        const { id_user, name, rol_id, createdAt, updatedAt } = user;
-
-        return { id: id_user, name, rol_id, createdAt, updatedAt};
+        return {
+            id: user.id_user,
+            name: user.name,
+            last_name: user.last_name,
+            id_role: user.id_role,
+            created_at: user.created_at,
+            };
     }
 
     async getUsers(): Promise<UserResponseDto[]> {
         const users = await this.prisma.users.findMany();
-        return users.map(({ id_user, name, rol_id, createdAt, updatedAt }) => ({
+        return users.map(({ id_user, name, last_name, id_role, created_at, updated_at }) => ({
         id: id_user,
         name,
-        rol_id,
-        createdAt,
-        updatedAt,
+        last_name,
+        id_role,
+        created_at: created_at ?? new Date(),
+        updated_at: updated_at ?? undefined,
         }));
     }
 
     async findOne(username: string): Promise<UserLoginDto> {
         const user = await this.prisma.users.findFirst({
-            where: { user: username },
+            where: { username: username },
         });
 
         if (!user) {
-            throw new Error(`Usuario con username "${username}" no encontrado`);
+            throw new NotFoundException(`Usuario con username "${username}" no encontrado`);
         }
 
         // Mapear al DTO solo con estos datos
@@ -49,7 +57,7 @@ export class UsersService {
             id: user.id_user,
             name: user.name,
             password: user.password,
-            rol_id: user.rol_id,
+            id_role: user.id_role,
         };
 
         return userResponse;

@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CommandsModule } from './commands/commands.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { CommandsModule } from './commands/commands.module';
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule],
+    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule],
   controllers: [AppController],
   providers: [AppService],
 })

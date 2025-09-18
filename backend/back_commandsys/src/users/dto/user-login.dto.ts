@@ -2,6 +2,6 @@
 export class UserLoginDto {
   id: number;
   name: string;
-  rol_id: number;
+  id_role: number;
   password: string;
 }

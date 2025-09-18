@@ -2,7 +2,8 @@
 export class UserResponseDto {
   id: number;
   name: string;
-  rol_id: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  last_name: string;
+  id_role: number;
+  created_at: Date;
+  updated_at?: Date;
 }
