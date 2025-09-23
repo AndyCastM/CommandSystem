@@ -10,11 +10,10 @@ datasource db {
 }
 
 model areas {
-  id_area   Int        @id @default(autoincrement())
+  id_area   Int      @id @default(autoincrement())
   id_branch Int
-  name      String     @db.VarChar(20)
-  branches  branches   @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "areas_ibfk_1")
-  products  products[]
+  name      String   @db.VarChar(20)
+  branches  branches @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "areas_ibfk_1")
 
   @@index([id_branch], map: "id_branch")
 }
@@ -34,51 +33,48 @@ model branch_schedules {
 
 model branches {
   id_branch        Int                @id @default(autoincrement())
+  id_company       Int
   name             String             @db.VarChar(40)
-  address          String?            @db.Text
+  street           String             @db.VarChar(45)
+  num_ext          String?            @db.VarChar(10)
+  colony           String             @db.VarChar(45)
+  cp               String             @db.VarChar(45)
+  city             String             @db.VarChar(45)
+  state            String             @db.VarChar(30)
+  country          String             @default("México") @db.VarChar(20)
   phone            String?            @db.VarChar(20)
   email            String?            @db.VarChar(40)
   created_at       DateTime?          @default(now()) @db.Timestamp(0)
   updated_at       DateTime?          @default(now()) @db.Timestamp(0)
+  is_active        Int?               @default(1) @db.TinyInt
   areas            areas[]
+  branch_products  branch_products[]
   branch_schedules branch_schedules[]
+  companies        companies          @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company")
+  combos           combos[]
   orders           orders[]
-  products         products[]
-  reports          reports[]
+  table_locations  table_locations[]
   tables           tables[]
   users            users[]
-}
 
-model company_info {
-  id_company     Int       @id @default(autoincrement())
-  name           String    @db.VarChar(60)
-  legal_name     String    @db.VarChar(80)
-  rfc            String    @db.VarChar(20)
-  address        String    @db.Text
-  cp             String    @db.VarChar(5)
-  city           String    @db.VarChar(30)
-  state          String    @db.VarChar(30)
-  country        String    @default("México") @db.VarChar(10)
-  phone          String    @db.VarChar(20)
-  email          String    @db.VarChar(50)
-  tax_percentage Decimal   @default(16.00) @db.Decimal(5, 2)
-  min_salary     Decimal   @db.Decimal(10, 2)
-  created_at     DateTime  @default(now()) @db.Timestamp(0)
-  updated_at     DateTime? @default(now()) @db.Timestamp(0)
+  @@index([id_company], map: "fk_id_company_idx")
 }
 
 model order_items {
-  id_orditems Int      @id @default(autoincrement())
-  id_order    Int
-  id_product  Int
-  quantity    Int
-  notes       String?  @db.Text
-  status      String?  @default("pending") @db.VarChar(20)
-  orders      orders   @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
-  products    products @relation(fields: [id_product], references: [id_product], onDelete: NoAction, onUpdate: NoAction, map: "order_items_ibfk_2")
+  id_order_item     Int              @id @default(autoincrement())
+  id_order          Int
+  id_branch_product Int?
+  id_combo          Int?
+  quantity          Int
+  notes             String?          @db.Text
+  status            String?          @default("pending") @db.VarChar(20)
+  combos            combos?          @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
+  branch_products   branch_products? @relation(fields: [id_branch_product], references: [id_branch_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_prod_orditems")
+  orders            orders           @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
 
   @@index([id_order], map: "id_order")
-  @@index([id_product], map: "id_product")
+  @@index([id_combo], map: "fk:combo_orditems_idx")
+  @@index([id_branch_product], map: "fk_branch_prod_orditmes_idx")
 }
 
 model orders {
@@ -109,34 +105,6 @@ model payments {
   @@index([id_order], map: "id_order")
 }
 
-model products {
-  id_product  Int           @id @default(autoincrement())
-  id_branch   Int
-  id_area     Int?
-  name        String        @db.VarChar(100)
-  description String?       @db.Text
-  price       Decimal       @db.Decimal(10, 2)
-  image_url   String?       @db.VarChar(255)
-  is_active   Boolean?      @default(true)
-  order_items order_items[]
-  branches    branches      @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_1")
-  areas       areas?        @relation(fields: [id_area], references: [id_area], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_2")
-
-  @@index([id_area], map: "id_area")
-  @@index([id_branch], map: "id_branch")
-}
-
-model reports {
-  id           Int       @id @default(autoincrement())
-  id_branch    Int
-  type         String?   @db.VarChar(50)
-  generated_at DateTime? @default(now()) @db.Timestamp(0)
-  file_url     String?   @db.VarChar(255)
-  branches     branches  @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "reports_ibfk_1")
-
-  @@index([id_branch], map: "id_branch")
-}
-
 model roles {
   id_role     Int     @id @default(autoincrement())
   name        String  @db.VarChar(20)
@@ -160,15 +128,18 @@ model table_sessions {
 }
 
 model tables {
-  id_table       Int              @id @default(autoincrement())
-  id_branch      Int
-  number         String           @db.VarChar(10)
-  capacity       Int?
-  status         String?          @default("available") @db.VarChar(20)
-  table_sessions table_sessions[]
-  branches       branches         @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "tables_ibfk_1")
+  id_table        Int              @id @default(autoincrement())
+  id_branch       Int
+  id_location     Int
+  number          String           @db.VarChar(10)
+  capacity        Int
+  status          String?          @default("available") @db.VarChar(20)
+  table_sessions  table_sessions[]
+  table_locations table_locations  @relation(fields: [id_location], references: [id_location], onDelete: NoAction, map: "fk_id_location")
+  branches        branches         @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "tables_ibfk_1")
 
   @@index([id_branch], map: "id_branch")
+  @@index([id_location], map: "fk_id_location_idx")
 }
 
 model users {
@@ -177,6 +148,7 @@ model users {
   id_role        Int
   name           String           @db.VarChar(30)
   last_name      String           @db.VarChar(30)
+  last_name2     String?          @db.VarChar(45)
   username       String           @unique(map: "username_UNIQUE") @db.VarChar(25)
   password       String           @db.VarChar(255)
   created_at     DateTime         @default(now()) @db.Timestamp(0)
@@ -188,4 +160,108 @@ model users {
 
   @@index([id_branch], map: "id_branch")
   @@index([id_role], map: "id_role")
+}
+
+model branch_products {
+  id_branch_product  Int              @id @default(autoincrement())
+  id_branch          Int
+  id_company_product Int
+  custom_price       Decimal          @db.Decimal(10, 2)
+  created_at         DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?        @default(now()) @db.Timestamp(0)
+  is_active          Boolean?         @default(true)
+  branches           branches         @relation(fields: [id_branch], references: [id_branch], onDelete: Cascade, map: "fk_branch_product_branch")
+  company_products   company_products @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, map: "fk_branch_product_companyprod")
+  order_items        order_items[]
+
+  @@index([id_branch], map: "fk_branch_idx")
+  @@index([id_company_product], map: "fk_companyprod_idx")
+}
+
+model combo_items {
+  id_combo_item      Int              @id
+  id_combo           Int
+  id_company_product Int
+  quantity           Int
+  combos             combos           @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk_combo_items")
+  company_products   company_products @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_prod_combo")
+
+  @@index([id_combo], map: "fk_combo_items_idx")
+  @@index([id_company_product], map: "fk_company_prod_combo_idx")
+}
+
+model combos {
+  id_combo    Int           @id
+  id_company  Int
+  id_branch   Int?
+  name        String        @db.VarChar(45)
+  description String?       @db.VarChar(1000)
+  base_price  Decimal       @db.Decimal(10, 2)
+  is_active   Int?          @default(1) @db.TinyInt
+  created_at  DateTime?     @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?     @default(now()) @db.Timestamp(0)
+  combo_items combo_items[]
+  branches    branches?     @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_combo")
+  companies   companies     @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_combo")
+  order_items order_items[]
+
+  @@index([id_branch], map: "fk_branch_combo_idx")
+  @@index([id_company], map: "fk_company_combo_idx")
+}
+
+model companies {
+  id_company         Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(60)
+  legal_name         String               @db.VarChar(80)
+  rfc                String               @db.VarChar(20)
+  street             String               @db.VarChar(50)
+  num_ext            String?              @db.VarChar(5)
+  cp                 String               @db.VarChar(5)
+  city               String               @db.VarChar(30)
+  state              String               @db.VarChar(30)
+  country            String               @default("México") @db.VarChar(10)
+  phone              String               @db.VarChar(20)
+  email              String               @db.VarChar(50)
+  tax_percentage     Decimal              @default(16.00) @db.Decimal(5, 2)
+  min_salary         Decimal              @db.Decimal(10, 2)
+  created_at         DateTime             @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?            @default(now()) @db.Timestamp(0)
+  branches           branches[]
+  combos             combos[]
+  product_categories product_categories[]
+}
+
+model company_products {
+  id_company_product Int               @id
+  id_company         Int
+  id_area            Int?
+  id_category        Int?
+  name               String            @db.VarChar(45)
+  description        String            @db.VarChar(100)
+  base_price         Decimal           @db.Decimal(10, 2)
+  image_url          String?           @db.VarChar(255)
+  created_at         DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?         @default(now()) @db.Timestamp(0)
+  is_active          Int?              @default(1) @db.TinyInt
+  branch_products    branch_products[]
+  combo_items        combo_items[]
+}
+
+model product_categories {
+  id_category Int       @id
+  id_company  Int
+  name        String    @db.VarChar(25)
+  companies   companies @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company_cat")
+
+  @@index([id_company], map: "fk_id_company_idx")
+}
+
+model table_locations {
+  id_location Int      @id @default(autoincrement())
+  id_branch   Int
+  name        String   @db.VarChar(45)
+  branches    branches @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, map: "fk_id_branch")
+  tables      tables[]
+
+  @@index([id_branch], map: "fk_id_branch_idx")
 }
