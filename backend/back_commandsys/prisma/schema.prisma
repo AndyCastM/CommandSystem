@@ -9,15 +9,6 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model areas {
-  id_area   Int      @id @default(autoincrement())
-  id_branch Int
-  name      String   @db.VarChar(20)
-  branches  branches @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "areas_ibfk_1")
-
-  @@index([id_branch], map: "id_branch")
-}
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model branch_schedules {
   id_bschedule Int      @id @default(autoincrement())
@@ -32,45 +23,48 @@ model branch_schedules {
 }
 
 model branches {
-  id_branch        Int                @id @default(autoincrement())
-  id_company       Int
-  name             String             @db.VarChar(40)
-  street           String             @db.VarChar(45)
-  num_ext          String?            @db.VarChar(10)
-  colony           String             @db.VarChar(45)
-  cp               String             @db.VarChar(45)
-  city             String             @db.VarChar(45)
-  state            String             @db.VarChar(30)
-  country          String             @default("México") @db.VarChar(20)
-  phone            String?            @db.VarChar(20)
-  email            String?            @db.VarChar(40)
-  created_at       DateTime?          @default(now()) @db.Timestamp(0)
-  updated_at       DateTime?          @default(now()) @db.Timestamp(0)
-  is_active        Int?               @default(1) @db.TinyInt
-  areas            areas[]
-  branch_products  branch_products[]
-  branch_schedules branch_schedules[]
-  companies        companies          @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company")
-  combos           combos[]
-  orders           orders[]
-  table_locations  table_locations[]
-  tables           tables[]
-  users            users[]
+  id_branch             Int                     @id @default(autoincrement())
+  id_company            Int
+  name                  String                  @db.VarChar(40)
+  street                String                  @db.VarChar(45)
+  num_ext               String?                 @db.VarChar(10)
+  colony                String                  @db.VarChar(45)
+  cp                    String                  @db.VarChar(45)
+  city                  String                  @db.VarChar(45)
+  state                 String                  @db.VarChar(30)
+  country               String                  @default("México") @db.VarChar(20)
+  phone                 String?                 @db.VarChar(20)
+  email                 String?                 @db.VarChar(40)
+  created_at            DateTime?               @default(now()) @db.Timestamp(0)
+  updated_at            DateTime?               @default(now()) @db.Timestamp(0)
+  is_active             Int?                    @default(1) @db.TinyInt
+  branch_print_stations branch_print_stations[]
+  branch_products       branch_products[]
+  branch_schedules      branch_schedules[]
+  companies             companies               @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company")
+  combos                combos[]
+  orders                orders[]
+  table_locations       table_locations[]
+  tables                tables[]
+  users                 users[]
 
   @@index([id_company], map: "fk_id_company_idx")
 }
 
 model order_items {
-  id_order_item     Int              @id @default(autoincrement())
-  id_order          Int
-  id_branch_product Int?
-  id_combo          Int?
-  quantity          Int
-  notes             String?          @db.Text
-  status            String?          @default("pending") @db.VarChar(20)
-  combos            combos?          @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
-  branch_products   branch_products? @relation(fields: [id_branch_product], references: [id_branch_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_prod_orditems")
-  orders            orders           @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
+  id_order_item      Int                  @id @default(autoincrement())
+  id_order           Int
+  id_branch_product  Int?
+  id_combo           Int?
+  quantity           Int
+  notes              String?              @db.Text
+  service_order      Int?                 @default(1)
+  status             order_items_status?  @default(pending)
+  created_at         DateTime?            @default(now()) @db.Timestamp(0)
+  order_item_options order_item_options[]
+  combos             combos?              @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
+  branch_products    branch_products?     @relation(fields: [id_branch_product], references: [id_branch_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_prod_orditems")
+  orders             orders               @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
 
   @@index([id_order], map: "id_order")
   @@index([id_combo], map: "fk:combo_orditems_idx")
@@ -82,7 +76,7 @@ model orders {
   id_branch      Int
   id_session     Int
   id_user        Int?
-  status         String?        @default("pending") @db.VarChar(20)
+  status         orders_status? @default(pending)
   created_at     DateTime?      @default(now()) @db.Timestamp(0)
   order_items    order_items[]
   branches       branches       @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_1")
@@ -96,11 +90,13 @@ model orders {
 }
 
 model payments {
-  id         Int       @id @default(autoincrement())
+  id_payment Int             @id @default(autoincrement())
   id_order   Int
-  amount     Decimal   @db.Decimal(10, 2)
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  orders     orders    @relation(fields: [id_order], references: [id_order], onDelete: NoAction, onUpdate: NoAction, map: "payments_ibfk_1")
+  method     payments_method
+  amount     Decimal         @db.Decimal(10, 2)
+  tip        Decimal?        @default(0.00) @db.Decimal(10, 2)
+  created_at DateTime?       @default(now()) @db.Timestamp(0)
+  orders     orders          @relation(fields: [id_order], references: [id_order], onDelete: NoAction, onUpdate: NoAction, map: "payments_ibfk_1")
 
   @@index([id_order], map: "id_order")
 }
@@ -113,15 +109,15 @@ model roles {
 }
 
 model table_sessions {
-  id_session Int       @id @default(autoincrement())
+  id_session Int                    @id @default(autoincrement())
   id_table   Int
   id_user    Int
-  status     String?   @default("open") @db.VarChar(20)
-  opened_at  DateTime? @default(now()) @db.Timestamp(0)
-  closed_at  DateTime? @db.Timestamp(0)
+  status     table_sessions_status? @default(open)
+  opened_at  DateTime?              @default(now()) @db.Timestamp(0)
+  closed_at  DateTime?              @db.Timestamp(0)
   orders     orders[]
-  tables     tables    @relation(fields: [id_table], references: [id_table], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_1")
-  users      users     @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_2")
+  tables     tables                 @relation(fields: [id_table], references: [id_table], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_1")
+  users      users                  @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_2")
 
   @@index([id_table], map: "id_table")
   @@index([id_user], map: "id_user")
@@ -133,7 +129,7 @@ model tables {
   id_location     Int
   number          String           @db.VarChar(10)
   capacity        Int
-  status          String?          @default("available") @db.VarChar(20)
+  status          tables_status?   @default(available)
   table_sessions  table_sessions[]
   table_locations table_locations  @relation(fields: [id_location], references: [id_location], onDelete: NoAction, map: "fk_id_location")
   branches        branches         @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "tables_ibfk_1")
@@ -144,7 +140,8 @@ model tables {
 
 model users {
   id_user        Int              @id @default(autoincrement())
-  id_branch      Int
+  id_company     Int?
+  id_branch      Int?
   id_role        Int
   name           String           @db.VarChar(30)
   last_name      String           @db.VarChar(30)
@@ -153,23 +150,25 @@ model users {
   password       String           @db.VarChar(255)
   created_at     DateTime         @default(now()) @db.Timestamp(0)
   updated_at     DateTime         @updatedAt @db.Timestamp(0)
+  is_active      Int              @default(1) @db.TinyInt
   orders         orders[]
   table_sessions table_sessions[]
-  branches       branches         @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
+  branches       branches?        @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
   roles          roles            @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_2")
+  companies      companies?       @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_3")
 
-  @@index([id_branch], map: "id_branch")
   @@index([id_role], map: "id_role")
+  @@index([id_branch], map: "users_ibfk_1")
+  @@index([id_company], map: "users_ibfk_3_idx")
 }
 
 model branch_products {
   id_branch_product  Int              @id @default(autoincrement())
   id_branch          Int
   id_company_product Int
-  custom_price       Decimal          @db.Decimal(10, 2)
+  is_active          Boolean?         @default(true)
   created_at         DateTime?        @default(now()) @db.Timestamp(0)
   updated_at         DateTime?        @default(now()) @db.Timestamp(0)
-  is_active          Boolean?         @default(true)
   branches           branches         @relation(fields: [id_branch], references: [id_branch], onDelete: Cascade, map: "fk_branch_product_branch")
   company_products   company_products @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, map: "fk_branch_product_companyprod")
   order_items        order_items[]
@@ -216,6 +215,7 @@ model companies {
   rfc                String               @db.VarChar(20)
   street             String               @db.VarChar(50)
   num_ext            String?              @db.VarChar(5)
+  colony             String               @db.VarChar(45)
   cp                 String               @db.VarChar(5)
   city               String               @db.VarChar(30)
   state              String               @db.VarChar(30)
@@ -228,30 +228,42 @@ model companies {
   updated_at         DateTime?            @default(now()) @db.Timestamp(0)
   branches           branches[]
   combos             combos[]
+  company_products   company_products[]
   product_categories product_categories[]
+  users              users[]
 }
 
 model company_products {
-  id_company_product Int               @id
+  id_company_product Int                @id
   id_company         Int
-  id_area            Int?
-  id_category        Int?
-  name               String            @db.VarChar(45)
-  description        String            @db.VarChar(100)
-  base_price         Decimal           @db.Decimal(10, 2)
-  image_url          String?           @db.VarChar(255)
-  created_at         DateTime?         @default(now()) @db.Timestamp(0)
-  updated_at         DateTime?         @default(now()) @db.Timestamp(0)
-  is_active          Int?              @default(1) @db.TinyInt
+  id_area            Int
+  id_category        Int
+  name               String             @db.VarChar(45)
+  description        String             @db.VarChar(100)
+  base_price         Decimal            @db.Decimal(10, 2)
+  image_url          String?            @db.VarChar(255)
+  is_active          Int?               @default(1) @db.TinyInt
+  created_at         DateTime?          @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?          @default(now()) @db.Timestamp(0)
   branch_products    branch_products[]
   combo_items        combo_items[]
+  product_categories product_categories @relation(fields: [id_category], references: [id_category], onDelete: NoAction, onUpdate: NoAction, map: "fk_category_comproducts")
+  companies          companies          @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_comproducts")
+  print_areas        print_areas        @relation(fields: [id_area], references: [id_area], onDelete: NoAction, onUpdate: NoAction, map: "fk_printarea_comproducts")
+  product_options    product_options[]
+
+  @@index([id_category], map: "fk_category_comproducts_idx")
+  @@index([id_company], map: "fk_company_comproducts_idx")
+  @@index([id_area], map: "fk_printarea_comproducts_idx")
 }
 
 model product_categories {
-  id_category Int       @id
-  id_company  Int
-  name        String    @db.VarChar(25)
-  companies   companies @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company_cat")
+  id_category      Int                @id
+  id_company       Int
+  name             String             @db.VarChar(25)
+  is_active        Int                @default(1) @db.TinyInt
+  company_products company_products[]
+  companies        companies          @relation(fields: [id_company], references: [id_company], onDelete: NoAction, map: "fk_id_company_cat")
 
   @@index([id_company], map: "fk_id_company_idx")
 }
@@ -260,8 +272,107 @@ model table_locations {
   id_location Int      @id @default(autoincrement())
   id_branch   Int
   name        String   @db.VarChar(45)
+  is_active   Int      @default(1) @db.TinyInt
   branches    branches @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, map: "fk_id_branch")
   tables      tables[]
 
   @@index([id_branch], map: "fk_id_branch_idx")
+}
+
+model branch_print_stations {
+  id_station   Int         @id @default(autoincrement())
+  id_branch    Int
+  id_area      Int
+  printer_name String      @db.VarChar(45)
+  printer_ip   String      @db.VarChar(45)
+  is_active    Int         @default(1) @db.TinyInt
+  print_areas  print_areas @relation(fields: [id_area], references: [id_area], onDelete: NoAction, onUpdate: NoAction, map: "fk_area_station")
+  branches     branches    @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_station")
+
+  @@index([id_area], map: "fk_area_station_idx")
+  @@index([id_branch], map: "fk_branch_station_idx")
+}
+
+model order_item_options {
+  id_order_item_option  Int                   @id @default(autoincrement())
+  id_order_item         Int
+  id_option_value       Int
+  created_at            DateTime?             @default(dbgenerated("(now())")) @db.Timestamp(0)
+  order_items           order_items           @relation(fields: [id_order_item], references: [id_order_item], onDelete: NoAction, onUpdate: NoAction, map: "order_item_options_ibfk_1")
+  product_option_values product_option_values @relation(fields: [id_option_value], references: [id_option_value], onDelete: NoAction, onUpdate: NoAction, map: "order_item_options_ibfk_2")
+
+  @@index([id_option_value], map: "id_option_value")
+  @@index([id_order_item], map: "id_order_item")
+}
+
+model print_areas {
+  id_area               Int                     @id @default(autoincrement())
+  name                  String                  @db.VarChar(20)
+  is_active             Int                     @default(1) @db.TinyInt
+  branch_print_stations branch_print_stations[]
+  company_products      company_products[]
+}
+
+model product_option_values {
+  id_option_value    Int                  @id @default(autoincrement())
+  id_option          Int
+  name               String               @db.VarChar(50)
+  extra_price        Decimal?             @default(0.00) @db.Decimal(10, 2)
+  is_active          Boolean              @default(true)
+  created_at         DateTime             @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?            @default(dbgenerated("(now())")) @db.Timestamp(0)
+  order_item_options order_item_options[]
+  product_options    product_options      @relation(fields: [id_option], references: [id_option], onDelete: NoAction, onUpdate: NoAction, map: "product_option_values_ibfk_1")
+
+  @@index([id_option], map: "id_option")
+}
+
+model product_options {
+  id_option             Int                     @id @default(autoincrement())
+  id_company_product    Int
+  name                  String                  @db.VarChar(45)
+  is_required           Int                     @default(0) @db.TinyInt
+  multi_select          Int                     @default(0) @db.TinyInt
+  created_at            DateTime                @default(now()) @db.Timestamp(0)
+  updated_at            DateTime?               @default(now()) @db.Timestamp(0)
+  product_option_values product_option_values[]
+  company_products      company_products        @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_companyprod_options")
+
+  @@index([id_company_product], map: "fk_companyprod_options_idx")
+}
+
+enum table_sessions_status {
+  open
+  closed
+  pending_payment
+  occupied
+}
+
+enum orders_status {
+  pending
+  in_progress
+  ready
+  delivered
+  cancelled
+}
+
+enum tables_status {
+  available
+  occupied
+  maintenance
+  reserved
+}
+
+enum order_items_status {
+  pending
+  in_preparation
+  ready
+  delivered
+  cancelled
+}
+
+enum payments_method {
+  cash
+  card
+  transfer
 }

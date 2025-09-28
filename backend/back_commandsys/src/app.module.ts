@@ -9,6 +9,9 @@ import { AuthModule } from './auth/auth.module';
 import { CommandsModule } from './commands/commands.module';
 import { BranchesModule } from './branches/branches.module';
 import { TablesModule } from './tables/tables.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -17,7 +20,14 @@ import { TablesModule } from './tables/tables.module';
       isGlobal: true
     }),
     PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [{
+    provide: APP_GUARD,
+    useClass: JwtAuthGuard,
+  },
+  {
+    provide: APP_GUARD,
+    useClass: RolesGuard
+  },
+  ],
 })
 export class AppModule {}
