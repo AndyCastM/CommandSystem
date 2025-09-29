@@ -16,8 +16,8 @@ export class AuthService {
     async logIn(username: string, pass: string): Promise<AuthResponseDto> {
         const user = await this.usersService.findOneByUsername(username);
 
-        if (!user) {
-            throw new UnauthorizedException('Usuario no encontrado');
+        if (!user || user.is_active === 0) {
+            throw new UnauthorizedException('Usuario inactivo o no encontrado');
         }
 
         // Verificar contraseña con bcrypt
