@@ -2,6 +2,7 @@
 import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { Role } from '../enums/role.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -23,9 +24,9 @@ export class RolesGuard implements CanActivate {
         throw new ForbiddenException('Usuario no autenticado');
     }
 
-    // user.role viene del payload del JWT
-    if (!requiredRoles.includes(user.role)) {
-        throw new ForbiddenException('No tienes permiso para acceder a este recurso');
+    // Valida que el rol del usuario esté en la lista
+    if (!requiredRoles.some((role) => user.role === role)) {
+      throw new ForbiddenException('No tienes permiso para acceder a este recurso');
     }
 
     return true; // Permitir acceso si el rol es válido

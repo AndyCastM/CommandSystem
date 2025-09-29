@@ -35,7 +35,7 @@ export class ScheduleGuard implements CanActivate {
     // Comparar hora actual con open_time / close_time
     const now = today.toTimeString().slice(0, 8); // "HH:MM:SS"
 
-    // Convert schedule.open_time and schedule.close_time to "HH:MM:SS" strings if they are Date objects
+    // Convertir schedule.open_time y schedule.close_time a "HH:MM:SS" strings si son objetos tipo Date
     const openTime =
       schedule.open_time instanceof Date
         ? schedule.open_time.toTimeString().slice(0, 8)

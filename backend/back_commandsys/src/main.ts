@@ -4,11 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import morgan from 'morgan';
 import { CORS } from './constants';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(morgan('dev'));
+  app.use(cookieParser());
   
   // Habilitado para validar información
   app.useGlobalPipes(

@@ -153,6 +153,7 @@ model users {
   is_active      Int              @default(1) @db.TinyInt
   orders         orders[]
   table_sessions table_sessions[]
+  user_tokens    user_tokens[]
   branches       branches?        @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
   roles          roles            @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_2")
   companies      companies?       @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_3")
@@ -211,8 +212,8 @@ model combos {
 model companies {
   id_company         Int                  @id @default(autoincrement())
   name               String               @db.VarChar(60)
-  legal_name         String               @db.VarChar(80)
-  rfc                String               @db.VarChar(20)
+  legal_name         String               @unique(map: "legal_name_UNIQUE") @db.VarChar(80)
+  rfc                String               @unique(map: "rfc_UNIQUE") @db.VarChar(20)
   street             String               @db.VarChar(50)
   num_ext            String?              @db.VarChar(5)
   colony             String               @db.VarChar(45)
@@ -223,7 +224,6 @@ model companies {
   phone              String               @db.VarChar(20)
   email              String               @db.VarChar(50)
   tax_percentage     Decimal              @default(16.00) @db.Decimal(5, 2)
-  min_salary         Decimal              @db.Decimal(10, 2)
   created_at         DateTime             @default(now()) @db.Timestamp(0)
   updated_at         DateTime?            @default(now()) @db.Timestamp(0)
   branches           branches[]
@@ -339,6 +339,20 @@ model product_options {
   company_products      company_products        @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_companyprod_options")
 
   @@index([id_company_product], map: "fk_companyprod_options_idx")
+}
+
+model user_tokens {
+  id_token     Int       @id @default(autoincrement())
+  id_user      Int
+  refresh_hash String    @db.VarChar(255)
+  user_agent   String?   @db.VarChar(255)
+  ip           String?   @db.VarChar(64)
+  expires_at   DateTime  @db.DateTime(0)
+  revoked_at   DateTime? @db.DateTime(0)
+  created_at   DateTime? @default(now()) @db.DateTime(0)
+  users        users     @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "user_tokens_ibfk_1")
+
+  @@index([id_user], map: "idx_user_tokens_user")
 }
 
 enum table_sessions_status {

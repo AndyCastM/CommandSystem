@@ -4,6 +4,7 @@ import { IsString, MinLength, IsInt, IsNotEmpty, IsOptional } from 'class-valida
 export class CreateUserDto {
   
   @IsInt()
+  @IsOptional()
   id_company: number;
 
   @IsInt()
