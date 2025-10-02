@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { CompaniesModule } from './companies/companies.module';
+import { BranchSchedulesModule } from './branch_schedules/branch_schedules.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { CompaniesModule } from './companies/companies.module';
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule],
+    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

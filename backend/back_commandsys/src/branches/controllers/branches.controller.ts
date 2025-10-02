@@ -34,9 +34,13 @@ export class BranchesController {
 
   @Get(':id')
   @Roles(Role.Admin)
-  findOne(@Param('id') id: string) {
-    return this.branchesService.findOne(+id);
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: any
+  ) {
+    return this.branchesService.findOne(+id, user.id_company);
   }
+
 
   @Put(':id')
   @Roles(Role.Admin)

@@ -44,15 +44,18 @@ export class BranchesService {
     });
   }
 
-  async findOne(id: number) {
-    const branch = await this.prisma.branches.findUnique({ where: { id_branch: id } });
-    if (!branch) throw new NotFoundException(`Sucursal con id ${id} no encontarda`);
+  async findOne(id: number, id_company: number) {
+    const branch = await this.prisma.branches.findUnique({ 
+      where: { 
+        id_branch: id , 
+        id_company: id_company, //para validar que pertenece a la empresa del usuario
+      } });
+    if (!branch) throw new NotFoundException(`Sucursal con id ${id} no encontrada`);
     return branch;
   }
 
   async update(id: number, dto: UpdateBranchDto) {
-    const branch = await this.prisma.branches.findUnique({ where: { id_branch: id } });
-    if (!branch) {
+    if (await this.validateBranch(id)) {
       throw new NotFoundException(`Sucursal con id ${id} no encontrada`);
     }
 
@@ -64,8 +67,7 @@ export class BranchesService {
 
 
   async delete(id: number) {
-    const branch = await this.prisma.branches.findUnique({ where: { id_branch: id } });
-    if (!branch) {
+    if (await this.validateBranch(id)) {
       throw new NotFoundException(`Sucursal con id ${id} no encontrada`);
     }
 
@@ -74,5 +76,12 @@ export class BranchesService {
       data: { is_active: 0 },
     });
   }
+
+  async validateBranch(id: number): Promise<boolean> {
+    const branch = await this.prisma.branches.findUnique({ where: { id_branch: id } });
+    if (!branch) throw new NotFoundException(`Sucursal con id ${id} no encontrada`);
+    return true;
+  }
+
 
 }
