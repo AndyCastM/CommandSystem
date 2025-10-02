@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateBranchScheduleDto } from '../dto/create-branch_schedule.dto';
 import { UpdateBranchScheduleDto } from '../dto/update-branch_schedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BranchesService } from 'src/branches/services/branches.service';
@@ -12,8 +11,8 @@ export class BranchSchedulesService {
 
 
   // Crear todos los dias de la semana para una sucursal
-  async createDefaultWeek(id_branch: number) {
-    if (!(await this.branchesService.validateBranch(id_branch))) {
+  async createDefaultWeek(id_branch: number, id_company: number) {
+    if (!(await this.branchesService.validateBranchInCompany(id_branch, id_company))) {
       throw new Error(`Sucursal con id ${id_branch} no encontrada`);
     }
 
@@ -28,10 +27,9 @@ export class BranchSchedulesService {
   }
 
   // Obtener horarios de una sucursal
-  async getSchedulesByBranch(id_branch: number) {
-    if (!(await this.branchesService.validateBranch(id_branch))) {
-      throw new Error(`Sucursal con id ${id_branch} no encontrada`);
-    }
+  async getSchedulesByBranch(id_branch: number, id_company: number) {
+    await this.branchesService.validateBranchInCompany(id_branch, id_company);
+
     return this.prisma.branch_schedules.findMany({
       where: { id_branch },
       orderBy: { day_of_week: 'asc' },
@@ -40,18 +38,25 @@ export class BranchSchedulesService {
 
   // Actualizar un dia especifico
   async update (id_branch: number, dto: UpdateBranchScheduleDto) {
+    const day = await this.validateDay(id_branch, dto.day_of_week);
+    
+    if (!day.is_open) {
+      throw new Error(
+        `El día ${dto.day_of_week} está desactivado. No se puede actualizar.`,
+      );
+    }
+
     return this.prisma.branch_schedules.updateMany({
       where: { id_branch: id_branch, day_of_week: dto.day_of_week },
       data: {
         open_time: dto.open_time,
         close_time: dto.close_time,
-        is_open: dto.is_open,
       },
     });
   }
   
 
-  // Eliminar un día (
+  // Eliminar un día (Desactivar)
   async deactivate(branchId: number, day: number) {
     return this.prisma.branch_schedules.updateMany({
       where: { id_branch: branchId, day_of_week: day },
@@ -67,4 +72,19 @@ export class BranchSchedulesService {
     });
   }
   
+  async validateDay(id_branch: number, day_of_week: number) {
+    const day = await this.prisma.branch_schedules.findFirst({
+      where: { id_branch, day_of_week },
+    });
+
+    if (!day) {
+      throw new Error(
+        `El día ${day_of_week} no existe en la sucursal con id ${id_branch}`,
+      );
+    }
+
+    return day;
+  }
+
+
 }

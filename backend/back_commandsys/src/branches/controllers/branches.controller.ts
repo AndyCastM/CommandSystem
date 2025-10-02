@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query, Patch } from '@nestjs/common';
 import { BranchesService } from '../services/branches.service';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { UpdateBranchDto } from '../dto/update-branch.dto';
@@ -13,6 +13,7 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 
+  // Aqui tambien se crean los horarios default 
   @Post()
   @Roles(Role.Admin)
   async create(
@@ -21,6 +22,7 @@ export class BranchesController {
     return this.branchesService.create(user.id_company, createBranchDto);
   }
 
+  // Obtener todas las sucursales de una empresa
   @Get()
   @Roles(Role.Admin)
   async findAll(
@@ -31,7 +33,7 @@ export class BranchesController {
     return this.branchesService.findAll(user.id_company, filter);
   }
 
-
+  // Obtener una sucursal por id
   @Get(':id')
   @Roles(Role.Admin)
   findOne(
@@ -41,11 +43,27 @@ export class BranchesController {
     return this.branchesService.findOne(+id, user.id_company);
   }
 
-
-  @Put(':id')
+  // Actualizar una sucursal
+  @Patch(':id')
   @Roles(Role.Admin)
-  update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto) {
-    return this.branchesService.update(+id, updateBranchDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateBranchDto: UpdateBranchDto,
+    @CurrentUser() user: any
+  ) {
+    // Asegurar que la sucursal pertenece a la empresa del usuario
+    return this.branchesService.update(+id, user.id_company, updateBranchDto);
+  }
+
+  // Eliminar (desactivar) sucursal (soft delete → is_active = 0)
+  @Patch(':id')
+  @Roles(Role.Admin)
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: any
+  ) {
+    // Asegurar que la sucursal pertenece a la empresa del usuario
+    return this.branchesService.delete(+id, user.id_company);
   }
 
 }
