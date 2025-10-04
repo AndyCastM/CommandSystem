@@ -25,7 +25,7 @@ export class BranchSchedulesController {
 
   // Obtener todos los horarios de la sucursal CHECAR BIEN LOS ROLES
   @Get()
-  @Roles(Role.Admin, Role.Superadmin, Role.Gerente)
+  @Roles(Role.Admin, Role.Gerente)
   async getAll(
     @Param('id_branch') id_branch: string,
     @CurrentUser() user: any,
@@ -35,7 +35,7 @@ export class BranchSchedulesController {
 
   // Actualizar un dia especifico
   @Patch()
-  @Roles(Role.Admin, Role.Gerente)
+  @Roles(Role.Gerente)
   async update(
     @Param('id_branch') id_branch: string,
     @Body() dto: UpdateBranchScheduleDto,
@@ -45,7 +45,7 @@ export class BranchSchedulesController {
 
   // Desactivar un dia
   @Patch(':day/deactivate')
-  @Roles(Role.Admin, Role.Gerente)
+  @Roles(Role.Gerente)
   async deactivate(
     @Param('id_branch') id_branch: string,
     @Param('day') day: string,
@@ -55,7 +55,7 @@ export class BranchSchedulesController {
 
   // Reactivar un dia
   @Patch(':day/activate')
-  @Roles(Role.Admin, Role.Gerente)
+  @Roles(Role.Gerente)
   async activate(
     @Param('id_branch') id_branch: string,
     @Param('day') day: string,

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { TablesService } from './tables.service';
-import { CreateTableDto } from './dto/create-table.dto';
-import { UpdateTableDto } from './dto/update-table.dto';
+import { TablesService } from '../tables.service';
+import { CreateTableDto } from '../dto/create-table.dto';
+import { UpdateTableDto } from '../dto/update-table.dto';
 
 @Controller('tables')
 export class TablesController {

@@ -12,6 +12,8 @@ import { JwtAuthGuard } from './auth/guards/auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { CompaniesModule } from './companies/companies.module';
 import { BranchSchedulesModule } from './branch_schedules/branch_schedules.module';
+import { TableLocationsModule } from './table_locations/table_locations.module';
+import { TableSessionsModule } from './table_sessions/table_sessions.module';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { BranchSchedulesModule } from './branch_schedules/branch_schedules.modul
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule],
+    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

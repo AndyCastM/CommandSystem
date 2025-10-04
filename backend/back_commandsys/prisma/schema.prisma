@@ -129,7 +129,7 @@ model tables {
   id_location     Int
   number          String           @db.VarChar(10)
   capacity        Int
-  status          tables_status?   @default(available)
+  is_active       Int              @default(1) @db.TinyInt
   table_sessions  table_sessions[]
   table_locations table_locations  @relation(fields: [id_location], references: [id_location], onDelete: NoAction, map: "fk_id_location")
   branches        branches         @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "tables_ibfk_1")
@@ -368,13 +368,6 @@ enum orders_status {
   ready
   delivered
   cancelled
-}
-
-enum tables_status {
-  available
-  occupied
-  maintenance
-  reserved
 }
 
 enum order_items_status {
