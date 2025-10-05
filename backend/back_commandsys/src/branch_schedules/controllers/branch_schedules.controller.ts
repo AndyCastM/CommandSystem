@@ -57,7 +57,7 @@ export class BranchSchedulesController {
   @Roles(Role.Gerente)
   async activate(
     @CurrentUser() user: any,
-    @Param('day') day: string,
+    @Param('day') day: number,
   ) {
     return this.branchSchedulesService.activate(+user.id_branch, +day);
   }

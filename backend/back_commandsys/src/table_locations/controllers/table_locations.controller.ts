@@ -49,8 +49,8 @@ export class TableLocationsController {
   }
 
   // Reactivar location (y sus mesas en cascada)
-  @Patch(':id/restore')
-  async restore(@Param('id') id: string) {
+  @Patch(':id/activate')
+  async activate(@Param('id') id: string) {
     return this.service.activate(+id, 1);
   }
 }

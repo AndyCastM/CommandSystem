@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { CreateTableDto } from '../dto/create-table.dto';
 import { UpdateTableDto } from '../dto/update-table.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class TablesService {
@@ -32,10 +33,10 @@ export class TablesService {
       } 
     });
 
-    return {
-      message: `Mesa "${table.number}" creada correctamente`,
+    return formatResponse(
+      `Mesa "${table.number}" creada correctamente`,
       table,
-    };
+    );
 
   }
 
@@ -74,10 +75,10 @@ export class TablesService {
       data,
     });
 
-    return {
-      message: `Mesa "${table.number}" actualizada correctamente`,
+    return formatResponse(
+      `Mesa "${table.number}" actualizada correctamente`,
       table,
-    };
+    );
   }
 
   /**
@@ -92,10 +93,10 @@ export class TablesService {
       data: { is_active: 0 },
     });
 
-    return {
-      message: `Mesa "${table.number}" desactivada correctamente`,
+    return formatResponse(
+      `Mesa "${table.number}" desactivada correctamente`,
       table2,
-    };
+    );
   }
 
   /**
@@ -110,10 +111,10 @@ export class TablesService {
       data: { is_active: 1 },
     });
 
-    return {
-      message: `Mesa "${table.number}" activada correctamente`,
+    return formatResponse(
+      `Mesa "${table.number}" activada correctamente`,
       table2,
-    };
+    );
   }
 
   /**

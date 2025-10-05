@@ -4,6 +4,7 @@ import { UsersService } from 'src/users/services/users.service';
 import * as bcrypt from 'bcrypt';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +45,7 @@ export class AuthService {
         const access_token = await this.generateUserToken(payload);
         
         return {
+            message: `Login exitoso`,
             access_token,
             user: {
                 id_user: user.id_user,
@@ -74,15 +76,15 @@ export class AuthService {
 
         const now = new Date();
         // Se resta 1 porque lo tenemos de 0-6 y aqui se regresa de 1-7
-        const currentDay = now.getDay() - 1 ; // 0 (Domingo) a 6 (Sábado)
+        const currentDay = now.getDay(); // 0 (Domingo) a 6 (Sábado)
         const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-
+        //console.log(currentDay);
         const schedule = branch.branch_schedules.find(s => s.day_of_week === currentDay && s.is_open);
         if (!schedule) {
             throw new ForbiddenException('Sucursal cerrada hoy');
         }
 
-        console.log(schedule);
+        //console.log(schedule);
         // Normalizar hora a formato "HH:MM" sin ajustar zona horaria
         const normalizeTime = (value: any): string => {
             if (!value) return '00:00';

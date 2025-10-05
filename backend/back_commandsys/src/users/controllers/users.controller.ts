@@ -1,4 +1,4 @@
-import {Controller, Get, Post, Body, Patch, Param} from "@nestjs/common";
+import {Controller, Get, Post, Body, Patch, Param, Delete} from "@nestjs/common";
 import { UsersService } from "../services/users.service";
 import { UserResponseDto } from "../dto/user-response.dto";
 import { CreateUserDto } from "../dto/create-user.dto";
@@ -18,7 +18,7 @@ export class UsersController {
     create(
         @Body() dto: CreateUserDto,
         @CurrentUser() user: any
-    ): Promise<UserResponseDto>{
+    ){
         // Si es admin, asignamos la empresa del token
         if (user.role === Role.Admin) {
             dto.id_company = user.id_company;
@@ -33,13 +33,28 @@ export class UsersController {
     }
 
     @Get()
-    async getAll(): Promise<UserResponseDto[]>{
-        return this.usersService.getUsers();
+    @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+    async getUsers(
+        @CurrentUser() user: any
+    ){
+        return this.usersService.getUsers(user);
     } 
 
-    @Public()
     @Patch(':id')
-    update(@Param('id') id: number, @Body()dto: UpdateUserDto): Promise<UserResponseDto>{
+    @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+    update(@Param('id') id: number, @Body()dto: UpdateUserDto){
         return this.usersService.updateUser(id, dto);
+    }
+
+    @Delete(':id')
+    @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+    deactivate(@Param('id') id: number){
+        return this.usersService.deactivateUser(id);
+    }
+
+    @Patch(':id/activate')
+    @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+    activate(@Param('id') id: number){
+        return this.usersService.activateUser(id);
     }
 }

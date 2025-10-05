@@ -62,14 +62,14 @@ export class TableLocationsService {
       );
     }
     
-    const table = await this.prisma.table_locations.update({
+    const location = await this.prisma.table_locations.update({
       where: { id_location },
       data,
     });
 
     return formatResponse(
-      `Localización ${table.name} actualizada correctamente.`,
-      table,
+      `Localización ${location.name} actualizada correctamente.`,
+      location,
     )
   }
 
@@ -91,6 +91,7 @@ export class TableLocationsService {
 
     return formatResponse(
       `Localización actualizada correctamente.`,
+      location
     )
   }
 

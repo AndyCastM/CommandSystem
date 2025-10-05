@@ -1,5 +1,6 @@
 // src/auth/dto/auth-response.dto.ts
 export class AuthResponseDto {
+  message: string;
   access_token: string;
   user: {
     id_user: number;

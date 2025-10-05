@@ -17,7 +17,7 @@ export class AuthController {
         @Body() loginDto: LoginDto,
         @Res({ passthrough: true }) res: express.Response
     ) {
-        const {access_token, user} = await this.authService.logIn(loginDto.username, loginDto.password);
+        const {message, access_token, user} = await this.authService.logIn(loginDto.username, loginDto.password);
         // Guardar el token en una cookie HTTP-only
         res.cookie('access_token', access_token, {
             httpOnly: true,
@@ -25,7 +25,7 @@ export class AuthController {
             maxAge: 8 * 60 * 60 * 1000, // 8 horas
         });
         
-        return { user };
+        return { message, user };
     }
 
     @Post('logout')

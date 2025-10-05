@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { UpdateBranchDto } from '../dto/update-branch.dto';
 import { BranchSchedulesService } from 'src/branch_schedules/services/branch_schedules.service';
+import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class BranchesService {
@@ -25,10 +26,10 @@ export class BranchesService {
     // Crear los 7 días default de horarios
     await this.branchSchedulesService.createDefaultWeek(branch.id_branch, branch.id_company);
 
-    return {
-      message: `Sucursal "${branch.name}" creada correctamente.`,
+    return formatResponse(
+      `Sucursal ${branch.name} creada correctamente.`,
       branch,
-    };
+    );
   }
 
   async findAll(id_company: number, is_active?: number) {
@@ -60,10 +61,10 @@ export class BranchesService {
       data: dto,
     });
 
-    return {
-      message: `Sucursal "${branch.name}" actualizada correctamente.`,
+    return formatResponse(
+      `Sucursal ${branch.name} actualizada correctamente.`,
       branch,
-    };
+    );
   }
 
   async delete(id: number, id_company: number) {
@@ -74,10 +75,10 @@ export class BranchesService {
       data: { is_active: 0 },
     });
 
-    return {
-      message: `Sucursal "${branch.name}" desactivada correctamente.`,
+    return formatResponse(
+      `Sucursal ${branch.name} desactivada correctamente.`,
       branch,
-    };
+    );
   }
 
   async activate(id: number, id_company: number) {
@@ -88,10 +89,10 @@ export class BranchesService {
       data: { is_active: 1 },
     });
 
-    return {
-      message: `Sucursal "${branch.name}" activada correctamente.`,
+   return formatResponse(
+      `Sucursal ${branch.name} activada correctamente.`,
       branch,
-    };
+    );
   }
 
   // Funciones de validación 
@@ -113,7 +114,7 @@ export class BranchesService {
     });
     if (duplicate) {
       throw new ConflictException(
-        `Ya existe una sucursal "${name}" en la ciudad ${city}`,
+        `Ya existe una sucursal ${name} en la ciudad ${city}`,
       );
     }
     return false;

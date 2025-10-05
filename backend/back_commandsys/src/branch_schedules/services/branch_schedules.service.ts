@@ -2,6 +2,7 @@ import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { UpdateBranchScheduleDto } from '../dto/update-branch_schedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BranchesService } from 'src/branches/services/branches.service';
+import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class BranchSchedulesService {
@@ -25,7 +26,12 @@ export class BranchSchedulesService {
       close_time: new Date(`1970-01-01T21:00:00Z`),
     }));
 
-    return this.prisma.branch_schedules.createMany({ data: days });
+    const week = await this.prisma.branch_schedules.createMany({ data: days });
+
+    return formatResponse(
+      `Horario semanal creado con éxito`,
+      week
+    );
   }
 
   // Obtener horarios de una sucursal
@@ -63,30 +69,47 @@ export class BranchSchedulesService {
       data.close_time = new Date(`1970-01-01T${h}:${m}:00Z`);
     }
 
-    return this.prisma.branch_schedules.updateMany({
+    const dayUpdated = await this.prisma.branch_schedules.updateMany({
       where: {
         id_branch,
         day_of_week: dto.day_of_week,
       },
       data,
     });
+
+    return formatResponse(
+      `Día ${day.day_of_week} actualizado correctamente`,
+      dayUpdated
+    );
   }
   
 
   // Eliminar un día (Desactivar)
   async deactivate(id_branch: number, day: number) {
-    return this.prisma.branch_schedules.updateMany({
+
+    const dayDeactivated = await this.prisma.branch_schedules.updateMany({
       where: { id_branch: id_branch, day_of_week: day },
       data: { is_open: false },
     });
+
+    return formatResponse(
+      `Día desactivado`,
+      dayDeactivated
+    );
   } 
 
   // Reactivar un día 
   async activate(id_branch: number, day: number) {
-    return this.prisma.branch_schedules.updateMany({
+    
+    const dayActivated = await this.prisma.branch_schedules.updateMany({
       where: { id_branch: id_branch, day_of_week: day },
       data: { is_open: true },
     });
+
+    return formatResponse(
+      `Día activado`,
+      dayActivated
+    );
   }
   
   async validateDay(id_branch: number, day_of_week: number) {

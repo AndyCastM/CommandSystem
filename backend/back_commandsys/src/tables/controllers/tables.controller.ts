@@ -49,7 +49,7 @@ export class TablesController {
     return this.tablesService.update(+id, updateTableDto);
   }
 
-  @Patch(':id/deactivate')
+  @Delete(':id')
   @Roles(Role.Gerente)
   async deactivate(@Param('id') id: string, @CurrentUser() user: any) {
     const table = await this.tablesService.findOne(+id);
