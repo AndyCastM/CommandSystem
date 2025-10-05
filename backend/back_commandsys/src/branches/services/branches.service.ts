@@ -25,7 +25,10 @@ export class BranchesService {
     // Crear los 7 días default de horarios
     await this.branchSchedulesService.createDefaultWeek(branch.id_branch, branch.id_company);
 
-    return branch;
+    return {
+      message: `Sucursal "${branch.name}" creada correctamente.`,
+      branch,
+    };
   }
 
   async findAll(id_company: number, is_active?: number) {
@@ -52,28 +55,43 @@ export class BranchesService {
   async update(id: number, id_company: number, dto: UpdateBranchDto) {
     await this.validateBranchInCompany(id, id_company);
 
-    return this.prisma.branches.update({
+    const branch = await this.prisma.branches.update({
       where: { id_branch: id },
       data: dto,
     });
+
+    return {
+      message: `Sucursal "${branch.name}" actualizada correctamente.`,
+      branch,
+    };
   }
 
   async delete(id: number, id_company: number) {
     await this.validateBranchInCompany(id, id_company);
 
-    return this.prisma.branches.update({
+    const branch = await this.prisma.branches.update({
       where: { id_branch: id },
       data: { is_active: 0 },
     });
+
+    return {
+      message: `Sucursal "${branch.name}" desactivada correctamente.`,
+      branch,
+    };
   }
 
   async activate(id: number, id_company: number) {
     await this.validateBranchInCompany(id, id_company);
 
-    return this.prisma.branches.update({
+    const branch = await this.prisma.branches.update({
       where: { id_branch: id },
       data: { is_active: 1 },
     });
+
+    return {
+      message: `Sucursal "${branch.name}" activada correctamente.`,
+      branch,
+    };
   }
 
   // Funciones de validación 

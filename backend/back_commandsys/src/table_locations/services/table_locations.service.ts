@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { CreateTableLocationDto } from '../dto/create-table_location.dto';
 import { UpdateTableLocationDto } from '../dto/update-table_location.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class TableLocationsService {
@@ -19,12 +20,17 @@ export class TableLocationsService {
       );
     }
 
-    return this.prisma.table_locations.create({
+    const tablelocation = await this.prisma.table_locations.create({
       data: {
         ...createTableLocationDto,
         id_branch
       }
     });
+
+    return formatResponse(
+      `Localización ${tablelocation.name} creada correctamente.`,
+      tablelocation,
+    )
   }
 
   async findAll(id_branch: number, isActive?: number) {
@@ -56,10 +62,15 @@ export class TableLocationsService {
       );
     }
     
-    return this.prisma.table_locations.update({
+    const table = await this.prisma.table_locations.update({
       where: { id_location },
       data,
     });
+
+    return formatResponse(
+      `Localización ${table.name} actualizada correctamente.`,
+      table,
+    )
   }
 
   /**
@@ -78,7 +89,9 @@ export class TableLocationsService {
       data: { is_active: activate },
     });
 
-    return location;
+    return formatResponse(
+      `Localización actualizada correctamente.`,
+    )
   }
 
   /**

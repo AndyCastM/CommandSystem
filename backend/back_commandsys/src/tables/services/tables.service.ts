@@ -12,7 +12,7 @@ export class TablesService {
    */
   async create(id_branch: number, createTableDto: CreateTableDto) {
     const { number, id_location } = createTableDto;
-    console.log(id_branch);
+    //console.log(id_branch);
 
     // Verificar si ya existe una mesa con el mismo número en la sucursal
     const exists = await this.validateNameInBranch(number, id_branch);
@@ -25,12 +25,18 @@ export class TablesService {
     // Validar que la location pertenezca a la misma sucursal y que esté activa
     await this.validateLocationInBranch(id_location, id_branch);
 
-    return this.prisma.tables.create({ 
+    const table = await this.prisma.tables.create({ 
       data:{
         ...createTableDto,
         id_branch,
       } 
-     });
+    });
+
+    return {
+      message: `Mesa "${table.number}" creada correctamente`,
+      table,
+    };
+
   }
 
   /**
@@ -63,10 +69,15 @@ export class TablesService {
    * Actualizar mesa
    */
   async update(id_table: number, data: UpdateTableDto) {
-    return this.prisma.tables.update({
+    const table = await this.prisma.tables.update({
       where: { id_table },
       data,
     });
+
+    return {
+      message: `Mesa "${table.number}" actualizada correctamente`,
+      table,
+    };
   }
 
   /**
@@ -76,10 +87,15 @@ export class TablesService {
     const table = await this.prisma.tables.findUnique({ where: { id_table } });
     if (!table) throw new NotFoundException(`Mesa ${id_table} no encontrada`);
 
-    return this.prisma.tables.update({
+    const table2 = await this.prisma.tables.update({
       where: { id_table },
       data: { is_active: 0 },
     });
+
+    return {
+      message: `Mesa "${table.number}" desactivada correctamente`,
+      table2,
+    };
   }
 
   /**
@@ -89,10 +105,15 @@ export class TablesService {
     const table = await this.prisma.tables.findUnique({ where: { id_table } });
     if (!table) throw new NotFoundException(`Mesa ${id_table} no encontrada`);
 
-    return this.prisma.tables.update({
+    const table2 = await this.prisma.tables.update({
       where: { id_table },
       data: { is_active: 1 },
     });
+
+    return {
+      message: `Mesa "${table.number}" activada correctamente`,
+      table2,
+    };
   }
 
   /**

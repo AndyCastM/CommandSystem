@@ -43,7 +43,7 @@ export class TableLocationsController {
   }
 
   // Soft delete → desactivar location (y sus mesas en cascada)
-  @Patch(':id')
+  @Delete(':id')
   async deactivate(@Param('id') id: string) {
     return this.service.activate(+id, 0);
   }
