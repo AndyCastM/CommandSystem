@@ -56,7 +56,7 @@ export class BranchesController {
   }
 
   // Eliminar (desactivar) sucursal (soft delete → is_active = 0)
-  @Patch(':id')
+  @Delete(':id')
   @Roles(Role.Admin)
   async remove(
     @Param('id') id: string,
@@ -64,6 +64,16 @@ export class BranchesController {
   ) {
     // Asegurar que la sucursal pertenece a la empresa del usuario
     return this.branchesService.delete(+id, user.id_company);
+  }
+
+  @Patch(':id/activate')
+  @Roles(Role.Admin)
+  async activate(
+    @Param('id') id: string,
+    @CurrentUser() user: any
+  ) {
+    // Asegurar que la sucursal pertenece a la empresa del usuario
+    return this.branchesService.activate(+id, user.id_company);
   }
 
 }

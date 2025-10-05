@@ -1,26 +1,131 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateTableDto } from '../dto/create-table.dto';
 import { UpdateTableDto } from '../dto/update-table.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class TablesService {
-  create(createTableDto: CreateTableDto) {
-    return 'This action adds a new table';
+  constructor(private prisma: PrismaService) {}
+
+  /**
+   * Crear una mesa nueva validando duplicados y pertenencia de location
+   */
+  async create(id_branch: number, createTableDto: CreateTableDto) {
+    const { number, id_location } = createTableDto;
+    console.log(id_branch);
+
+    // Verificar si ya existe una mesa con el mismo número en la sucursal
+    const exists = await this.validateNameInBranch(number, id_branch);
+    if (exists) {
+      throw new BadRequestException(
+        'Ya existe una mesa con ese número en esta sucursal',
+      );
+    }
+
+    // Validar que la location pertenezca a la misma sucursal y que esté activa
+    await this.validateLocationInBranch(id_location, id_branch);
+
+    return this.prisma.tables.create({ 
+      data:{
+        ...createTableDto,
+        id_branch,
+      } 
+     });
   }
 
-  findAll() {
-    return `This action returns all tables`;
+  /**
+   * Listar mesas por sucursal (con filtro por is_active)
+   */
+  async findAll(id_branch: number, isActive?: number) {
+    return this.prisma.tables.findMany({
+      where: {
+        id_branch,
+        ...(isActive !== undefined ? { is_active: isActive } : {}),
+      },
+      include: { table_locations: true },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} table`;
+  /**
+   * Buscar una mesa específica
+   */
+  async findOne(id_table: number) {
+    const table = await this.prisma.tables.findUnique({
+      where: { id_table },
+      include: { table_locations: true },
+    });
+    if (!table)
+      throw new NotFoundException(`Mesa con id ${id_table} no encontrada`);
+    return table;
   }
 
-  update(id: number, updateTableDto: UpdateTableDto) {
-    return `This action updates a #${id} table`;
+  /**
+   * Actualizar mesa
+   */
+  async update(id_table: number, data: UpdateTableDto) {
+    return this.prisma.tables.update({
+      where: { id_table },
+      data,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} table`;
+  /**
+   * Desactivar mesa (soft delete)
+   */
+  async deactivate(id_table: number) {
+    const table = await this.prisma.tables.findUnique({ where: { id_table } });
+    if (!table) throw new NotFoundException(`Mesa ${id_table} no encontrada`);
+
+    return this.prisma.tables.update({
+      where: { id_table },
+      data: { is_active: 0 },
+    });
+  }
+
+  /**
+   * Reactivar mesa
+   */
+  async activate(id_table: number) {
+    const table = await this.prisma.tables.findUnique({ where: { id_table } });
+    if (!table) throw new NotFoundException(`Mesa ${id_table} no encontrada`);
+
+    return this.prisma.tables.update({
+      where: { id_table },
+      data: { is_active: 1 },
+    });
+  }
+
+  /**
+   * Verifica si ya existe una mesa con el mismo número en la sucursal
+   */
+  async validateNameInBranch(number: string, id_branch: number): Promise<boolean> {
+    const table = await this.prisma.tables.findFirst({
+      where: { number, id_branch },
+    });
+    return !!table;
+  }
+
+  /**
+   * Valida que una location pertenezca a una sucursal y que este activa
+   */
+
+  async validateLocationInBranch(id_location: number, id_branch: number): Promise<boolean> {
+    const location = await this.prisma.table_locations.findUnique({
+      where: { id_location },
+    });
+    
+    if (!location) {
+      throw new NotFoundException(`Ubicación con id ${id_location} no encontrada`);
+    }
+
+    if (location.id_branch !== id_branch) {
+      throw new BadRequestException('La ubicación seleccionada no pertenece a la misma sucursal');    
+    }
+
+    if (location.is_active === 0) {
+      throw new BadRequestException('La ubicación seleccionada está desactivada');
+    }
+
+    return !!location;
   }
 }

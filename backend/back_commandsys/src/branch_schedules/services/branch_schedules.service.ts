@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { UpdateBranchScheduleDto } from '../dto/update-branch_schedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BranchesService } from 'src/branches/services/branches.service';
@@ -7,7 +7,9 @@ import { BranchesService } from 'src/branches/services/branches.service';
 export class BranchSchedulesService {
   constructor(
     private prisma: PrismaService, 
-    private branchesService: BranchesService) {}
+    @Inject(forwardRef(() => BranchesService))
+    private readonly branchesService: BranchesService,
+  ) {}
 
 
   // Crear todos los dias de la semana para una sucursal
@@ -19,8 +21,8 @@ export class BranchSchedulesService {
     const days = Array.from({ length: 7 }, (_, i) =>  ({ // Dias de la semana del 0 al 6
       id_branch: id_branch,
       day_of_week: i,
-      open_time: '09:00',
-      close_time: '21:00',
+      open_time: new Date(`1970-01-01T09:00:00Z`),
+      close_time: new Date(`1970-01-01T21:00:00Z`),
     }));
 
     return this.prisma.branch_schedules.createMany({ data: days });
@@ -39,35 +41,50 @@ export class BranchSchedulesService {
   // Actualizar un dia especifico
   async update (id_branch: number, dto: UpdateBranchScheduleDto) {
     const day = await this.validateDay(id_branch, dto.day_of_week);
-    
+    const data : any = {}
+
     if (!day.is_open) {
       throw new Error(
         `El día ${dto.day_of_week} está desactivado. No se puede actualizar.`,
       );
     }
 
+    // Si viene open_time en el body
+    if (dto.open_time) {
+      const [h, m] = dto.open_time.split(':').map(String);
+      //console.log(h, m);
+      data.open_time = new Date(`1970-01-01T${h}:${m}:00Z`);
+      //console.log(data.open_time);
+    }
+
+    // Si viene close_time en el body
+    if (dto.close_time) {
+      const [h, m] = dto.close_time.split(':').map(String);
+      data.close_time = new Date(`1970-01-01T${h}:${m}:00Z`);
+    }
+
     return this.prisma.branch_schedules.updateMany({
-      where: { id_branch: id_branch, day_of_week: dto.day_of_week },
-      data: {
-        open_time: dto.open_time,
-        close_time: dto.close_time,
+      where: {
+        id_branch,
+        day_of_week: dto.day_of_week,
       },
+      data,
     });
   }
   
 
   // Eliminar un día (Desactivar)
-  async deactivate(branchId: number, day: number) {
+  async deactivate(id_branch: number, day: number) {
     return this.prisma.branch_schedules.updateMany({
-      where: { id_branch: branchId, day_of_week: day },
+      where: { id_branch: id_branch, day_of_week: day },
       data: { is_open: false },
     });
   } 
 
   // Reactivar un día 
-  async activate(branchId: number, day: number) {
+  async activate(id_branch: number, day: number) {
     return this.prisma.branch_schedules.updateMany({
-      where: { id_branch: branchId, day_of_week: day },
+      where: { id_branch: id_branch, day_of_week: day },
       data: { is_open: true },
     });
   }

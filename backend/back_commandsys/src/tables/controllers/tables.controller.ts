@@ -1,34 +1,68 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { TablesService } from '../tables.service';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { TablesService } from '../services/tables.service';
 import { CreateTableDto } from '../dto/create-table.dto';
 import { UpdateTableDto } from '../dto/update-table.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/enums/role.enum';
 
 @Controller('tables')
 export class TablesController {
   constructor(private readonly tablesService: TablesService) {}
 
   @Post()
-  create(@Body() createTableDto: CreateTableDto) {
-    return this.tablesService.create(createTableDto);
+  @Roles(Role.Gerente)
+  async create(
+    @CurrentUser() user: any,
+    @Body() createTableDto: CreateTableDto) {
+      return this.tablesService.create(user.id_branch, createTableDto);
   }
 
   @Get()
-  findAll() {
-    return this.tablesService.findAll();
+  @Roles(Role.Gerente, Role.Mesero)
+  async findAll(
+    @CurrentUser() user: any,
+    @Query('isActive') isActive: string,
+  ) {
+    const filter = isActive ? parseInt(isActive, 10) : undefined;
+    return this.tablesService.findAll(user.id_branch, filter);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tablesService.findOne(+id);
+  @Roles(Role.Gerente, Role.Mesero)
+  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    const table = await this.tablesService.findOne(+id);
+    
+    //Verificar que la mesa pertenece a la sucursal del usuario
+    if (table.id_branch !== user.id_branch) {
+      throw new Error('No autorizado para acceder a esta mesa');
+    }
+      
+    return table;
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto) {
+  @Roles(Role.Gerente)
+  async update(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto, @CurrentUser() user: any) {
+    const table = await this.tablesService.findOne(+id); 
+
     return this.tablesService.update(+id, updateTableDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tablesService.remove(+id);
+  @Patch(':id/deactivate')
+  @Roles(Role.Gerente)
+  async deactivate(@Param('id') id: string, @CurrentUser() user: any) {
+    const table = await this.tablesService.findOne(+id);
+
+    return this.tablesService.deactivate(+id);
   }
+
+  @Patch(':id/activate')
+  @Roles(Role.Gerente)
+  async activate(@Param('id') id: string, @CurrentUser() user: any) {
+    const table = await this.tablesService.findOne(+id);
+
+    return this.tablesService.activate(+id);
+  }
+
 }

@@ -20,6 +20,12 @@ export class AuthService {
             throw new UnauthorizedException('Usuario inactivo o no encontrado');
         }
 
+        if (user.id_branch === null) {
+            
+        } else {
+            await this.validateTimeOff(user.id_branch);
+        }
+        
         // Verificar contraseña con bcrypt
         const passwordValid = await bcrypt.compare(pass, user.password);
 
@@ -67,7 +73,8 @@ export class AuthService {
         }
 
         const now = new Date();
-        const currentDay = now.getDay(); // 0 (Domingo) a 6 (Sábado)
+        // Se resta 1 porque lo tenemos de 0-6 y aqui se regresa de 1-7
+        const currentDay = now.getDay() - 1 ; // 0 (Domingo) a 6 (Sábado)
         const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
 
         const schedule = branch.branch_schedules.find(s => s.day_of_week === currentDay && s.is_open);
@@ -75,16 +82,32 @@ export class AuthService {
             throw new ForbiddenException('Sucursal cerrada hoy');
         }
 
-        // Convertir open_time y close_time a formato "HH:MM"
-        const openTimeStr = typeof schedule.open_time === 'string'
-            ? schedule.open_time
-            : schedule.open_time.toTimeString().slice(0, 5);
-        const closeTimeStr = typeof schedule.close_time === 'string'
-            ? schedule.close_time
-            : schedule.close_time.toTimeString().slice(0, 5);
+        console.log(schedule);
+        // Normalizar hora a formato "HH:MM" sin ajustar zona horaria
+        const normalizeTime = (value: any): string => {
+            if (!value) return '00:00';
+
+            // Si viene como Date (Prisma lo hace así para TIME)
+            if (value instanceof Date) {
+                // Forzamos a hora local “plana”, sin offset
+                const utcHours = value.getUTCHours().toString().padStart(2, '0');
+                const utcMinutes = value.getUTCMinutes().toString().padStart(2, '0');
+                return `${utcHours}:${utcMinutes}`;
+            }
+
+            // Si viene como string ("09:00:00" o "09:00")
+            if (typeof value === 'string') {
+                return value.slice(0, 5);
+            }
+            return '00:00';
+        };
+
+        const openTimeStr = normalizeTime(schedule.open_time);
+        const closeTimeStr = normalizeTime(schedule.close_time);
 
         if (currentTime < openTimeStr || currentTime > closeTimeStr) {
             throw new ForbiddenException('Sucursal cerrada en este momento');
         }
+
     }
 }

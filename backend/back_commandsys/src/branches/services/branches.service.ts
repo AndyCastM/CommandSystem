@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { UpdateBranchDto } from '../dto/update-branch.dto';
@@ -8,7 +8,8 @@ import { BranchSchedulesService } from 'src/branch_schedules/services/branch_sch
 export class BranchesService {
   constructor(
     private prisma: PrismaService,
-    private branchSchedulesService: BranchSchedulesService, // 👈 para crear los horarios default
+    @Inject(forwardRef(() => BranchSchedulesService))
+    private readonly branchSchedulesService: BranchSchedulesService,
   ) {}
 
   async create(id_company: number, dto: CreateBranchDto) {
@@ -63,6 +64,15 @@ export class BranchesService {
     return this.prisma.branches.update({
       where: { id_branch: id },
       data: { is_active: 0 },
+    });
+  }
+
+  async activate(id: number, id_company: number) {
+    await this.validateBranchInCompany(id, id_company);
+
+    return this.prisma.branches.update({
+      where: { id_branch: id },
+      data: { is_active: 1 },
     });
   }
 

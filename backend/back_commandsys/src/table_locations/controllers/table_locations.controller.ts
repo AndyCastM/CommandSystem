@@ -2,28 +2,29 @@ import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestj
 import { TableLocationsService } from '../services/table_locations.service';
 import { CreateTableLocationDto } from '../dto/create-table_location.dto';
 import { UpdateTableLocationDto } from '../dto/update-table_location.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
-@Controller('branches/:branchId/locations')
+@Controller('branches/locations')
 export class TableLocationsController {
   constructor(private readonly service: TableLocationsService) {}
 
   // Crear una nueva location
   @Post()
   async create(
-    @Param('branchId') branchId: string,
-    @Body() dto: CreateTableLocationDto,
+    @CurrentUser() user : any,
+    @Body() createTableLocationDto: CreateTableLocationDto,
   ) {
-    return this.service.create({ ...dto, id_branch: +branchId });
+    return this.service.create(user.id_branch, createTableLocationDto );
   }
 
   // Listar locations de una sucursal
   @Get()
   async findAll(
-    @Param('branchId') branchId: string,
+    @CurrentUser() user : any,
     @Query('is_active') isActive?: string,
   ) {
     const filter = isActive ? parseInt(isActive, 10) : undefined;
-    return this.service.findAll(+branchId, filter);
+    return this.service.findAll(+user.id_branch, filter);
   }
 
   // Buscar una location por id
@@ -36,9 +37,9 @@ export class TableLocationsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() dto: UpdateTableLocationDto,
+    @Body() updateTableLocationDto: UpdateTableLocationDto,
   ) {
-    return this.service.update(+id, dto);
+    return this.service.update(+id, updateTableLocationDto);
   }
 
   // Soft delete → desactivar location (y sus mesas en cascada)

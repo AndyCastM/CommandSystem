@@ -7,7 +7,7 @@ import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
-@Controller('branches/:id_branch/schedules')
+@Controller('branches/schedules')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BranchSchedulesController {
   constructor(private readonly branchSchedulesService: BranchSchedulesService) {}
@@ -27,40 +27,39 @@ export class BranchSchedulesController {
   @Get()
   @Roles(Role.Admin, Role.Gerente)
   async getAll(
-    @Param('id_branch') id_branch: string,
     @CurrentUser() user: any,
   ) {
-    return this.branchSchedulesService.getSchedulesByBranch(+id_branch, user.id_company);
+    return this.branchSchedulesService.getSchedulesByBranch(+user.id_branch, user.id_company);
   }
 
   // Actualizar un dia especifico
-  @Patch()
+  @Patch('update')
   @Roles(Role.Gerente)
   async update(
-    @Param('id_branch') id_branch: string,
+    @CurrentUser() user: any,
     @Body() dto: UpdateBranchScheduleDto,
   ) {
-    return this.branchSchedulesService.update(+id_branch, dto);
+    return this.branchSchedulesService.update(+user.id_branch, dto);
   }
 
   // Desactivar un dia
   @Patch(':day/deactivate')
   @Roles(Role.Gerente)
   async deactivate(
-    @Param('id_branch') id_branch: string,
-    @Param('day') day: string,
+    @Param('day') day: number,
+    @CurrentUser() user: any,
   ) {
-    return this.branchSchedulesService.deactivate(+id_branch, +day);
+    return this.branchSchedulesService.deactivate(+user.id_branch, +day);
   }
 
   // Reactivar un dia
   @Patch(':day/activate')
   @Roles(Role.Gerente)
   async activate(
-    @Param('id_branch') id_branch: string,
+    @CurrentUser() user: any,
     @Param('day') day: string,
   ) {
-    return this.branchSchedulesService.activate(+id_branch, +day);
+    return this.branchSchedulesService.activate(+user.id_branch, +day);
   }
 
 }

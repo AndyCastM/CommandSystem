@@ -7,10 +7,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class TableLocationsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createTableLocationDto: CreateTableLocationDto) {
+  async create(id_branch: number, createTableLocationDto: CreateTableLocationDto) {
     const exists = await this.validateNameInBranch(
       createTableLocationDto.name,
-      createTableLocationDto.id_branch,
+      id_branch,
     );
 
     if (exists) {
@@ -20,7 +20,10 @@ export class TableLocationsService {
     }
 
     return this.prisma.table_locations.create({
-      data: createTableLocationDto,
+      data: {
+        ...createTableLocationDto,
+        id_branch
+      }
     });
   }
 
