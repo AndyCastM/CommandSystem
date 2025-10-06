@@ -114,10 +114,10 @@ export class CompanyProductsService {
       data: { is_active },
     });
 
-    return {
-      message: `Producto ${is_active ? 'activado' : 'desactivado'} correctamente.`,
-      data: updated,
-    };
+    return formatResponse(
+      `Producto ${is_active ? 'activado' : 'desactivado'} correctamente.`,
+      updated,
+    );
   }
 
   async toggleCompanyProduct(id_company: number, id_company_product: number, is_active: number){
@@ -134,10 +134,10 @@ export class CompanyProductsService {
       data: { is_active : is_active},
     });
 
-    return {
-      message: `Producto ${is_active === 1 ? 'activado' : 'desactivado'} correctamente.`,
-      data: updated,
-    };
+    return formatResponse(
+      `Producto ${is_active === 1 ? 'activado' : 'desactivado'} correctamente.`,
+      updated,
+    );
   }
   async updateProduct(id_company_product: number, dto: CreateCompanyProductDto, id_company: number) {
 
@@ -213,10 +213,10 @@ export class CompanyProductsService {
         }
       }
 
-      return {
-        message: `Producto "${updated.name}" actualizado correctamente.`,
-        data: updated,
-      };
+      return formatResponse(
+        `Producto "${updated.name}" actualizado correctamente.`,
+        updated,
+      );
   });
 }
 
