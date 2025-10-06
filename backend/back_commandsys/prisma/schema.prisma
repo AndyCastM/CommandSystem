@@ -234,12 +234,12 @@ model companies {
 }
 
 model company_products {
-  id_company_product Int                @id
+  id_company_product Int                @id @default(autoincrement())
   id_company         Int
   id_area            Int
   id_category        Int
   name               String             @db.VarChar(45)
-  description        String             @db.VarChar(100)
+  description        String?            @db.VarChar(100)
   base_price         Decimal            @db.Decimal(10, 2)
   image_url          String?            @db.VarChar(255)
   is_active          Int?               @default(1) @db.TinyInt
@@ -333,8 +333,10 @@ model product_options {
   name                  String                  @db.VarChar(45)
   is_required           Int                     @default(0) @db.TinyInt
   multi_select          Int                     @default(0) @db.TinyInt
+  max_selection         Int                     @default(1)
   created_at            DateTime                @default(now()) @db.Timestamp(0)
   updated_at            DateTime?               @default(now()) @db.Timestamp(0)
+  product_option_tiers  product_option_tiers[]
   product_option_values product_option_values[]
   company_products      company_products        @relation(fields: [id_company_product], references: [id_company_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_companyprod_options")
 
@@ -353,6 +355,16 @@ model user_tokens {
   users        users     @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "user_tokens_ibfk_1")
 
   @@index([id_user], map: "idx_user_tokens_user")
+}
+
+model product_option_tiers {
+  id_tier         Int             @id @default(autoincrement())
+  id_option       Int
+  selection_count Int
+  extra_price     Decimal         @default(0.00) @db.Decimal(10, 2)
+  product_options product_options @relation(fields: [id_option], references: [id_option], onDelete: NoAction, onUpdate: NoAction, map: "fk_tier_productoption")
+
+  @@index([id_option], map: "fk_tier_productoption_idx")
 }
 
 enum table_sessions_status {

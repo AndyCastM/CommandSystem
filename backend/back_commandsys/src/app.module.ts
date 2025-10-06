@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
-import { ProductsModule } from './products/products.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
@@ -14,6 +13,9 @@ import { CompaniesModule } from './companies/companies.module';
 import { BranchSchedulesModule } from './branch_schedules/branch_schedules.module';
 import { TableLocationsModule } from './table_locations/table_locations.module';
 import { TableSessionsModule } from './table_sessions/table_sessions.module';
+import { ProductCategoriesModule } from './product_categories/product_categories.module';
+import { PrintAreasModule } from './print_areas/print_areas.module';
+import { CompanyProductsModule } from './company_products/company_products.module';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { TableSessionsModule } from './table_sessions/table_sessions.module';
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, ProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule],
+    PrismaModule, CompanyProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule, ProductCategoriesModule, PrintAreasModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,
