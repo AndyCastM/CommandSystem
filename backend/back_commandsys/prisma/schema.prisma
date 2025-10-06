@@ -258,7 +258,7 @@ model company_products {
 }
 
 model product_categories {
-  id_category      Int                @id
+  id_category      Int                @id @default(autoincrement())
   id_company       Int
   name             String             @db.VarChar(25)
   is_active        Int                @default(1) @db.TinyInt

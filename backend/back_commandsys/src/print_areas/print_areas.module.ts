@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrintAreasService } from './print_areas.service';
-import { PrintAreasController } from './print_areas.controller';
+import { PrintAreasController } from './controllers/print_areas.controller';
 
 @Module({
   controllers: [PrintAreasController],

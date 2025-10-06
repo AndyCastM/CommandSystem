@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { PrintAreasService } from './print_areas.service';
-import { CreatePrintAreaDto } from './dto/create-print_area.dto';
-import { UpdatePrintAreaDto } from './dto/update-print_area.dto';
+import { PrintAreasService } from '../print_areas.service';
+import { CreatePrintAreaDto } from '../dto/create-print_area.dto';
+import { UpdatePrintAreaDto } from '../dto/update-print_area.dto';
 
 @Controller('print-areas')
 export class PrintAreasController {

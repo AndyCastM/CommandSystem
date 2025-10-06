@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrintAreasController } from './print_areas.controller';
-import { PrintAreasService } from './print_areas.service';
+import { PrintAreasService } from '../services/print_areas.service';
 
 describe('PrintAreasController', () => {
   let controller: PrintAreasController;
