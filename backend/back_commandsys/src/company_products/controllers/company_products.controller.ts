@@ -31,13 +31,26 @@ export class CompanyProductsController {
   }
 
   // ESTO ES PARA EL GERENTE DE LA SUCURSAL, ASI QUE NO DEBERIA DE IR AQUI, O BUENO A LO MEJOR SI
-  @Patch('branch/:id_company_product/toggle')
+  @Patch('branch/:id_branch_product/toggle')
   @Roles(Role.Gerente)
-  toggle(
-    @Param('id_company_product', ParseIntPipe) id_company_product: number,
+  toggleBranchProduct(
+    @Param('id_branch_product', ParseIntPipe) id_branch_product: number,
     @Body('is_active') is_active: boolean,
     @CurrentUser() user: any
   ) {
-    return this.companyProductsService.toggleProduct(user.id_branch, id_company_product, is_active);
+    return this.companyProductsService.toggleProduct(user.id_branch, id_branch_product, is_active);
   }
+
+  // ESTO ES PARA EL ADMIN DE LA EMPRESA, ADMINISTRADOR DE TODOS LOS PRODUCTOS
+  @Patch('company/:id_company_product/toggle')
+  @Roles(Role.Admin)
+  toggleCompanyProduct(
+    @Param('id_company_product', ParseIntPipe) id_company_product: number,
+    @Body('is_active') is_active: number,
+    @CurrentUser() user: any
+  ) {
+    return this.companyProductsService.toggleCompanyProduct(user.id_company, id_company_product, is_active);
+  }
+
+
 }

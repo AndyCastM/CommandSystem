@@ -100,9 +100,9 @@ export class CompanyProductsService {
    * Activar/desactivar un producto en sucursal.
    */
 
-  async toggleProduct(id_branch: number, id_company_product: number, is_active: boolean){
+  async toggleProduct(id_branch: number, id_branch_product: number, is_active: boolean){
     const branchProduct = await this.prisma.branch_products.findFirst({
-      where: { id_branch, id_company_product },
+      where: { id_branch, id_branch_product },
     });
 
     if (!branchProduct) {
@@ -120,6 +120,25 @@ export class CompanyProductsService {
     };
   }
 
+  async toggleCompanyProduct(id_company: number, id_company_product: number, is_active: number){
+    const companyProduct = await this.prisma.company_products.findFirst({
+      where: { id_company, id_company_product },
+    });
+
+    if (!companyProduct) {
+      throw new NotFoundException('Producto no encontrado en esta empresa.');
+    }
+
+    const updated = await this.prisma.company_products.update({
+      where: { id_company_product: companyProduct.id_company_product },
+      data: { is_active : is_active},
+    });
+
+    return {
+      message: `Producto ${is_active === 1 ? 'activado' : 'desactivado'} correctamente.`,
+      data: updated,
+    };
+  }
   async updateProduct(id_company_product: number, dto: CreateCompanyProductDto, id_company: number) {
 
     // Validaciones básicas
