@@ -4,12 +4,13 @@ import { UpdateCompanyDto } from '../dto/update-company.dto';
 import { CompanyResponseDto } from '../dto/company-response.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { encrypt } from "src/libs/bcrypt";
+import { PrintAreasService } from 'src/print_areas/services/print_areas.service';
 
 @Injectable()
 export class CompaniesService {
 
-  constructor(private prisma: PrismaService) {}
-
+  constructor(private prisma: PrismaService, private printArea: PrintAreasService) {}
+  
   async create(dto: CreateCompanyDto): Promise<CompanyResponseDto> {
     
     //Validar duplicados
@@ -70,8 +71,11 @@ export class CompaniesService {
         include: { roles: true },
       });
 
+      await this.printArea.createDefaultAreas(company.id_company);
+      
       return { company, adminUser };
     });
+
 
     return {
       id_company: result.company.id_company,

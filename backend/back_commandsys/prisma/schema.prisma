@@ -229,6 +229,7 @@ model companies {
   branches           branches[]
   combos             combos[]
   company_products   company_products[]
+  print_areas        print_areas[]
   product_categories product_categories[]
   users              users[]
 }
@@ -307,10 +308,14 @@ model order_item_options {
 
 model print_areas {
   id_area               Int                     @id @default(autoincrement())
+  id_company            Int
   name                  String                  @db.VarChar(20)
   is_active             Int                     @default(1) @db.TinyInt
   branch_print_stations branch_print_stations[]
   company_products      company_products[]
+  companies             companies               @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_printareas")
+
+  @@index([id_company], map: "fk_company_printareas_idx")
 }
 
 model product_option_values {
