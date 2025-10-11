@@ -70,12 +70,11 @@ export class CompaniesService {
         },
         include: { roles: true },
       });
-
-      await this.printArea.createDefaultAreas(company.id_company);
       
       return { company, adminUser };
     });
 
+    await this.printArea.createDefaultAreas(result.company.id_company);
 
     return {
       id_company: result.company.id_company,

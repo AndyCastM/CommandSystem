@@ -7,8 +7,8 @@ import { formatResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class CompanyProductsService {
-  private validators: CompanyProductsValidators;
-  constructor (private prisma: PrismaService){}
+  
+  constructor (private prisma: PrismaService, private validators: CompanyProductsValidators){}
 
    /**
    * Crea un producto de empresa con opciones/valores/tiers y lo replica a TODAS las sucursales de esa empresa.
@@ -219,5 +219,57 @@ export class CompanyProductsService {
       );
   });
 }
+
+/**
+ * Cuando se crea una nueva sucursal, clona todos los productos de su empresa
+ * en la tabla branch_products, manteniendo la relación con company_products.
+ */
+async syncProductsToBranch(id_company: number, id_branch: number) {
+  // Verificar que la empresa exista
+  await this.validators.validateCompanyExists(id_company);
+  // Verificar que la sucursal pertenezca a la empresa
+  await this.validators.validateBranchInCompany(id_branch, id_company);
+
+  // Obtener todos los productos de la empresa
+  const companyProducts = await this.validators.validateCompanyHasProducts(id_company);
+
+  if (companyProducts.length === 0) {
+    return formatResponse('No hay productos en la empresa para replicar.', []);
+  }
+
+  // Verificar qué productos ya existen en la sucursal
+  const existing = await this.prisma.branch_products.findMany({
+    where: {
+      id_branch,
+      id_company_product: { in: companyProducts.map(p => p.id_company_product) },
+    },
+    select: { id_company_product: true },
+  });
+
+  const existingIds = new Set(existing.map(e => e.id_company_product));
+
+  // Filtrar solo los productos que aún no existen
+  const toCreate = companyProducts.filter(
+    p => !existingIds.has(p.id_company_product)
+  );
+
+  if (toCreate.length === 0) {
+    return formatResponse('La sucursal ya tiene todos los productos sincronizados.', []);
+  }
+
+  // Crear los registros en branch_products
+  await this.prisma.branch_products.createMany({
+    data: toCreate.map(p => ({
+      id_branch,
+      id_company_product: p.id_company_product,
+    })),
+  });
+
+  return formatResponse(
+    `Se sincronizaron ${toCreate.length} producto(s) de la empresa con la sucursal.`,
+    toCreate,
+  );
+}
+
 
 }

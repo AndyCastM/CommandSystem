@@ -1,6 +1,7 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+@Injectable()
 export class CompanyProductsValidators {
   constructor(private prisma: PrismaService) {}
 
@@ -43,5 +44,27 @@ export class CompanyProductsValidators {
         `Ya existe un producto llamado "${name}" en esta categoría.`
       );
     }
+  }
+  
+  // Verificar que la sucursal pertenezca a la empresa
+  async validateBranchInCompany(id_branch: number, id_company: number) {
+    const branch = await this.prisma.branches.findFirst({
+      where: { id_branch, id_company },
+    });
+    if (!branch) {
+      throw new BadRequestException(
+        'La sucursal no pertenece a la empresa especificada.'
+      );
+    }
+  }
+
+  // Verificar que existan productos en la empresa
+  async validateCompanyHasProducts(id_company: number) {
+    const companyProducts = await this.prisma.company_products.findMany({
+        where: { id_company },
+        select: { id_company_product: true },
+      });
+    
+    return companyProducts;
   }
 }

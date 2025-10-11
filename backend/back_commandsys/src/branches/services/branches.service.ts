@@ -4,6 +4,7 @@ import { CreateBranchDto } from '../dto/create-branch.dto';
 import { UpdateBranchDto } from '../dto/update-branch.dto';
 import { BranchSchedulesService } from 'src/branch_schedules/services/branch_schedules.service';
 import { formatResponse } from 'src/common/helpers/response.helper';
+import { CompanyProductsService } from 'src/company_products/services/company_products.service';
 
 @Injectable()
 export class BranchesService {
@@ -11,6 +12,7 @@ export class BranchesService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => BranchSchedulesService))
     private readonly branchSchedulesService: BranchSchedulesService,
+    private companyProductsService: CompanyProductsService,
   ) {}
 
   async create(id_company: number, dto: CreateBranchDto) {
@@ -25,7 +27,7 @@ export class BranchesService {
 
     // Crear los 7 días default de horarios
     await this.branchSchedulesService.createDefaultWeek(branch.id_branch, branch.id_company);
-
+    await this.companyProductsService.syncProductsToBranch(branch.id_company, branch.id_branch);
     return formatResponse(
       `Sucursal ${branch.name} creada correctamente.`,
       branch,
