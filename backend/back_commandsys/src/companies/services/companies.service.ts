@@ -111,16 +111,12 @@ export class CompaniesService {
   async update(id:number, dto: UpdateCompanyDto){
     let data = { ...dto };
 
-    const company = this.prisma.companies.update({
+    const company = await this.prisma.companies.update({
       where: { id_company: id },
       data,
     });
     return {
-      message: 'Actualización exitosa',    
+      message: 'Actualización exitosa',  
     };
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} company`;
   }
 }

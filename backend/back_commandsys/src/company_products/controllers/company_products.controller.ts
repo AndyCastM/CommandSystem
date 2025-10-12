@@ -24,10 +24,10 @@ export class CompanyProductsController {
   @Roles(Role.Admin)
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: CreateCompanyProductDto,
+    @Body() dto: UpdateCompanyProductDto,
     @CurrentUser() user: any
   ){
-    return this.companyProductsService.updateProduct(id, dto, user.id_company);
+    return this.companyProductsService.updateProduct(+id, dto, user.id_company);
   }
 
   // ESTO ES PARA EL GERENTE DE LA SUCURSAL, ASI QUE NO DEBERIA DE IR AQUI, O BUENO A LO MEJOR SI
@@ -51,6 +51,5 @@ export class CompanyProductsController {
   ) {
     return this.companyProductsService.toggleCompanyProduct(user.id_company, id_company_product, is_active);
   }
-
 
 }

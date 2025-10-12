@@ -9,6 +9,14 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 export class ProductCategoriesController {
   constructor(private readonly productCategoriesService: ProductCategoriesService) {}
 
+  @Get()
+  @Roles(Role.Admin, Role.Mesero)
+  findAll(
+    @CurrentUser() user: any,
+  ) {
+    return this.productCategoriesService.findAll(user.id_company, 1);
+  }
+  
   @Post()
   @Roles(Role.Admin)
   create(
@@ -20,12 +28,14 @@ export class ProductCategoriesController {
 
   // Soft delete → desactivar categoria (y sus productos en cascada)
   @Delete(':id')
+  @Roles(Role.Admin)
   async deactivate(@Param('id') id: number) {
     return this.productCategoriesService.activate(+id, 0);
   }
 
   // Reactivar categoria (y sus productos en cascada)
   @Patch(':id/activate')
+  @Roles(Role.Admin)
   async activate(@Param('id') id: number) {
     return this.productCategoriesService.activate(+id, 1);
   }

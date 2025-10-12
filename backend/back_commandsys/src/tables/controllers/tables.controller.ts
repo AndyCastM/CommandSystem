@@ -22,9 +22,9 @@ export class TablesController {
   @Roles(Role.Gerente, Role.Mesero)
   async findAll(
     @CurrentUser() user: any,
-    @Query('isActive') isActive: string,
+    @Query('is_active') is_active: string,
   ) {
-    const filter = isActive ? parseInt(isActive, 10) : undefined;
+    const filter = is_active ? parseInt(is_active, 10) : undefined;
     return this.tablesService.findAll(user.id_branch, filter);
   }
 

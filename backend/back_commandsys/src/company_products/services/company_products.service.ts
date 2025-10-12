@@ -134,12 +134,19 @@ export class CompanyProductsService {
       data: { is_active : is_active},
     });
 
+    const active = is_active === 1 ? true : false;
+    // Propagar cambio a todas las sucursales
+    await this.prisma.branch_products.updateMany({
+      where: { id_company_product },
+      data: { is_active: active },
+    });
+    
     return formatResponse(
       `Producto ${is_active === 1 ? 'activado' : 'desactivado'} correctamente.`,
       updated,
     );
   }
-  async updateProduct(id_company_product: number, dto: CreateCompanyProductDto, id_company: number) {
+  async updateProduct(id_company_product: number, dto: UpdateCompanyProductDto, id_company: number) {
 
     // Validaciones básicas
     await this.validators.validateCompanyExists(id_company);
@@ -158,6 +165,9 @@ export class CompanyProductsService {
       (dto.name.trim() !== existingProduct.name ||
         dto.id_category !== existingProduct.id_category)
     ) {
+      if (dto.id_category === undefined) {
+        throw new BadRequestException('La categoría del producto es requerida para validar duplicados.');
+      }
       await this.validators.validateDuplicateProduct(
         dto.name,
         dto.id_category,

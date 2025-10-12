@@ -31,8 +31,9 @@ export class CompaniesController {
   }
 
   @Patch(':id')
+  @Roles(Role.Superadmin, Role.Admin)
   update(@Param('id') id: number, @Body() dto: UpdateCompanyDto) {
-    return this.companiesService.update(id, dto);
+    return this.companiesService.update(+id, dto);
   }
 
 }

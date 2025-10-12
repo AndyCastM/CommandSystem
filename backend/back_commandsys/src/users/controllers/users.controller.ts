@@ -43,18 +43,18 @@ export class UsersController {
     @Patch(':id')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
     update(@Param('id') id: number, @Body()dto: UpdateUserDto){
-        return this.usersService.updateUser(id, dto);
+        return this.usersService.updateUser(+id, dto);
     }
 
     @Delete(':id')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
     deactivate(@Param('id') id: number){
-        return this.usersService.deactivateUser(id);
+        return this.usersService.deactivateUser(+id);
     }
 
     @Patch(':id/activate')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
     activate(@Param('id') id: number){
-        return this.usersService.activateUser(id);
+        return this.usersService.activateUser(+id);
     }
 }
