@@ -73,6 +73,15 @@ export class BranchesController {
     return this.branchesService.activate(+id, user.id_company);
   }
 
+  @Get(':id_branch/menu')
+  @Roles(Role.Gerente, Role.Mesero)
+  async getBranchMenu(
+    @Param('id_branch') id_branch: string,
+    @CurrentUser() user: any, 
+  ) {
+    return this.branchesService.getBranchMenu(+user.id_company, +id_branch);
+  }
+
 }
 
 

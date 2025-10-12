@@ -11,6 +11,12 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 export class CompanyProductsController {
   constructor(private readonly companyProductsService: CompanyProductsService) {}
 
+  @Get(':id')
+  @Roles(Role.Admin, Role.Gerente, Role.Mesero)
+  async getProductDetail(@Param('id') id_company_product: string) {
+    return this.companyProductsService.getProductDetail(+id_company_product);
+  }
+
   @Post()
   @Roles(Role.Admin)
   create(

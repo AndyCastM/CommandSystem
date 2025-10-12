@@ -281,5 +281,59 @@ async syncProductsToBranch(id_company: number, id_branch: number) {
   );
 }
 
+async getProductDetail(id_company_product: number) {
+  const product = await this.prisma.company_products.findUnique({
+    where: { id_company_product },
+    include: {
+      product_categories: true,
+      product_options: {
+        include: {
+          product_option_values: true,
+          product_option_tiers: true,
+        },
+      },
+      print_areas: true,
+    },
+  });
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado.');
+  }
+
+  // Formateo del producto para el panel admin
+  const formatted = {
+    id_company_product: product.id_company_product,
+    id_category: product.id_category,
+    id_area: product.id_area,
+    name: product.name,
+    description: product.description,
+    base_price: Number(product.base_price),
+    image_url: product.image_url,
+    is_active: product.is_active,
+    category_name: product.product_categories?.name,
+    area_name: product.print_areas?.name,
+    options: product.product_options.map(o => ({
+      id_option: o.id_option,
+      name: o.name,
+      is_required: o.is_required === 1,
+      multi_select: o.multi_select === 1,
+      max_selection: o.max_selection,
+      values: o.product_option_values.map(v => ({
+        id_value: v.id_option_value,
+        name: v.name,
+        extra_price: Number(v.extra_price),
+        is_active: v.is_active,
+      })),
+      tiers: o.product_option_tiers.map(t => ({
+        id_tier: t.id_tier,
+        selection_count: t.selection_count,
+        extra_price: Number(t.extra_price),
+      })),
+    })),
+  };
+
+  return formatResponse(`Detalle del producto ${product.name}`, formatted);
+}
+
 
 }

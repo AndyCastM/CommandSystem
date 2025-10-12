@@ -136,4 +136,76 @@ export class BranchesService {
     return true;
   }
 
+  async getBranchMenu(id_company: number, id_branch: number) {
+    // Obtener productos activos en la sucursal
+    const products = await this.prisma.branch_products.findMany({
+      where: {
+        id_branch,
+        is_active: true,
+        company_products: {
+          id_company
+        },
+      },
+      include: {
+        company_products: {
+          include: {
+            product_categories: true, 
+            product_options: {
+              include: {
+                product_option_values: true,
+                product_option_tiers: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log(products.length);
+
+    // Agrupar productos por categoría
+    const grouped = products.reduce((acc, p) => {
+      
+      const prod = p.company_products;
+      const cat = p.company_products.product_categories.name;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push({
+        id: p.company_products.id_company_product,
+        name: p.company_products.name,
+        price: p.company_products.base_price,
+        image: p.company_products.image_url,
+        description: p.company_products.description,
+        
+        options: prod.product_options.map(opt => ({
+        id_option: opt.id_option,
+        name: opt.name,
+        is_required: opt.is_required === 1,
+        multi_select: opt.multi_select === 1,
+        max_selection: opt.max_selection,
+        values: opt.product_option_values.map(val => ({
+          id_value: val.id_option_value,
+          name: val.name,
+          extra_price: Number(val.extra_price),
+          is_active: val.is_active,
+        })),
+        tiers: opt.product_option_tiers.map(tier => ({
+          id_tier: tier.id_tier,
+          selection_count: tier.selection_count,
+          extra_price: Number(tier.extra_price),
+        })),
+      })),
+      
+      });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // Convertir a formato de menú
+    const menu = Object.entries(grouped).map(([category, products]) => ({
+      category,
+      products,
+    }));
+
+    return formatResponse(`Menú de la sucursal ${id_branch}`, menu);
+  }
+
 }
