@@ -179,7 +179,7 @@ model branch_products {
 }
 
 model combo_items {
-  id_combo_item      Int              @id
+  id_combo_item      Int              @id @default(autoincrement())
   id_combo           Int
   id_company_product Int
   quantity           Int
@@ -191,7 +191,7 @@ model combo_items {
 }
 
 model combos {
-  id_combo    Int           @id
+  id_combo    Int           @id @default(autoincrement())
   id_company  Int
   id_branch   Int?
   name        String        @db.VarChar(45)
@@ -243,7 +243,8 @@ model company_products {
   description        String?            @db.VarChar(100)
   base_price         Decimal            @db.Decimal(10, 2)
   image_url          String?            @db.VarChar(255)
-  is_active          Int?               @default(1) @db.TinyInt
+  preparation_time   Int?
+  is_active          Int                @default(1) @db.TinyInt
   created_at         DateTime?          @default(now()) @db.Timestamp(0)
   updated_at         DateTime?          @default(now()) @db.Timestamp(0)
   branch_products    branch_products[]

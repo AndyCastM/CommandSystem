@@ -25,6 +25,9 @@ export class CreateCompanyProductDto {
     @IsString()
     image_url?: string;
 
+    @IsInt()
+    preparation_time?: number; // en minutos
+
     options?: {
         name: string;
         is_required?: number;

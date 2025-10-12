@@ -16,6 +16,7 @@ import { TableSessionsModule } from './table_sessions/table_sessions.module';
 import { ProductCategoriesModule } from './product_categories/product_categories.module';
 import { PrintAreasModule } from './print_areas/print_areas.module';
 import { CompanyProductsModule } from './company_products/company_products.module';
+import { CombosModule } from './combos/combos.module';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { CompanyProductsModule } from './company_products/company_products.modul
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, CompanyProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule, ProductCategoriesModule, PrintAreasModule],
+    PrismaModule, CompanyProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule, ProductCategoriesModule, PrintAreasModule, CombosModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,
