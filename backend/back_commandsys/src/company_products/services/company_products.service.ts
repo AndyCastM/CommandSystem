@@ -335,5 +335,36 @@ async getProductDetail(id_company_product: number) {
   return formatResponse(`Detalle del producto ${product.name}`, formatted);
 }
 
+async getCompanyProducts(
+  id_company: number,
+  filters: { id_category?: number; id_area?: number; search?: string },
+) {
+  const { id_category, id_area, search } = filters;
+
+  const products = await this.prisma.company_products.findMany({
+    where: {
+      id_company,
+      is_active: 1,
+      ...(id_category ? { id_category } : {}),
+      ...(id_area ? { id_area } : {}),
+      ...(search ? { name: { contains: search } } : {}),
+    },
+    include: {
+      product_categories: true,
+      print_areas: true,
+    },
+    orderBy: { id_category: 'asc' },
+  });
+
+  return formatResponse('Lista de productos', products.map(p => ({
+    id_company_product: p.id_company_product,
+    name: p.name,
+    category: p.product_categories?.name,
+    area: p.print_areas?.name,
+    base_price: Number(p.base_price),
+    is_active: p.is_active,
+    image_url: p.image_url,
+  })));
+}
 
 }

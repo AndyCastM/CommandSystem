@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { CompanyProductsService } from '../services/company_products.service';
 import { CreateCompanyProductDto } from '../dto/create-company_product.dto';
 import { UpdateCompanyProductDto } from '../dto/update-company_product.dto';
@@ -57,5 +57,20 @@ export class CompanyProductsController {
   ) {
     return this.companyProductsService.toggleCompanyProduct(user.id_company, id_company_product, is_active);
   }
+
+  @Get()
+  @Roles(Role.Admin, Role.Gerente, Role.Mesero)
+  async getCompanyProducts(
+    @CurrentUser() user: any,
+    @Query('id_category') id_category?: string,
+    @Query('id_area') id_area?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.companyProductsService.getCompanyProducts(+user.id_company, {
+      id_category: id_category ? +id_category : undefined,
+      id_area: id_area ? +id_area : undefined,
+      search,
+  });
+}
 
 }
