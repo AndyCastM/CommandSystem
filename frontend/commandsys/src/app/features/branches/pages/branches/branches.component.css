@@ -1,0 +1,7 @@
+:host { display:block; }
+.metric-card {
+  @apply bg-white rounded-xl shadow-sm p-4;
+}
+.icon-btn {
+  @apply rounded-md p-2 transition;
+}
