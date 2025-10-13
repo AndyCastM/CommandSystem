@@ -1,15 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { CompanyProductsService } from '../services/company_products.service';
 import { CreateCompanyProductDto } from '../dto/create-company_product.dto';
 import { UpdateCompanyProductDto } from '../dto/update-company_product.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CompanyImagesService } from '../services/company_images.service';
 
 @Controller('company-products')
 export class CompanyProductsController {
-  constructor(private readonly companyProductsService: CompanyProductsService) {}
+  constructor(
+    private readonly companyProductsService: CompanyProductsService,
+    private readonly companyImagesService: CompanyImagesService,
+  ) {}
 
   @Get(':id')
   @Roles(Role.Admin, Role.Gerente, Role.Mesero)
@@ -71,6 +75,16 @@ export class CompanyProductsController {
       id_area: id_area ? +id_area : undefined,
       search,
   });
+}
+
+// Subir imagen con cloudinary y generar descripción con IA
+@Post(':id/upload')
+@UseInterceptors(FileInterceptor('file'))
+async uploadProductImage(
+  @Param('id') id_product: string,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  return this.companyImagesService.uploadProductImage(Number(id_product), file);
 }
 
 }
