@@ -1,13 +1,14 @@
 // src/app/features/auth/services/auth.service.ts
 import { CookieService } from 'ngx-cookie-service';
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
+import { HttpClient , HttpContext} from '@angular/common/http';
+import { tap, catchError, map, of } from 'rxjs';
+import { SKIP_AUTH_REDIRECT } from '../../core/interceptors/auth-error.interceptor';
 
 export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | 'Cocinero' | 'Bartender';
 
 export interface LoginResponse {
-  access_token: string; // lo que te devuelva tu backend
+  access_token: string; 
   user: {
     id_user: number;
     username: string;
@@ -21,24 +22,23 @@ export interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private cookies = inject(CookieService);
-  userSig = signal<any | null>(null);
+  currentUser = signal<any | null>(null);
 
   apiUrl = 'http://localhost:3000/api'; 
 
   login(username: string, password: string) {
     return this.http.post<any>(`${this.apiUrl}/auth/login`, { username, password })
       .pipe(tap((res) => {
-        this.cookies.set('access_token', res.access_token, { path: '/', sameSite: 'Lax' });
         // si quieres persistir usuario (no sensible), puedes guardarlo en otra cookie:
         this.cookies.set('user', JSON.stringify(res.user), { path: '/', sameSite: 'Lax' });
-        this.userSig.set(res.user);
+        this.currentUser.set(res.user);
       }));
   }
 
   logout() {
     this.cookies.delete('access_token', '/');
     this.cookies.delete('user', '/');
-    this.userSig.set(null);
+    this.currentUser.set(null);
   }
 
   get token(): string | null {
@@ -49,7 +49,22 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!this.token;
   }
+
+  ensureSession$() {
+    if (this.currentUser()) return of(this.currentUser());
+    return this.http.get<any>('/api/auth/me', {
+      withCredentials: true,
+      context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
+    }).pipe(
+      tap(u => this.currentUser.set(u)),
+      catchError(() => of(null))
+    );
+  }
+
+  isLoggedIn$() { return this.ensureSession$().pipe(map(Boolean)); }
+
 }
+
 
 // helper para leer el usuario al arrancar
 function readUserCookie(cookies: CookieService): LoginResponse['user'] | null {

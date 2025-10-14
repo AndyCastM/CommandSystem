@@ -1,0 +1,116 @@
+<div class="grid gap-6 grid-cols-1 p-5 md:p-6 bg-white rounded-2xl shadow border">
+  <!-- Header -->
+  <div class="flex flex-col">
+    <div class="flex flex-col sm:flex-row items-center">
+      <h2 class="font-semibold text-lg mr-auto">
+        {{ data.mode === 'create' ? 'Nueva Sucursal' : 'Editar Sucursal' }}
+      </h2>
+      <div class="w-full sm:w-auto sm:ml-auto mt-3 sm:mt-0"></div>
+    </div>
+
+    <!-- Form -->
+    <form class="mt-5" [formGroup]="form" (ngSubmit)="submit()" autocomplete="off" novalidate>
+      <div class="form">
+        <!-- Nombre + Email -->
+        <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
+          <div class="mb-3 space-y-2 w-full">
+            <label class="font-semibold text-gray-600 py-2">Nombre <abbr title="required">*</abbr></label>
+            <input placeholder="Ej. Sucursal Centro"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="name">
+            <p class="text-[11px] text-red-600" *ngIf="showError('name','required')">El nombre es obligatorio.</p>
+            <p class="text-[11px] text-red-600" *ngIf="showError('name','minlength')">Mínimo 2 caracteres.</p>
+            <p class="text-[11px] text-red-600" *ngIf="showError('name','maxlength')">Máximo 80 caracteres.</p>
+          </div>
+
+          <div class="mb-3 space-y-2 w-full">
+            <label class="font-semibold text-gray-600 py-2">Email</label>
+            <input placeholder="correo@empresa.com"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="email" formControlName="email">
+            <p class="text-[11px] text-red-600" *ngIf="showError('email','email')">Correo inválido.</p>
+          </div>
+        </div>
+
+        <!-- Dirección -->
+        <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Calle</label>
+            <input placeholder="Calle y número"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="street">
+          </div>
+
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Colonia</label>
+            <input placeholder="Colonia / Barrio"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="suburb">
+          </div>
+        </div>
+
+        <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Número Exterior</label>
+            <input placeholder="Número exterior"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="num_ext">
+          </div>
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Ciudad</label>
+            <input placeholder="Ciudad"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="city">
+          </div>
+        </div>
+
+        <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Estado</label>
+            <input placeholder="Estado"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="state">
+          </div>
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Código Postal</label>
+            <input placeholder="#####"
+                   maxlength="5"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="zip">
+            <p class="text-[11px] text-red-600" *ngIf="showError('zip','pattern')">CP inválido (5 dígitos).</p>
+          </div>
+        </div>
+
+        <!-- Teléfono + Activa -->
+        <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
+          <div class="w-full flex flex-col mb-3">
+            <label class="font-semibold text-gray-600 py-2">Teléfono</label>
+            <input placeholder="+52 668 123 4567"
+                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   type="text" formControlName="phone">
+            <p class="text-[11px] text-gray-500">10–15 caracteres: números, +, espacios o guiones.</p>
+            <p class="text-[11px] text-red-600" *ngIf="showError('phone','pattern')">Formato de teléfono inválido.</p>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="mt-5 text-right md:space-x-3 md:block flex flex-col-reverse">
+          <button type="button"
+                  class="mb-2 md:mb-0 bg-white px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-gray-700 rounded-full hover:shadow-lg hover:bg-gray-100"
+                  (click)="close()">
+            Cancelar
+          </button>
+
+          <button type="submit"
+                  class="mb-2 md:mb-0 px-5 py-2 text-sm shadow-sm font-medium tracking-wider text-white rounded-full hover:shadow-lg"
+                  [class.bg-gray-400]="form.invalid || saving()"
+                  [class.bg-blue-400]="!(form.invalid || saving())"
+                  [class.hover\:bg-blue7600]="!(form.invalid || saving())"
+                  [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

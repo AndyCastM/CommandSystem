@@ -5,10 +5,11 @@
       <div class="text-sm text-slate-500">Admin / <span class="text-slate-700">Sucursales</span></div>
       <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Sucursales</h1>
     </div>
-    <button mat-raised-button class="!bg-[#16a3bd] hover:!bg-[#117e91] text-white rounded-md"
+    <button type="button"
             (click)="openCreate()">
-      <span class="material-symbols-outlined align-middle mr-1">add</span>
-      Nueva Sucursal
+      <span 
+      class="mb-2 md:mb-0 bg-[#16a3bd] px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-white rounded-full hover:shadow-lg hover:bg-gray-500"
+        >Nueva Sucursal</span>
     </button>
   </div>
 
@@ -17,7 +18,7 @@
     <mat-card class="metric-card border border-slate-200">
       <div class="flex items-center justify-between">
         <div class="font-semibold">Total Sucursales</div>
-        <span class="material-symbols-outlined text-slate-400">table</span>
+        <span class="material-symbols-outlined text-slate-400">corporate_fare</span>
       </div>
       <div class="text-4xl font-bold mt-2">{{ total() }}</div>
     </mat-card>
@@ -25,7 +26,7 @@
     <mat-card class="metric-card border-l-4 border-green-500 border border-slate-200">
       <div class="flex items-center justify-between">
         <div class="font-semibold text-green-600">Activas</div>
-        <span class="material-symbols-outlined text-green-500">table</span>
+        <span class="material-symbols-outlined text-green-500">corporate_fare</span>
       </div>
       <div class="text-4xl font-bold mt-2 text-green-700">{{ activas() }}</div>
     </mat-card>
@@ -33,21 +34,27 @@
     <mat-card class="metric-card border-l-4 border-red-500 border border-slate-200">
       <div class="flex items-center justify-between">
         <div class="font-semibold text-red-600">Inactivas</div>
-        <span class="material-symbols-outlined text-red-500">table</span>
+        <span class="material-symbols-outlined text-red-500">corporate_fare</span>
       </div>
       <div class="text-4xl font-bold mt-2 text-red-700">{{ inactivas() }}</div>
     </mat-card>
   </div>
 
-  <!-- filtro -->
+  <!-- Filtro -->
   <div class="mb-4">
-    <mat-select class="w-64 bg-white border border-slate-200 rounded-md px-2"
-                [value]="estado()" (valueChange)="estado.set($event)">
-      <mat-option value="all">Estado</mat-option>
-      <mat-option value="active">Activas</mat-option>
-      <mat-option value="inactive">Inactivas</mat-option>
-    </mat-select>
+    <mat-form-field  class="w-64">
+      <mat-select
+        [value]="estado()"
+        (valueChange)="estado.set($event)"
+        [panelClass]="'filter-panel'"
+      >
+        <mat-option value="all" disabled="true">Estado</mat-option>
+        <mat-option value="active">Activas</mat-option>
+        <mat-option value="inactive">Inactivas</mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
+
 
   <!-- lista -->
   <div class="space-y-4">
@@ -89,14 +96,16 @@
         <!-- acciones -->
         <div class="flex items-start gap-3">
           <button class="icon-btn text-slate-500 hover:text-slate-700"
-                  [attr.aria-label]="b.is_active ? 'Desactivar' : 'Activar'"
-                  (click)="toggleActive(b)">
-            <span class="material-symbols-outlined"
-                  [class.text-green-600]="!b.is_active"
-                  [class.text-red-600]="b.is_active">
-              {{ b.is_active ? 'visibility_off' : 'visibility' }}
-            </span>
-          </button>
+                [disabled]="isPending(b.id_branch)"
+                [attr.aria-label]="b.is_active ? 'Desactivar' : 'Activar'"
+                (click)="toggleActive(b)">
+          <span class="material-symbols-outlined"
+                [class.text-green-600]="!b.is_active"
+                [class.text-red-600]="b.is_active">
+            {{b.is_active ? 'visibility_off' : 'visibility' }}
+          </span>
+        </button>
+
 
           <button class="icon-btn text-slate-500 hover:text-slate-700"
                   aria-label="Editar" (click)="openEdit(b)">

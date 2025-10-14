@@ -41,8 +41,6 @@ export class Login {
 
     try {
       const res = await this.auth.login(usuario!, contrasena!).toPromise();
-
-      // Redirección por rol / contexto (ajústalo a tus rutas reales)
       this.redirectByRole(res!);
     } catch (e: any) {
       this.errorMsg.set(e?.error?.message ?? 'Usuario o contraseña incorrectos');
@@ -52,16 +50,12 @@ export class Login {
   }
 
   private redirectByRole(res: LoginResponse) {
-    // Guarda info en memoria/localStorage la maneja AuthService
-    const role = res.user.role;               // 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | 'Cocinero'
-    const branchId = res.user.id_branch;      // opcional según tu backend
+    // Guarda
+    const role = res.user.role;               // 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | Superadmin'
+    const id_branch = res.user.id_branch;     
     // Ejemplos de destinos
-    if (role === 'Admin' || role === 'Gerente') {
-      this.router.navigate(['/admin/settings']);
-    } else if (role === 'Cocinero' || role === 'Bartender') {
-      this.router.navigate(['/kds', branchId]); // Kitchen/bar display por sucursal
-    } else {
-      this.router.navigate(['/pos', branchId]); // POS por sucursal
-    }
+    if (role === 'Admin') {
+      this.router.navigate(['/admin/configuracion']); // Panel admin
+    } 
   }
 }

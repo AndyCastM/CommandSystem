@@ -2,3 +2,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Asegura que el overlay esté por encima de headers/tables/dialogs */
+.cdk-overlay-container { z-index: 2000; }
+
+/* Panel del select: fondo sólido, sombra y borde */
+.filter-panel {
+  background: #fff !important;                /* evita transparencias heredadas */
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
+  margin-top: 6px;                             /* despega del trigger */
+  max-height: 320px !important;
+  overflow: auto !important;
+  /* Opcional: mismo ancho que el trigger */
+  min-width: var(--mat-select-trigger-width, 16rem);
+  position: relative;                          /* para la flechita */
+}
+
+/* Flechita (como en tu captura, pero limpia) */
+.filter-panel::before { /* borde exterior (sombra) */
+  content: "";
+  position: absolute;
+  top: -8px; left: 28px;                       /* ajusta según tu UI */
+  border: 8px solid transparent;
+  border-bottom-color: rgba(15,23,42,0.08);
+}
+.filter-panel::after {  /* relleno blanco */
+  content: "";
+  position: absolute;
+  top: -7px; left: 29px;
+  border: 7px solid transparent;
+  border-bottom-color: #fff;
+}
+
+/* Opciones del panel */
+.filter-panel .mat-mdc-option { padding: 10px 14px; }
+.filter-panel .mat-mdc-option.mdc-list-item--selected {
+  background: rgba(22, 163, 189, 0.08);
+}
+.filter-panel .mat-mdc-option:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* Backdrop transparente para bloquear clics detrás sin oscurecer */
+.filter-backdrop { background: transparent; }
+

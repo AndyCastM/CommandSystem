@@ -1,0 +1,34 @@
+/* Altura uniforme de encabezados (sidebar y topbar) para alinear la línea inferior */
+:root {
+  --hdr-h: 76px; /* ajusta a 64 | 72 | 76 según te guste; ambos headers usarán esta altura */
+}
+
+/* Efecto radiant reutilizable para los items del menú */
+.nav-radiant {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem; /* match rounded-lg */
+  background: linear-gradient(135deg, #38bdf8 0%, #22d3ee 45%, #7c3aed 100%);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+
+a:hover .nav-radiant,
+a.active .nav-radiant {
+  opacity: 1;
+}
+
+/* Estado activo (cuando RouterLinkActive aplica la clase "active") */
+a.active {
+  color: #0b66a7; /* azul legible en blanco */
+  background: #eaf6ff; /* sin cambiar layout, sutil en reposo */
+  box-shadow: inset 0 0 0 1px #cfeaff;
+}
+
+/* Variante de radiant para el botón de logout */
+.nav-radiant--danger {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 40%, #dc2626 100%);
+}
+
+/* Ajuste tipográfico menor para títulos/breadcrumbs si usas fuentes compactas */
+.text-sm\/4 { line-height: 1rem; } /* utilidad micro para el "Administrador" */

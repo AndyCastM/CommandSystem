@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import express from 'express';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { Public } from '../decorators/public.decorator';
-
+import { JwtAuthGuard } from '../guards/auth.guard';
+import { CurrentUser } from '../decorators/current-user.decorator';
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService){}
@@ -22,12 +23,19 @@ export class AuthController {
         res.cookie('access_token', access_token, {
             httpOnly: true,
             // secure: true, // Usar solo en producción con HTTPS
+            path: '/',
             maxAge: 8 * 60 * 60 * 1000, // 8 horas
         });
         
         return { message, user };
     }
 
+    @UseGuards(JwtAuthGuard) // Proteger esta ruta con el guard de JWT
+    @Get('me')
+    me(@CurrentUser() user: any) {
+        return user; // { id_user, username, role, id_company, id_branch }
+    }
+    
     @Post('logout')
     async logout(@Res({ passthrough: true }) res: express.Response) {
         res.clearCookie('access_token');
