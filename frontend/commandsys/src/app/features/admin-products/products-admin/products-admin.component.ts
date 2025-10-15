@@ -6,7 +6,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ProductDialogComponent } from '../UI/product-dialog/product-dialog.component';
 import { ProductService } from '../data-access/products.service';
-import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../data-access/products.models';
+import type { CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
+import { take } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -22,17 +23,40 @@ export class ProductsAdminComponent {
   search = signal('');
   selectedCategory = signal<'Todas' | string>('Todas');
 
-  // Signals del servicio (¡no las invoques aquí!)
+  // Signals del servicio
   productsSig = this.productSrv.productsSig;
 
-  // Carga inicial
+  // Cache de imágenes (id -> url)
+  private imagesCache = new Map<number, string>();
+
+  // Placeholder inline (SVG) para no depender de /assets
+  private placeholderDataUrl =
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="180" height="120">
+        <rect width="100%" height="100%" fill="#f1f5f9"/>
+        <g fill="#cbd5e1">
+          <rect x="16" y="20" width="148" height="80" rx="8"/>
+          <circle cx="56" cy="60" r="16"/>
+          <path d="M32 92 L88 44 L148 92 Z" />
+        </g>
+      </svg>
+    `);
+
   constructor() {
-    this.productSrv.loadAll({ id_company: 5, id_branch: 12 });
+    // Carga de productos/catálogos
+    this.productSrv.loadAll();
 
     // Diagnóstico opcional
     effect(() => {
       const list = this.productsSig();
       console.log('Products loaded:', list.length, list.slice(0, 2));
+    });
+
+    // Prefetch con concurrencia limitada para los visibles (mejora UX y reduce parpadeo)
+    effect(() => {
+      const visible = this.filtered().slice(0, 24); // ajusta N
+      this.productSrv.warmImagesFor(visible, 4);
     });
   }
 
@@ -42,14 +66,16 @@ export class ProductsAdminComponent {
     const cat = this.selectedCategory();
     return this.productsSig()
       .filter(p => (cat === 'Todas' ? true : p.category === cat))
-      .filter(p => !term ? true :
-        p.name.toLowerCase().includes(term) ||
-        (p.category ?? '').toLowerCase().includes(term) ||
-        (p.area ?? '').toLowerCase().includes(term)
+      .filter(p =>
+        !term
+          ? true
+          : p.name.toLowerCase().includes(term) ||
+            (p.category ?? '').toLowerCase().includes(term) ||
+            (p.area ?? '').toLowerCase().includes(term)
       );
   });
 
-  // Métricas por categoría (de strings devueltos por backend)
+  // Métricas por categoría
   metrics = computed(() => {
     const map = new Map<string, { total: number; disponibles: number }>();
     for (const p of this.productsSig()) {
@@ -62,9 +88,27 @@ export class ProductsAdminComponent {
     return Array.from(map.entries()).map(([name, v]) => ({ name, ...v }));
   });
 
-  // Imagen (placeholder porque ignoramos image_url)
-  imgPlaceholder = '/assets/placeholders/product.png';
-  img(_p: CompanyProduct) { return this.imgPlaceholder; }
+  private thumbMap = new WeakMap<CompanyProduct, string>();
+
+  img(p: CompanyProduct) {
+    const current = this.thumbMap.get(p);
+    if (current) return current;
+
+    // devuelve placeholder ahora y resuelve asincrónicamente
+    this.productSrv.getThumbUrl$(p.id_company_product).pipe(take(1)).subscribe(url => {
+      const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
+      this.thumbMap.set(p, finalUrl);
+      // forzamos change detection tocando una signal “tonta” si hiciera falta
+      // (Angular 17 con signals normalmente refresca cuando cambia filtered(); si no, crea una signal "bump" y set(bump()+1))
+    });
+
+    return this.placeholderDataUrl;
+  }
+
+  // Manejo de error en <img> (caer a placeholder y evitar loops)
+  onImgError(p: CompanyProduct, evt: Event) {
+    (evt?.target as HTMLImageElement).src = this.placeholderDataUrl;
+  }
 
   // Dialogs
   openCreate() {
@@ -84,8 +128,15 @@ export class ProductsAdminComponent {
     }).afterClosed().subscribe((res: { dto: Partial<CreateCompanyProductDto>; file: File | null } | null) => {
       if (!res) return;
       this.productSrv.update(p.id_company_product, res.dto, res.file ?? undefined);
+      // invalida miniatura y la volverá a precargar
+      this.thumbMap.delete(p);
+      this.productSrv.getThumbUrl$(p.id_company_product).pipe(take(1)).subscribe(url => {
+        const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
+        this.thumbMap.set(p, finalUrl);
+      });
     });
   }
+
 
   toggleAvailability(p: CompanyProduct) {
     const next = p.is_active !== 1;
@@ -93,7 +144,10 @@ export class ProductsAdminComponent {
   }
 
   delete(p: CompanyProduct) {
-    if (confirm(`Eliminar "${p.name}"?`)) this.productSrv.remove(p.id_company_product);
+    if (confirm(`Eliminar "${p.name}"?`)) {
+      this.productSrv.remove(p.id_company_product);
+      this.imagesCache.delete(p.id_company_product);
+    }
   }
 
   trackById = (_: number, p: CompanyProduct) => p.id_company_product;

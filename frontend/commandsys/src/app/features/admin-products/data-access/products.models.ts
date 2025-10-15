@@ -10,6 +10,7 @@ export interface Area {
   code?: string;
 }
 export interface ProductImage {
+  id_company_product: number;
   id_image: number;
   image_url: string;
   public_id: string;
@@ -31,8 +32,8 @@ export interface CompanyProduct {
   category: string;   // string, p.ej. "Pizzas"
   area: string;       // string, p.ej. "Cocina"
   base_price: number;
+  preparation_time?: number; // minutos
   is_active: number;  // 0 | 1
-  image_url?: string; // ⬅️ EXISTE, pero la ignoraremos en la UI
 }
 
 export interface CompanyProductOptionTier {
@@ -59,7 +60,6 @@ export interface CreateCompanyProductDto {
   name: string;
   description?: string;
   base_price: number;
-  image_url?: string;
   preparation_time?: number; // minutos
   options?: CompanyProductOption[];
   is_active?: boolean;
@@ -70,4 +70,10 @@ export type UpdateCompanyProductDto = Partial<CreateCompanyProductDto> & { id_pr
 export interface UploadResponse {
   url: string;
   public_id: string;
+}
+
+export interface ProductImagesResponse {
+  message?: string;
+  count?: number;
+  images?: ProductImage[];
 }

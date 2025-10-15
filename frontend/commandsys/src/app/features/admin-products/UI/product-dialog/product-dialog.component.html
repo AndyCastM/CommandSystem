@@ -1,91 +1,139 @@
-<div class="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4">
+<div class="sm:max-w-[520px] max-h-[90vh] overflow-y-auto p-5">
+  <!-- Header -->
   <div class="mb-4">
-    <h2 class="text-xl font-semibold">{{ title() }}</h2>
+    <h2 class="text-xl font-semibold text-slate-800">{{ title() }}</h2>
     <p class="text-slate-500 text-sm">{{ subtitle() }}</p>
   </div>
 
   <form (ngSubmit)="submit()" class="space-y-4">
-    <!-- Categoría -->
-    <div class="space-y-2">
-      <label class="text-sm">Categoría</label>
-      <mat-select [formControl]="form.controls.id_category" class="w-full">
-        <mat-option [value]="null" disabled>Selecciona</mat-option>
-        <mat-option *ngFor="let c of categories()" [value]="c.id_category">{{ c.name }}</mat-option>
-      </mat-select>
-      <p *ngIf="showError('id_category','required')" class="text-xs text-rose-600">Requerido</p>
-    </div>
+    <!-- Row: Categoría / Área -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Categoría -->
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700" for="sel-category">Categoría</label>
+        <div class="relative">
+          <select
+            id="sel-category"
+            [formControl]="form.controls.id_category"
+            [disabled]="loadingCategories()"
+            class="w-full appearance-none bg-white rounded-xl border border-slate-300 px-3 py-2.5 pr-9 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 disabled:bg-slate-50 disabled:text-slate-400"
+          >
+            <option [ngValue]="null" disabled>Selecciona</option>
+            <option *ngFor="let c of categories()" [ngValue]="c.id_category">{{ c.name }}</option>
+          </select>
+          <!-- caret -->
+          <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+               viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <p *ngIf="showError('id_category','required')" class="text-xs text-rose-600">Requerido</p>
+      </div>
 
-    <!-- Área -->
-    <div class="space-y-2">
-      <label class="text-sm">Área</label>
-      <mat-select [formControl]="form.controls.id_area" class="w-full">
-        <mat-option [value]="null" disabled>Selecciona</mat-option>
-        <mat-option *ngFor="let a of areas()" [value]="a.id_area">{{ a.name }}</mat-option>
-      </mat-select>
-      <p *ngIf="showError('id_area','required')" class="text-xs text-rose-600">Requerido</p>
+      <!-- Área -->
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700" for="sel-area">Área</label>
+        <div class="relative">
+          <select
+            id="sel-area"
+            [formControl]="form.controls.id_area"
+            [disabled]="loadingAreas()"
+            class="w-full appearance-none bg-white rounded-xl border border-slate-300 px-3 py-2.5 pr-9 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 disabled:bg-slate-50 disabled:text-slate-400"
+          >
+            <option [ngValue]="null" disabled>Selecciona</option>
+            <option *ngFor="let a of areas()" [ngValue]="a.id_area">{{ a.name }}</option>
+          </select>
+          <!-- caret -->
+          <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+               viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <p *ngIf="showError('id_area','required')" class="text-xs text-rose-600">Requerido</p>
+      </div>
     </div>
 
     <!-- Nombre -->
-    <div class="space-y-2">
-      <label class="text-sm" for="name">Nombre</label>
-      <input id="name" type="text"
-             class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-             [formControl]="form.controls.name">
-      <p *ngIf="showError('name','required')" class="text-xs text-rose-600">Requerido</p>
-      <p *ngIf="showError('name','onlySpaces')" class="text-xs text-rose-600">No puede ser solo espacios</p>
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-slate-700" for="name">Nombre</label>
+      <input
+        id="name" type="text"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        [formControl]="form.controls.name"
+      />
+      <div class="flex gap-3">
+        <p *ngIf="showError('name','required')" class="text-xs text-rose-600">Requerido</p>
+        <p *ngIf="showError('name','onlySpaces')" class="text-xs text-rose-600">No puede ser sólo espacios</p>
+      </div>
     </div>
 
     <!-- Precio base -->
-    <div class="space-y-2">
-      <label class="text-sm" for="base_price">Precio base</label>
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-slate-700" for="base_price">Precio base</label>
       <div class="relative">
-        <span class="absolute left-3 top-2.5 text-slate-400">$</span>
-        <input id="base_price" type="number" step="0.01" min="0"
-               class="w-full bg-white rounded-xl border border-slate-300 pl-8 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-               [formControl]="form.controls.base_price">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+        <input
+          id="base_price" type="number" step="0.01" min="0"
+          class="w-full bg-white rounded-xl border border-slate-300 pl-8 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+          [formControl]="form.controls.base_price"
+        />
       </div>
     </div>
 
     <!-- Tiempo de preparación -->
-    <div class="space-y-2">
-      <label class="text-sm" for="prep">Tiempo de preparación (min)</label>
-      <input id="prep" type="number" min="0"
-             class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-             [formControl]="form.controls.preparation_time">
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-slate-700" for="prep">Tiempo de preparación (min)</label>
+      <input
+        id="prep" type="number" min="0"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        [formControl]="form.controls.preparation_time"
+      />
     </div>
 
     <!-- Descripción -->
-    <div class="space-y-2">
-      <label class="text-sm" for="description">Descripción</label>
-      <textarea id="description" rows="3"
-                class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-                [formControl]="form.controls.description"></textarea>
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-slate-700" for="description">Descripción</label>
+      <textarea
+        id="description" rows="3"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        [formControl]="form.controls.description">
+      </textarea>
     </div>
 
     <!-- Imagen -->
     <div class="space-y-2">
-      <label class="text-sm">Imagen del Producto</label>
+      <label class="text-sm font-medium text-slate-700">Imagen del producto</label>
 
-      <!-- URL opcional -->
-      <input type="url" placeholder="https://ejemplo.com/imagen.jpg"
-             class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-             [formControl]="form.controls.image_url" />
-
-      <!-- Archivo -->
-      <div class="flex items-center gap-2 mt-2">
+      <div class="flex flex-wrap items-center gap-2">
         <input id="image-upload" type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
-        <button type="button" class="border rounded-lg px-3 py-2" (click)="triggerFilePick()">Subir archivo</button>
-        <button *ngIf="imagePreview()" type="button" class="bg-rose-600 text-white rounded-lg px-3 py-2" (click)="clearImage()">Quitar</button>
+        <button type="button"
+                class="px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
+                (click)="triggerFilePick()">
+          Subir archivo
+        </button>
+        <button *ngIf="imagePreview()"
+                type="button"
+                class="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
+                (click)="clearImage()">
+          Quitar
+        </button>
       </div>
 
       <img *ngIf="imagePreview()" [src]="imagePreview()!" alt="preview"
-           class="w-full h-48 object-cover rounded-lg border mt-2" />
+           class="w-full h-48 object-cover rounded-xl border border-slate-200 mt-2" />
     </div>
 
     <!-- Acciones -->
-    <div class="flex justify-end gap-2 pt-4">
-      <button type="button" class="border rounded-xl px-4 py-2" (click)="close()" [disabled]="saving()">Cancelar</button>
-      <button type="submit" class="rounded-xl px-4 py-2 text-white bg-[#3aa3bd] hover:bg-[#283996]" [disabled]="saving() || form.invalid">
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button"
+              class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
+              (click)="close()"
+              [disabled]="saving()">
+        Cancelar
+      </button>
+      <button type="submit"
+              class="px-4 py-2 rounded-xl text-white bg-[#3aa3bd] hover:bg-[#283996]"
+              [disabled]="saving() || form.invalid">
         {{ editing() ? 'Actualizar' : 'Crear' }}
       </button>
     </div>

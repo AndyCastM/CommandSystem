@@ -16,37 +16,73 @@
            md:flex md:flex-col bg-white border-r border-slate-200"
     [class.-translate-x-full]="!sidebarOpen">
 
-    <!-- Header azul del sidebar -->
-    <div class="px-4 py-6 border-b border-white/10  bg-[#1f3b6f] text-white flex items-center gap-3">
-      <img src="assets/logo.png" alt="Logo" class="h-9 w-9 rounded-md object-contain bg-white/10 p-1" />
-      <div>
-        <div class="text-sm/5 opacity-95">Administrador</div>
-        <div class="text-[11px] opacity-80 -mt-0.5">Admin</div>
+    <!-- Header azul con gradiente -->
+    <div class="px-4 py-6 border-b border-white/10 bg-gradient-to-r from-[#0ea6e9] via-[#3aa3bd] to-[#1e3a8a] text-white flex items-center gap-3">
+      <img
+        src="assets/logo.png"
+        alt="Logo"
+        class="h-10 w-10 rounded-full object-cover ring-1 ring-white/20 shadow-sm bg-white/10 p-0.5"
+      />
+      <div class="leading-tight">
+        <div class="text-sm font-semibold tracking-wide">Administrador</div>
+        <div class="text-[11px] opacity-80">Admin</div>
       </div>
     </div>
 
-    <!-- Navegación (blanco) -->
+    <!-- Navegación -->
     <nav class="flex-1 py-3 overflow-y-auto">
       <ng-container *ngFor="let item of nav">
         <a
           [routerLink]="item.path"
           [routerLinkActiveOptions]="{ exact: false }"
-          routerLinkActive="bg-blue-100 text-blue-800 ring-1 ring-blue-200"
-          class="group flex items-center gap-3 mx-2 my-1 px-3 py-2 rounded-md transition
-                 hover:bg-blue-50 hover:text-blue-700 text-black">
-          <span class="h-5 w-1 rounded-full mr-1 bg-transparent group-[.router-link-active]:bg-blue-600"></span>
-          <mat-icon class="text-blue-700 group-hover:text-blue-800 group-[.router-link-active]:text-blue-700">
+          routerLinkActive="is-active"
+          class="group relative flex items-center gap-3 mx-2 my-1 px-3 py-2 rounded-md transition
+                text-slate-800 hover:bg-indigo-50 hover:text-indigo-700
+                focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        >
+          <!-- Indicador lateral -->
+          <span
+            class="h-5 w-1 rounded-full mr-1 bg-transparent transition-colors
+                  group-hover:bg-indigo-300
+                  group-[.is-active]:bg-indigo-500"
+          ></span>
+
+          <!-- Icono (¡sin grises!) -->
+          <mat-icon
+            class="transition-colors text-indigo-600
+                  group-hover:text-indigo-700
+                  group-[.is-active]:text-white"
+          >
             {{ item.icon }}
           </mat-icon>
-          <span class="group-hover:text-blue-600 group-[.router-link-active]:text-blue-800">
+
+          <!-- Label -->
+          <span
+            class="flex-1 transition-colors
+                  group-[.is-active]:text-white"
+          >
             {{ item.label }}
           </span>
-          <span class="ml-auto opacity-0 group-hover:opacity-100 transition material-icons text-blue-600">
+
+          <!-- Chevron -->
+          <span
+            class="ml-auto transition opacity-0 group-hover:opacity-100
+                  material-icons text-indigo-600
+                  group-[.is-active]:text-white"
+          >
             chevron_right
           </span>
+
+          <!-- Fondo activo (pill) -->
+          <span
+            class="pointer-events-none absolute inset-0 rounded-md -z-10
+                  group-[.is-active]:bg-indigo-600
+                  group-[.is-active]:ring-1 group-[.is-active]:ring-indigo-500/40"
+          ></span>
         </a>
       </ng-container>
     </nav>
+
 
     <!-- Footer -->
     <div class="px-4 py-4 border-t border-slate-200">

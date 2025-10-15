@@ -2,108 +2,155 @@
   <div class="flex items-center justify-between mb-4">
     <div>
       <div class="text-sm text-slate-500">Admin / <span class="text-slate-700">Configuración</span></div>
-      <h1 class="text-3xl font-bold text-slate-800 mt-1"> Configuración General</h1>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">Configuración General</h1>
       <p class="text-slate-500">Configura los aspectos principales del sistema de comandas</p>
     </div>
   </div>
 
-  <mat-tab-group [selectedIndex]="activeTabIndex" >
+  <mat-tab-group [selectedIndex]="activeTabIndex">
     <!-- EMPRESA -->
     <mat-tab label="Empresa">
       <div class="mt-4 space-y-6">
         <mat-card>
           <mat-card-header>
-            <mat-card-title class="flex items-center text-[#283996]">
-              <mat-icon class="mr-2">business</mat-icon>
-              Información de la Empresa
+            <mat-card-title>
+              <div class="flex items-center gap-2 text-[#283996] mb-2">
+                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]">
+                  business
+                </mat-icon>
+                <span class="inline-block align-middle leading-tight font-medium">
+                  Información de la Empresa
+                </span>
+              </div>
             </mat-card-title>
           </mat-card-header>
 
+
           <mat-card-content class="space-y-6">
+            <!-- fila 1 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium mb-1">Nombre Comercial</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.name" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.name"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Razón Social</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput  [formControl]="companyForm.controls.legal_name" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.legal_name"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
             </div>
 
+            <!-- fila 2 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium mb-1"><mat-icon class="mr-1">call</mat-icon>Teléfono Principal</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.phone" />
-                </mat-form-field>
+                <label class="block text-sm font-medium mb-1 flex items-center"><mat-icon class="mr-1">call</mat-icon>Teléfono Principal</label>
+                <input
+                  type="tel"
+                  [formControl]="companyForm.controls.phone"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1"><mat-icon class="mr-1">mail</mat-icon>Email Corporativo</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput type="email" [formControl]="companyForm.controls.email" />
-                </mat-form-field>
+                <label class="block text-sm font-medium mb-1 flex items-center"><mat-icon class="mr-1">mail</mat-icon>Email Corporativo</label>
+                <input
+                  type="email"
+                  [formControl]="companyForm.controls.email"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
             </div>
 
             <mat-divider></mat-divider>
             <h3 class="font-medium text-[#283996]">Dirección Fiscal</h3>
 
+            <!-- fila 3 -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div class="lg:col-span-2">
                 <label class="block text-sm font-medium mb-1">Calle</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.street" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.street"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Número Exterior</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput  [formControl]="companyForm.controls.num_ext" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.num_ext"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
             </div>
 
+            <!-- fila 4 -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Código Postal</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput maxlength="5" [formControl]="companyForm.controls.cp" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  maxlength="5"
+                  [formControl]="companyForm.controls.cp"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Ciudad</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.city" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.city"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Estado</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.state" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.state"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">País</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput [formControl]="companyForm.controls.country" />
-                </mat-form-field>
+                <input
+                  type="text"
+                  [formControl]="companyForm.controls.country"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
               </div>
             </div>
 
             <div class="flex justify-end">
-              <button mat-raised-button color="primary" class="bg-[#3aa3c1] hover:bg-[#283996]" (click)="saveCompany()">
-                <mat-icon class="mr-2">save</mat-icon>
+              <button
+                type="button"
+                (click)="saveCompany()"
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-[#3aa3c1] hover:bg-[#283996] transition
+                       shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+              >
+                <mat-icon>save</mat-icon>
                 Guardar Información
               </button>
             </div>
@@ -117,9 +164,15 @@
       <div class="mt-4 space-y-6">
         <mat-card>
           <mat-card-header>
-            <mat-card-title class="flex items-center text-[#283996]">
-              <mat-icon class="mr-2">payments</mat-icon>
-              Configuración Fiscal
+            <mat-card-title>
+              <div class="flex items-center gap-2 text-[#283996] mb-2">
+                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]">
+                  payments
+                </mat-icon>
+                <span class="inline-block align-middle leading-tight font-medium">
+                  Configuración Fiscal
+                </span>
+              </div>
             </mat-card-title>
           </mat-card-header>
 
@@ -129,21 +182,30 @@
               <p class="text-sm text-yellow-700">Esta información se usa para tickets y facturas.</p>
             </div>
 
+            <!-- fila fiscal -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium mb-1">RFC de la Empresa</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput maxlength="13" [formControl]="companyForm.controls.rfc" />
-                </mat-form-field>
-                <p class="text-sm text-slate-500">Registro Federal de Contribuyentes</p>
+                <input
+                  type="text"
+                  maxlength="13"
+                  [formControl]="companyForm.controls.rfc"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
+                <p class="text-sm text-slate-500 mt-1">Registro Federal de Contribuyentes</p>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Porcentaje de IVA (%)</label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input matInput type="number" min="0" max="100" step="0.01" [formControl]="companyForm.controls.tax_percentage" />
-                </mat-form-field>
-                <p class="text-sm text-slate-500">IVA en productos y servicios</p>
+                <input
+                  type="number"
+                  min="0" max="100" step="0.01"
+                  [formControl]="companyForm.controls.tax_percentage"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
+                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                />
+                <p class="text-sm text-slate-500 mt-1">IVA en productos y servicios</p>
               </div>
             </div>
 
@@ -167,8 +229,13 @@
             </div>
 
             <div class="flex justify-end">
-              <button mat-raised-button color="primary" class="bg-[#3aa3c1] hover:bg-[#283996]" (click)="saveFiscal()">
-                <mat-icon class="mr-2">save</mat-icon>
+              <button
+                type="button"
+                (click)="saveFiscal()"
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-[#3aa3c1] hover:bg-[#283996] transition
+                       shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+              >
+                <mat-icon>save</mat-icon>
                 Guardar Configuración Fiscal
               </button>
             </div>

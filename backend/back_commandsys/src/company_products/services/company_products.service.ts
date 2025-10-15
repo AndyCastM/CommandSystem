@@ -362,6 +362,7 @@ async getCompanyProducts(
     category: p.product_categories?.name,
     area: p.print_areas?.name,
     base_price: Number(p.base_price),
+    preparation_time: p.preparation_time,
     is_active: p.is_active,
     image_url: p.image_url,
   })));
