@@ -1,11 +1,30 @@
 <div class="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4">
-  <!-- Header -->
   <div class="mb-4">
     <h2 class="text-xl font-semibold">{{ title() }}</h2>
     <p class="text-slate-500 text-sm">{{ subtitle() }}</p>
   </div>
 
   <form (ngSubmit)="submit()" class="space-y-4">
+    <!-- Categoría -->
+    <div class="space-y-2">
+      <label class="text-sm">Categoría</label>
+      <mat-select [formControl]="form.controls.id_category" class="w-full">
+        <mat-option [value]="null" disabled>Selecciona</mat-option>
+        <mat-option *ngFor="let c of categories()" [value]="c.id_category">{{ c.name }}</mat-option>
+      </mat-select>
+      <p *ngIf="showError('id_category','required')" class="text-xs text-rose-600">Requerido</p>
+    </div>
+
+    <!-- Área -->
+    <div class="space-y-2">
+      <label class="text-sm">Área</label>
+      <mat-select [formControl]="form.controls.id_area" class="w-full">
+        <mat-option [value]="null" disabled>Selecciona</mat-option>
+        <mat-option *ngFor="let a of areas()" [value]="a.id_area">{{ a.name }}</mat-option>
+      </mat-select>
+      <p *ngIf="showError('id_area','required')" class="text-xs text-rose-600">Requerido</p>
+    </div>
+
     <!-- Nombre -->
     <div class="space-y-2">
       <label class="text-sm" for="name">Nombre</label>
@@ -16,36 +35,23 @@
       <p *ngIf="showError('name','onlySpaces')" class="text-xs text-rose-600">No puede ser solo espacios</p>
     </div>
 
-    <!-- Precio -->
+    <!-- Precio base -->
     <div class="space-y-2">
-      <label class="text-sm" for="price">Precio</label>
+      <label class="text-sm" for="base_price">Precio base</label>
       <div class="relative">
         <span class="absolute left-3 top-2.5 text-slate-400">$</span>
-        <input id="price" type="number" step="0.01" min="0"
+        <input id="base_price" type="number" step="0.01" min="0"
                class="w-full bg-white rounded-xl border border-slate-300 pl-8 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-               [formControl]="form.controls.price">
+               [formControl]="form.controls.base_price">
       </div>
     </div>
 
-    <!-- Categoría y Área -->
-    <div class="grid grid-cols-2 gap-4">
-      <div class="space-y-2">
-        <label class="text-sm">Categoría</label>
-        <mat-select [formControl]="form.controls.category" class="w-full" [disabled]="loadingCategories()">
-          <mat-option *ngIf="loadingCategories()" [value]="null" disabled>Cargando áreas…</mat-option>
-          <mat-option *ngIf="!loadingCategories() && categories().length === 0" [value]="null" disabled>Sin categorías</mat-option>
-          <mat-option *ngFor="let c of categories()" [value]="c.id_category">{{ c.name }}</mat-option>
-        </mat-select>
-      </div>
-
-      <div class="space-y-2">
-        <label class="text-sm">Área</label>
-        <mat-select [formControl]="form.controls.id_area" class="w-full" [disabled]="loadingAreas()">
-          <mat-option *ngIf="loadingAreas()" [value]="null" disabled>Cargando áreas…</mat-option>
-          <mat-option *ngIf="!loadingAreas() && areas().length === 0" [value]="null" disabled>Sin áreas</mat-option>
-          <mat-option *ngFor="let a of areas()" [value]="a.id_area">{{ a.name }}</mat-option>
-        </mat-select>
-      </div>
+    <!-- Tiempo de preparación -->
+    <div class="space-y-2">
+      <label class="text-sm" for="prep">Tiempo de preparación (min)</label>
+      <input id="prep" type="number" min="0"
+             class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
+             [formControl]="form.controls.preparation_time">
     </div>
 
     <!-- Descripción -->
@@ -60,38 +66,26 @@
     <div class="space-y-2">
       <label class="text-sm">Imagen del Producto</label>
 
-      <!-- URL directa -->
+      <!-- URL opcional -->
       <input type="url" placeholder="https://ejemplo.com/imagen.jpg"
              class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-200"
-             [formControl]="form.controls.image" />
+             [formControl]="form.controls.image_url" />
 
-      <div class="flex items-center gap-2">
-        <input type="file" accept="image/*" (change)="onFileSelected($event)" id="image-upload" hidden>
-        <button type="button" class="border rounded-lg px-3 py-2"
-                (click)="document.getElementById('image-upload')?.click()">
-          Subir archivo
-        </button>
-        <button *ngIf="imagePreview()" type="button"
-                class="bg-rose-600 text-white rounded-lg px-3 py-2"
-                (click)="clearImage()">Quitar</button>
+      <!-- Archivo -->
+      <div class="flex items-center gap-2 mt-2">
+        <input id="image-upload" type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
+        <button type="button" class="border rounded-lg px-3 py-2" (click)="triggerFilePick()">Subir archivo</button>
+        <button *ngIf="imagePreview()" type="button" class="bg-rose-600 text-white rounded-lg px-3 py-2" (click)="clearImage()">Quitar</button>
       </div>
 
       <img *ngIf="imagePreview()" [src]="imagePreview()!" alt="preview"
-           class="w-full h-48 object-cover rounded-lg border" />
-    </div>
-
-    <!-- Disponible -->
-    <div class="flex items-center gap-3">
-      <mat-slide-toggle [formControl]="form.controls.available" id="available"></mat-slide-toggle>
-      <label for="available" class="text-sm">Disponible</label>
+           class="w-full h-48 object-cover rounded-lg border mt-2" />
     </div>
 
     <!-- Acciones -->
     <div class="flex justify-end gap-2 pt-4">
       <button type="button" class="border rounded-xl px-4 py-2" (click)="close()" [disabled]="saving()">Cancelar</button>
-      <button type="submit"
-              class="rounded-xl px-4 py-2 text-white bg-[#3aa3c1] hover:bg-[#283996]"
-              [disabled]="saving() || form.invalid">
+      <button type="submit" class="rounded-xl px-4 py-2 text-white bg-[#3aa3bd] hover:bg-[#283996]" [disabled]="saving() || form.invalid">
         {{ editing() ? 'Actualizar' : 'Crear' }}
       </button>
     </div>

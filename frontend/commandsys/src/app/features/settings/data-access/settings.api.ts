@@ -1,31 +1,25 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CompanySettings } from './settings.models';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsApi {
   private http = inject(HttpClient);
-  // demo: signals locales (puedes mover a un store si quieres)
+  private baseUrl = 'http://localhost:3000/api';
   company = signal<CompanySettings | null>(null);
+  loading = signal(false);
 
-  loadInitial() {
-    
-    const company: CompanySettings = {
-      name: 'Restaurantes El Sabor',
-      legal_name: 'El Sabor Corporativo S.A. de C.V.',
-      rfc: 'ESC123456789',
-      street: 'Av. Principal',
-      num_ext: '123',
-      CP: '01234',
-      city: 'Ciudad de México',
-      state: 'CDMX',
-      country: 'México',
-      phone: '+52 55 1234 5678',
-      email: 'contacto@elsabor.com',
-      tax_percentage: 16,
-    };
-
-    this.company.set(company);
+  async loadInitial() {
+    this.loading.set(true);
+    try {
+      const data = await firstValueFrom(
+        this.http.get<CompanySettings>(`${this.baseUrl}/companies/company`, {  withCredentials: true })
+      );
+      this.company.set(data);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   saveCompany(body: CompanySettings) {

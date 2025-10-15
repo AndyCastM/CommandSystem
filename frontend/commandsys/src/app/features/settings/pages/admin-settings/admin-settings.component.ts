@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
@@ -27,6 +27,16 @@ import { CompanySettings } from '../../../settings/data-access/settings.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminSettingsComponent {
+
+  constructor() {
+    // Suscribirse reactivamente a cambios en company (signal)
+    effect(() => {
+      const c = this.api.company();
+      if (c) this.companyForm.patchValue(c, { emitEvent: false });
+    });
+    this.api.loadInitial();
+  }
+  
   private fb = inject(FormBuilder);
   private snack = inject(MatSnackBar);
   private api = inject(SettingsApi);
@@ -41,7 +51,7 @@ export class AdminSettingsComponent {
     rfc: ['', Validators.maxLength(13)],
     street: [''],
     num_ext: [''],
-    CP: ['', Validators.maxLength(5)],
+    cp: ['', Validators.maxLength(5)],
     city: [''],
     state: [''],
     country: [''],
@@ -53,14 +63,6 @@ export class AdminSettingsComponent {
   // getters de vista
   get company(): CompanySettings {
     return this.companyForm.getRawValue() as CompanySettings;
-  }
-
-
-  constructor() {
-    this.api.loadInitial();
-    // hidratar forms desde el api (signals → patchValue)
-    const c = this.api.company();
-    if (c) this.companyForm.patchValue(c);
   }
 
   saveCompany() {

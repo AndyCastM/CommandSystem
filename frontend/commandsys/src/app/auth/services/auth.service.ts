@@ -52,10 +52,7 @@ export class AuthService {
 
   ensureSession$() {
     if (this.currentUser()) return of(this.currentUser());
-    return this.http.get<any>('/api/auth/me', {
-      withCredentials: true,
-      context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
-    }).pipe(
+    return this.http.get('/api/auth/me', { withCredentials: true }).pipe(
       tap(u => this.currentUser.set(u)),
       catchError(() => of(null))
     );

@@ -1,19 +1,20 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgFor, NgIf } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-admin-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgFor, NgIf],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgFor, NgIf, MatIconModule],
   templateUrl: './admin-shell.component.html',
-  styleUrl: './admin-shell.component.css',
+  styleUrls: ['./admin-shell.component.css'],
 })
 export class AdminShellComponent {
   nav = [
-    { icon: '📦', label: 'Productos', path: '/admin/productos', disabled: true }, // demo
-    { icon: '🏢', label: 'Sucursales', path: '/admin/sucursales' },
-    { icon: '⚙️', label: 'Configuración', path: '/admin/configuracion' },
+    { icon: 'inventory_2', label: 'Productos', path: '/admin/productos' },
+    { icon: 'apartment', label: 'Sucursales', path: '/admin/sucursales' },
+    { icon: 'settings', label: 'Configuración', path: '/admin/configuracion' },
   ];
 
   sidebarOpen = false; // móvil

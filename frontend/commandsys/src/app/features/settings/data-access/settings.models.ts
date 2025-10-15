@@ -4,7 +4,7 @@ export interface CompanySettings {
   rfc: string;
   street: string;
   num_ext: string;
-  CP: string;
+  cp: string;
   city: string;
   state: string;
   country: string;

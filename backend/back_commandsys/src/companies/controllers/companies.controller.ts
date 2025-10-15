@@ -6,6 +6,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { UpdateCompanyDto } from '../dto/update-company.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,10 +25,10 @@ export class CompaniesController {
     return this.companiesService.findAll();
   }
 
-  @Get(':id')
+  @Get('company')
   @Roles(Role.Superadmin, Role.Admin)
-  findOne(@Param('id') id: string) {
-    return this.companiesService.findOne(+id);
+  findOne(@CurrentUser() user: any) {
+    return this.companiesService.findOne(+user.id_company);
   }
 
   @Patch(':id')

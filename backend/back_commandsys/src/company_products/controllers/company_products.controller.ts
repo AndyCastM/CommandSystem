@@ -77,14 +77,20 @@ export class CompanyProductsController {
   });
 }
 
-// Subir imagen con cloudinary y generar descripción con IA
-@Post(':id/upload')
-@UseInterceptors(FileInterceptor('file'))
-async uploadProductImage(
-  @Param('id') id_product: string,
-  @UploadedFile() file: Express.Multer.File,
-) {
-  return this.companyImagesService.uploadProductImage(Number(id_product), file);
-}
+  // Subir imagen con cloudinary y generar descripción con IA
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadProductImage(
+    @Param('id') id_product: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.companyImagesService.uploadProductImage(Number(id_product), file);
+  }
+
+  @Get(':id_product/images')
+  @Roles(Role.Admin, Role.Gerente, Role.Mesero)
+  async getProductImages(@Param('id_product', ParseIntPipe) id_product: number) {
+    return this.companyImagesService.getImagesByProduct(+id_product);
+  }
 
 }

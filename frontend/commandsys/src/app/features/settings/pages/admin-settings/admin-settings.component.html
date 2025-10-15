@@ -24,14 +24,14 @@
               <div>
                 <label class="block text-sm font-medium mb-1">Nombre Comercial</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="Ej: Restaurantes El Sabor" [formControl]="companyForm.controls.name" />
+                  <input matInput [formControl]="companyForm.controls.name" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Razón Social</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="Ej: El Sabor Corporativo S.A. de C.V." [formControl]="companyForm.controls.legal_name" />
+                  <input matInput  [formControl]="companyForm.controls.legal_name" />
                 </mat-form-field>
               </div>
             </div>
@@ -40,14 +40,14 @@
               <div>
                 <label class="block text-sm font-medium mb-1"><mat-icon class="mr-1">call</mat-icon>Teléfono Principal</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="+52 55 1234 5678" [formControl]="companyForm.controls.phone" />
+                  <input matInput [formControl]="companyForm.controls.phone" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1"><mat-icon class="mr-1">mail</mat-icon>Email Corporativo</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput type="email" placeholder="contacto@empresa.com" [formControl]="companyForm.controls.email" />
+                  <input matInput type="email" [formControl]="companyForm.controls.email" />
                 </mat-form-field>
               </div>
             </div>
@@ -59,14 +59,14 @@
               <div class="lg:col-span-2">
                 <label class="block text-sm font-medium mb-1">Calle</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="Av. Principal" [formControl]="companyForm.controls.street" />
+                  <input matInput [formControl]="companyForm.controls.street" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Número Exterior</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="123" [formControl]="companyForm.controls.num_ext" />
+                  <input matInput  [formControl]="companyForm.controls.num_ext" />
                 </mat-form-field>
               </div>
             </div>
@@ -75,28 +75,28 @@
               <div>
                 <label class="block text-sm font-medium mb-1">Código Postal</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput maxlength="5" placeholder="01234" [formControl]="companyForm.controls.CP" />
+                  <input matInput maxlength="5" [formControl]="companyForm.controls.cp" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Ciudad</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="Ciudad de México" [formControl]="companyForm.controls.city" />
+                  <input matInput [formControl]="companyForm.controls.city" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">Estado</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="CDMX" [formControl]="companyForm.controls.state" />
+                  <input matInput [formControl]="companyForm.controls.state" />
                 </mat-form-field>
               </div>
 
               <div>
                 <label class="block text-sm font-medium mb-1">País</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput placeholder="México" [formControl]="companyForm.controls.country" />
+                  <input matInput [formControl]="companyForm.controls.country" />
                 </mat-form-field>
               </div>
             </div>
@@ -133,7 +133,7 @@
               <div>
                 <label class="block text-sm font-medium mb-1">RFC de la Empresa</label>
                 <mat-form-field appearance="outline" class="w-full">
-                  <input matInput maxlength="13" placeholder="ABC123456789" [formControl]="companyForm.controls.rfc" />
+                  <input matInput maxlength="13" [formControl]="companyForm.controls.rfc" />
                 </mat-form-field>
                 <p class="text-sm text-slate-500">Registro Federal de Contribuyentes</p>
               </div>
@@ -159,7 +159,7 @@
                   <div class="text-xs">
                     {{ company.street }} {{ company.num_ext }}, {{ company.city }}, {{ company.state }}
                   </div>
-                  <div class="text-xs">CP: {{ company.CP }}</div>
+                  <div class="text-xs">CP: {{ company.cp }}</div>
                   <div class="text-xs">Tel: {{ company.phone }}</div>
                 </div>
                 <div class="text-xs text-center text-gray-600">IVA: {{ company.tax_percentage }}%</div>
