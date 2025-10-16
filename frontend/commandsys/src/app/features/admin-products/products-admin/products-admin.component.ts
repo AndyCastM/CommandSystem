@@ -29,6 +29,10 @@ export class ProductsAdminComponent {
   // Cache de imágenes (id -> url)
   private imagesCache = new Map<number, string>();
 
+  togglingIds = new Set<number>();
+
+  isActive = (p: CompanyProduct) => p?.is_active === 1;
+
   // Placeholder inline (SVG) para no depender de /assets
   private placeholderDataUrl =
     'data:image/svg+xml;utf8,' +
@@ -139,8 +143,15 @@ export class ProductsAdminComponent {
 
 
   toggleAvailability(p: CompanyProduct) {
-    const next = p.is_active !== 1;
-    this.productSrv.setActive(p.id_company_product, next);
+    if (!p) return;
+    if (this.togglingIds.has(p.id_company_product)) return;
+    this.togglingIds.add(p.id_company_product);
+
+    const next = !this.isActive(p);
+    this.productSrv.setActive(p.id_company_product, next).subscribe({
+      next: () => this.togglingIds.delete(p.id_company_product),
+      error: () => this.togglingIds.delete(p.id_company_product),
+    });
   }
 
   delete(p: CompanyProduct) {

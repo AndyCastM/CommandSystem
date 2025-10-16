@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { forkJoin, of, switchMap, tap, map, shareReplay, take, mergeMap, toArray } from 'rxjs';
+import { forkJoin, of, switchMap, tap, map, shareReplay, take, mergeMap, toArray, catchError, throwError } from 'rxjs';
 import { Observable } from 'rxjs';
 
 import {
@@ -23,6 +23,10 @@ export class ProductService {
   loadingSig = signal<boolean>(false);
   productsSig = signal<CompanyProduct[]>([]);
   
+  private normalizeActive(v: any): 0 | 1 {
+    return (v === 1 || v === '1' || v === true) ? 1 : 0;
+  }
+  
   /** Cache: id_product -> url primera imagen */
   private imagesCache = new Map<number, string>();
   /** In-flight: id_product -> observable compartido para evitar duplicar requests */
@@ -40,12 +44,8 @@ export class ProductService {
   }
 
   // ---------- CARGAS ----------
-  loadAll(params?: { id_company?: number; id_branch?: number }) {
+  loadAll() {
     this.loadingSig.set(true);
-
-    let p = new HttpParams();
-    if (params?.id_company) p = p.set('id_company', params.id_company);
-    if (params?.id_branch)  p = p.set('id_branch',  params.id_branch);
 
     const urlProducts = `${this.base}/api/company-products`;
     const urlCats     = `${this.base}/api/product-categories`;
@@ -54,7 +54,7 @@ export class ProductService {
     const req$ = forkJoin({
       categories: this.categoriesLoaded ? of(this.categoriesSig()) : this.http.get<Category[]>(urlCats),
       areas: this.areasLoaded ? of(this.areasSig()) : this.http.get<Area[]>(urlAreas),
-      products: this.http.get<CompanyProductApiResponse>(urlProducts, { params: p }),
+      products: this.http.get<CompanyProductApiResponse>(urlProducts),
     });
 
     return req$.pipe(
@@ -130,13 +130,42 @@ export class ProductService {
   }
 
   setActive(id_company_product: number, active: boolean) {
-    const url = `${this.base}/api/company-products/${id_company_product}`;
+    // si tu endpoint es este (como mostraste):
+    const url = `${this.base}/api/company-products/company/${id_company_product}/toggle`;
+    // si tu backend realmente usa PATCH /api/company-products/:id con body { is_active }, cambia esa URL
     const body = { is_active: active ? 1 : 0 };
-    return this.http.patch<CompanyProduct>(url, body).pipe(
-      tap(updated => {
-        this.productsSig.set(this.productsSig().map(p => p.id_company_product === id_company_product ? updated : p));
+
+    // Optimista: actualiza en memoria primero (merge)
+    this.productsSig.update(list =>
+      list.map(p => p.id_company_product === id_company_product
+        ? { ...p, is_active: body.is_active }
+        : p
+      )
+    );
+
+    return this.http.patch<CompanyProduct | Partial<CompanyProduct>>(url, body).pipe(
+      tap(res => {
+        // normaliza y mergea con el existente
+        this.productsSig.update(list =>
+          list.map(p => {
+            if (p.id_company_product !== id_company_product) return p;
+            const next = { ...p, ...res } as CompanyProduct;
+            next.is_active = this.normalizeActive((res as any)?.is_active ?? p.is_active);
+            return next;
+          })
+        );
+      }),
+      catchError(err => {
+        // revertir optimista
+        this.productsSig.update(list =>
+          list.map(p => p.id_company_product === id_company_product
+            ? { ...p, is_active: this.normalizeActive(!active) } // vuelve al estado previo
+            : p
+          )
+        );
+        return throwError(() => err);
       })
-    ).subscribe();
+    );
   }
 
   // On-demand (si quieres usarlos por separado)

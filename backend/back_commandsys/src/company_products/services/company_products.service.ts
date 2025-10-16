@@ -344,7 +344,6 @@ async getCompanyProducts(
   const products = await this.prisma.company_products.findMany({
     where: {
       id_company,
-      is_active: 1,
       ...(id_category ? { id_category } : {}),
       ...(id_area ? { id_area } : {}),
       ...(search ? { name: { contains: search } } : {}),

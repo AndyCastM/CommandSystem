@@ -107,26 +107,30 @@
             </div>
 
             <div class="flex items-center justify-end gap-2">
-              <button (click)="openEdit(p)" class="p-2 hover:bg-slate-100 rounded-lg" title="Editar">
-                <svg class="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <!-- Editar -->
+              <button (click)="openEdit(p)"
+                      class="p-2 hover:bg-slate-100 rounded-lg"
+                      title="Editar">
+                <svg class="w-5 h-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 0 0 .707-.293l9.9-9.9a2 2 0 0 0 0-2.828l-1.172-1.172a2 2 0 0 0-2.828 0l-9.9 9.9A1 1 0 0 0 4 15.414V20z"/>
                 </svg>
               </button>
 
-              <button (click)="toggleAvailability(p)" class="p-2 hover:bg-slate-100 rounded-lg" title="Alternar disponibilidad">
-                <svg class="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-              </button>
+            <label class="inline-flex items-center cursor-pointer select-none">
+              <input type="checkbox" class="sr-only"
+                    [checked]="p.is_active === 1"
+                    (change)="toggleAvailability(p)" />
+              <span class="relative w-10 h-6 rounded-full transition
+                          bg-slate-300"
+                    [class.bg-indigo-600]="p.is_active === 1">
+                <span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                      [class.translate-x-4]="p.is_active === 1"></span>
+              </span>
+            </label>
 
-              <button (click)="delete(p)" class="p-2 hover:bg-rose-50 rounded-lg" title="Eliminar">
-                <svg class="w-5 h-5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5-3h4m-6 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1m-7 0h8M6 7h12"/>
-                </svg>
-              </button>
             </div>
+
           </div>
         </ng-container>
 
