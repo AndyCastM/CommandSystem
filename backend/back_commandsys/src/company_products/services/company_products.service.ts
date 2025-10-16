@@ -33,7 +33,6 @@ export class CompanyProductsService {
           name: dto.name.trim(),
           description: dto.description ?? undefined,
           base_price: Number(dto.base_price),
-          image_url: dto.image_url ?? undefined,
         },
       });
 
@@ -185,7 +184,6 @@ export class CompanyProductsService {
           base_price: Number(dto.base_price ?? existingProduct.base_price),
           id_category: dto.id_category ?? existingProduct.id_category,
           id_area: dto.id_area ?? existingProduct.id_area,
-          image_url: dto.image_url ?? existingProduct.image_url,
         },
       });
 

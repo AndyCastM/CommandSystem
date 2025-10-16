@@ -1,3 +1,22 @@
+:host ::ng-deep .mat-mdc-dialog-surface {
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+  max-width: 95vw !important;
+  background: transparent !important;
+}
+
 :host {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+form::-webkit-scrollbar,
+div::-webkit-scrollbar {
+  width: 6px;
+}
+form::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 3px;
 }

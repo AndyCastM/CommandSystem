@@ -22,9 +22,6 @@ export class CreateCompanyProductDto {
     @IsPositive()
     base_price: number;
 
-    @IsString()
-    image_url?: string;
-
     @IsInt()
     preparation_time?: number; // en minutos
 

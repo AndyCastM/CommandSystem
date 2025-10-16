@@ -1,6 +1,9 @@
 import { Component, Inject, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, FormArray, FormGroup,
+  FormControl
+} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { ProductService } from '../../data-access/products.service';
 import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../../data-access/products.models';
+import { CustomizationFormComponent } from '../customization-form/customization-form.component';
 
 export type DialogMode = 'create' | 'edit';
 export interface ProductDialogData {
@@ -34,7 +38,8 @@ export interface ProductDialogData {
     MatSnackBarModule,
     MatInputModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    CustomizationFormComponent
   ],
   templateUrl: './product-dialog.component.html',
   styleUrls: ['./product-dialog.component.css']
@@ -60,28 +65,19 @@ export class ProductDialogComponent {
     description: [''],
     base_price: <number | null>0,
     preparation_time: <number | null>null,
-    image_url: [''],            // URL pegada (opcional)
-    file: [null as File | null] // archivo local (opcional)
+    image_url: [''],
+    file: [null as File | null],
+    is_customizable: [false],
+    options: this.fb.array<FormGroup>([])
   });
+
+  // ======= Getters =======
+  get options() { return this.form.controls.options as FormArray<FormGroup>; }
+  getOptionValues(i: number) { return this.options.at(i).get('values') as FormArray<FormGroup>; }
+  getOptionTiers(i: number) { return this.options.at(i).get('tiers') as FormArray<FormGroup>; }
 
   title = computed(() => (this.editing() ? 'Editar Producto' : 'Nuevo Producto'));
   subtitle = computed(() => (this.editing() ? 'Modifica los datos del producto' : 'Complete los datos del nuevo producto'));
-
-  // --- helpers para mapear nombres (string) -> ids
-  private findCategoryIdByName(name?: string | null) {
-    if (!name) return null;
-    const match = this.categories().find(
-      c => (c.name ?? '').trim().toLowerCase() === name.trim().toLowerCase()
-    );
-    return match?.id_category ?? null;
-  }
-  private findAreaIdByName(name?: string | null) {
-    if (!name) return null;
-    const match = this.areas().find(
-      a => (a.name ?? '').trim().toLowerCase() === name.trim().toLowerCase()
-    );
-    return match?.id_area ?? null;
-  }
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: ProductDialogData,
@@ -90,17 +86,12 @@ export class ProductDialogComponent {
     const v = (data?.value ?? {}) as CompanyProduct;
     this.editing.set(data?.mode === 'edit');
 
-    // Prefill básico (incluye preparation_time si viene del backend)
     this.form.patchValue({
       name: v.name ?? '',
       base_price: v.base_price ?? 0,
-      description: (v as any).description ?? '', // si backend llega a mandar descripción, se muestra
       preparation_time: (v as any).preparation_time ?? null,
-      image_url: ''
-      // id_category e id_area se setean al cargar catálogos (mapeo por nombre)
     });
 
-    // --- Cargar CATEGORÍAS (data -> cache -> fetch)
     const catsCached = data?.categories ?? this.productSrv.categoriesCached;
     if (catsCached?.length) {
       this.categories.set(catsCached);
@@ -112,7 +103,6 @@ export class ProductDialogComponent {
       });
     }
 
-    // --- Cargar ÁREAS (data -> cache -> fetch)
     const areasCached = data?.areas ?? this.productSrv.areasCached;
     if (areasCached?.length) {
       this.areas.set(areasCached);
@@ -124,7 +114,6 @@ export class ProductDialogComponent {
       });
     }
 
-    // --- Si es edición, precargar preview con la 1ª imagen real del producto
     if (this.editing() && v?.id_company_product) {
       this.productSrv.getProductImages(v.id_company_product).subscribe(list => {
         const first = list?.[0]?.image_url ?? null;
@@ -132,35 +121,25 @@ export class ProductDialogComponent {
       });
     }
 
-    // --- Cuando catálogos ya estén listos y es edición, mapea nombre->id y setea selects
-    effect(() => {
-      if (!this.editing()) return;
-      if (this.loadingCategories() || this.loadingAreas()) return;
-
-      const catId = this.findCategoryIdByName((v as any).category ?? null);
-      const areaId = this.findAreaIdByName((v as any).area ?? null);
-
-      this.form.patchValue(
-        { id_category: catId, id_area: areaId },
-        { emitEvent: false }
-      );
-    });
-
-    // --- Reglas de habilitación para evitar warnings de disabled en forms
-    effect(() => {
-      if (this.loadingCategories()) this.form.controls.id_category.disable({ emitEvent: false });
-      else this.form.controls.id_category.enable({ emitEvent: false });
-
-      if (this.loadingAreas()) this.form.controls.id_area.disable({ emitEvent: false });
-      else this.form.controls.id_area.enable({ emitEvent: false });
-    });
-
-    // Validadores requeridos
     this.form.controls.id_category.addValidators([Validators.required]);
     this.form.controls.id_area.addValidators([Validators.required]);
+
+    effect(() => {
+      const custom = this.form.controls.is_customizable.value;
+      const dialog = document.querySelector('.mat-mdc-dialog-surface');
+      if (!dialog) return;
+
+      // animación de ancho
+      if (custom) {
+        dialog.classList.add('transition-all', 'duration-300');
+      } else {
+        dialog.classList.remove('transition-all', 'duration-300');
+      }
+    });
+
   }
 
-  // --- Validadores & helpers
+  // ======= Helpers =======
   noOnlySpaces(ctrl: AbstractControl): ValidationErrors | null {
     const val = (ctrl.value ?? '') as string;
     return val.trim().length ? null : { onlySpaces: true };
@@ -170,10 +149,8 @@ export class ProductDialogComponent {
     return !!c && (c.touched || c.dirty) && c.hasError(err);
   }
 
-  // --- Imagen (archivo)
-  triggerFilePick() {
-    document.getElementById('image-upload')?.click();
-  }
+  // ======= Imagen =======
+  triggerFilePick() { document.getElementById('image-upload')?.click(); }
   onFileSelected(evt: Event) {
     const input = evt.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -182,15 +159,11 @@ export class ProductDialogComponent {
 
     if (!/^image\//i.test(file.type)) {
       this.sb.open('El archivo seleccionado no es una imagen', 'OK', { duration: 2500 });
-      this.form.patchValue({ file: null });
-      input.value = '';
-      return;
+      this.form.patchValue({ file: null }); input.value = ''; return;
     }
     if (file.size > 5 * 1024 * 1024) {
       this.sb.open('La imagen supera 5MB', 'OK', { duration: 2500 });
-      this.form.patchValue({ file: null });
-      input.value = '';
-      return;
+      this.form.patchValue({ file: null }); input.value = ''; return;
     }
 
     const reader = new FileReader();
@@ -204,7 +177,41 @@ export class ProductDialogComponent {
     if (input) input.value = '';
   }
 
-  // --- Submit
+  // ======= Opciones =======
+  addOption() {
+    const option = this.fb.group({
+      name: [''],
+      is_required: [0],
+      multi_select: [0],
+      max_selection: [1],
+      values: this.fb.array<FormGroup>([]),
+      tiers: this.fb.array<FormGroup>([])
+    });
+    this.options.push(option);
+  }
+  removeOption(i: number) { this.options.removeAt(i); }
+
+  addValue(optIdx: number) {
+    this.getOptionValues(optIdx).push(
+      this.fb.group({ name: [''], extra_price: [0] })
+    );
+  }
+
+  removeValue(e: { optIdx: number; valIdx: number }) {
+    this.getOptionValues(e.optIdx).removeAt(e.valIdx);
+  }
+
+  addTier(optIdx: number) {
+    this.getOptionTiers(optIdx).push(
+      this.fb.group({ selection_count: [1], extra_price: [0] })
+    );
+  }
+
+  removeTier(e: { optIdx: number; tierIdx: number }) {
+    this.getOptionTiers(e.optIdx).removeAt(e.tierIdx);
+  }
+
+  // ======= Submit =======
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -217,10 +224,24 @@ export class ProductDialogComponent {
       id_category: Number(raw.id_category),
       id_area: Number(raw.id_area),
       name: String(raw.name).trim(),
-      description: (raw.description ?? '').trim() || undefined,
+      description: raw.description ?? '',
       base_price: Number(raw.base_price ?? 0),
+      image_url: raw.image_url ?? '',
       preparation_time: raw.preparation_time != null ? Number(raw.preparation_time) : undefined,
-      // options: [] // si activas personalizaciones, mapea aquí
+      options: raw.is_customizable ? raw.options.map(o => ({
+        name: o['name'],
+        is_required: o['is_required'] ? 1 : 0,
+        multi_select: o['multi_select'] ? 1 : 0,
+        max_selection: Number(o['max_selection'] ?? 1),
+        tiers: o['tiers'].map((t: { selection_count: any; extra_price: any; }) => ({
+          selection_count: Number(t.selection_count),
+          extra_price: Number(t.extra_price ?? 0)
+        })),
+        values: o['values'].map((v: { name: any; extra_price: any; }) => ({
+          name: v.name,
+          extra_price: Number(v.extra_price ?? 0)
+        }))
+      })) : []
     };
 
     const file = raw.file as File | null;
@@ -229,4 +250,13 @@ export class ProductDialogComponent {
   }
 
   close() { this.ref.close(null); }
+
+  getControl<T = any>(group: FormGroup, name: string): FormControl<T> {
+    return group.get(name) as FormControl<T>;
+  }
+
+  getArray(group: FormGroup, name: string): FormArray<FormGroup> {
+    return group.get(name) as FormArray<FormGroup>;
+  }
+  
 }
