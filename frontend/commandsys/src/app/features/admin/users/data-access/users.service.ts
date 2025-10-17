@@ -1,16 +1,38 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateUser } from './user.model';
+import { CreateUser, User } from './user.model';
+import { sign } from 'crypto';
+import { firstValueFrom } from 'rxjs';
+import { map} from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
-  private base = '/api/users';
+  private base = 'http://localhost:3000/api/users';
+
+  users = signal<User[]>([]);
+  loading = signal(false);
 
   constructor(private http: HttpClient) {}
 
-  getUsers(params?: any): Observable<CreateUser[]> {
-    return this.http.get<CreateUser[]>(this.base, { params });
+  async load() {
+    this.loading.set(true);
+    try {
+      const data = await firstValueFrom(
+        this.http
+          .get<{ data: User[] }>(this.base, { withCredentials: true })
+          .pipe(map((res) => res.data)) 
+      );
+      this.users.set(data);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  getUsers(): Observable<User[]> {
+    return this.http
+      .get<{ data: User[] }>(this.base, { withCredentials: true })
+      .pipe(map((res) => res.data));
   }
 
   createUser(data: CreateUser): Observable<any> {

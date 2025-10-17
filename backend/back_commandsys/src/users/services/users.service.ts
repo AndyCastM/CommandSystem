@@ -79,6 +79,7 @@ export class UsersService {
             name: u.name,
             last_name: u.last_name,
             role_name: u.roles.name,
+            is_active: Boolean(u.is_active),
             created_at: u.created_at,
             updated_at: u.updated_at,
         }));

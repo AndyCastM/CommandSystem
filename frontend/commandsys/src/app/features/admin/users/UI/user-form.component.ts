@@ -4,11 +4,12 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { CreateUser } from '../data-access/user.model';
 import { UsersService } from '../data-access/users.service';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-user-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatDialogModule],
   templateUrl: './user-form.component.html'
 })
 export class UserFormComponent {

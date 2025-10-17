@@ -1,128 +1,130 @@
-<!-- Contenedor general -->
-<div class="flex justify-center items-center min-h-[90vh] bg-slate-50 px-4 py-6">
+<!-- Contenedor del formulario dentro del modal -->
+<div
+  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden w-full sm:w-[450px] md:w-[600px] lg:w-[700px] max-h-[90vh]"
+>
+  <!-- Encabezado -->
   <div
-    class="bg-white rounded-3xl shadow-2xl shadow-slate-300/60 overflow-hidden w-full sm:w-[500px] md:w-[650px] lg:w-[800px] max-w-[95vw] flex flex-col h-[85vh] transition-all duration-300"
+    class="p-5 border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-sky-50"
   >
-    <!-- Encabezado -->
-    <div class="p-6 border-b border-slate-200 bg-gradient-to-r from-sky-100 via-white to-sky-50">
-      <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-        <mat-icon class="text-sky-600">person_add</mat-icon>
-        {{ editing() ? 'Editar Usuario' : 'Crear Usuario' }}
-      </h2>
-      <p class="text-slate-500 text-sm mt-1">
-        Completa los datos del usuario para registrarlo en el sistema.
-      </p>
+    <h2
+      class="text-2xl font-bold text-slate-800 flex items-center gap-2"
+    >
+      <mat-icon class="text-sky-600">person_add</mat-icon>
+      {{ editing() ? 'Editar Usuario' : 'Crear Usuario' }}
+    </h2>
+    <p class="text-slate-500 text-sm mt-1">
+      Completa los datos del usuario para registrarlo en el sistema.
+    </p>
+  </div>
+
+  <!-- Contenido (scroll interno) -->
+  <form
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    class="flex-1 overflow-y-auto p-6 space-y-5 custom-scroll"
+  >
+    <!-- Sucursal -->
+    <div class="space-y-1.5" *ngIf="showBranch()">
+      <label class="text-sm font-semibold text-slate-700">Sucursal</label>
+      <select
+        formControlName="id_branch"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+      >
+        <option [ngValue]="null" disabled>Selecciona una sucursal</option>
+        <option *ngFor="let b of branches()" [ngValue]="b.id_branch">
+          {{ b.name }}
+        </option>
+      </select>
     </div>
 
-    <!-- Formulario scrollable -->
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      class="flex-1 overflow-y-auto p-6 space-y-5 custom-scroll"
-    >
-      <!-- Sucursal -->
-      <div class="space-y-1.5" *ngIf="showBranch()">
-        <label class="text-sm font-semibold text-slate-700">Sucursal</label>
-        <select
-          formControlName="id_branch"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-        >
-          <option [ngValue]="null" disabled>Selecciona una sucursal</option>
-          <option *ngFor="let b of branches()" [ngValue]="b.id_branch">
-            {{ b.name }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Rol -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-semibold text-slate-700">Rol</label>
-        <select
-          formControlName="id_role"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-        >
-          <option [ngValue]="null" disabled>Selecciona un rol</option>
-          <option *ngFor="let r of roles()" [ngValue]="r.id_role">
-            {{ r.name }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Nombre -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-semibold text-slate-700">Nombre</label>
-        <input
-          type="text"
-          formControlName="name"
-          placeholder="Ej: Juan"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-        />
-      </div>
-
-      <!-- Apellidos -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="space-y-1.5">
-          <label class="text-sm font-semibold text-slate-700">Primer apellido</label>
-          <input
-            type="text"
-            formControlName="last_name"
-            placeholder="Ej: Pérez"
-            class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-          />
-        </div>
-        <div class="space-y-1.5">
-          <label class="text-sm font-semibold text-slate-700">Segundo apellido (opcional)</label>
-          <input
-            type="text"
-            formControlName="last_name2"
-            placeholder="Ej: Ramírez"
-            class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-          />
-        </div>
-      </div>
-
-      <!-- Nombre de usuario -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-semibold text-slate-700">Nombre de usuario</label>
-        <input
-          type="text"
-          formControlName="username"
-          placeholder="Ej: juan.perez"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-        />
-      </div>
-
-      <!-- Contraseña -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-semibold text-slate-700">Contraseña</label>
-        <input
-          type="password"
-          formControlName="password"
-          placeholder="Mínimo 6 caracteres"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none"
-        />
-      </div>
-    </form>
-
-    <!-- Footer fijo -->
-    <div
-      class="p-4 border-t bg-white flex flex-col sm:flex-row justify-end sm:justify-between gap-3 sm:gap-2 sticky bottom-0"
-    >
-      <button
-        type="button"
-        class="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all"
-        (click)="close()"
+    <!-- Rol -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Rol</label>
+      <select
+        formControlName="id_role"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
       >
-        Cancelar
-      </button>
-      <button
-        type="submit"
-        class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all"
-        [disabled]="form.invalid"
-        (click)="submit()"
-      >
-        {{ editing() ? 'Actualizar' : 'Crear' }}
-      </button>
+        <option [ngValue]="null" disabled>Selecciona un rol</option>
+        <option *ngFor="let r of roles()" [ngValue]="r.id_role">
+          {{ r.name }}
+        </option>
+      </select>
     </div>
+
+    <!-- Nombre -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Nombre</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ej: Juan"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+      />
+    </div>
+
+    <!-- Apellidos -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Primer apellido</label>
+        <input
+          type="text"
+          formControlName="last_name"
+          placeholder="Ej: Pérez"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Segundo apellido (opcional)</label>
+        <input
+          type="text"
+          formControlName="last_name2"
+          placeholder="Ej: Ramírez"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        />
+      </div>
+    </div>
+
+    <!-- Usuario -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Nombre de usuario</label>
+      <input
+        type="text"
+        formControlName="username"
+        placeholder="Ej: juan.perez"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+      />
+    </div>
+
+    <!-- Contraseña -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Contraseña</label>
+      <input
+        type="password"
+        formControlName="password"
+        placeholder="Mínimo 6 caracteres"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+      />
+    </div>
+  </form>
+
+  <!-- Footer -->
+  <div
+    class="p-4 border-t bg-white flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0"
+  >
+    <button
+      type="button"
+      class="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all"
+      (click)="close()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="submit"
+      class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all"
+      [disabled]="form.invalid"
+      (click)="submit()"
+    >
+      {{ editing() ? 'Actualizar' : 'Crear' }}
+    </button>
   </div>
 </div>

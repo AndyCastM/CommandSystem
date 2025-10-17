@@ -5,7 +5,7 @@ import { HttpClient , HttpContext} from '@angular/common/http';
 import { tap, catchError, map, of } from 'rxjs';
 import { SKIP_AUTH_REDIRECT } from '../../core/interceptors/auth-error.interceptor';
 
-export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | 'Cocinero' | 'Bartender';
+export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero';
 
 export interface LoginResponse {
   access_token: string; 
@@ -22,9 +22,22 @@ export interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private cookies = inject(CookieService);
-  currentUser = signal<any | null>(null);
+  // store only the user object (that's what we persist in the cookie and set on login)
+  currentUser = signal<LoginResponse['user'] | null>(null);
 
   apiUrl = 'http://localhost:3000/api'; 
+
+  constructor() {
+    console.log('Cookies disponibles:', this.cookies.getAll());
+    const saved = readUserCookie(this.cookies);
+    if (saved) {
+      console.log('Usuario cargado desde cookie:', saved);
+      this.currentUser.set(saved);
+    } else {
+      console.log('No se encontró usuario en cookie');
+    }
+  }
+
 
   login(username: string, password: string) {
     return this.http.post<any>(`${this.apiUrl}/auth/login`, { username, password })
@@ -53,7 +66,7 @@ export class AuthService {
   ensureSession$() {
     if (this.currentUser()) return of(this.currentUser());
     return this.http.get('/api/auth/me', { withCredentials: true }).pipe(
-      tap(u => this.currentUser.set(u)),
+      tap(u => this.currentUser.set(u as any)),
       catchError(() => of(null))
     );
   }

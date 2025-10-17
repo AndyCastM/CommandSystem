@@ -1,6 +1,6 @@
 <div class="max-w-6xl mx-auto">
   <!-- Encabezado -->
-  <div class="flex items-center justify-between mb-4">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
     <div>
       <div class="text-sm text-slate-500">Admin / <span class="text-slate-700">Productos</span></div>
       <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Productos</h1>
@@ -8,13 +8,13 @@
 
     <button type="button"
             (click)="openCreate()"
-            class="mb-2 md:mb-0 bg-[#16a3bd] px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-white rounded-full hover:shadow-lg hover:bg-[#283996]">
+            class="w-full md:w-auto bg-[#16a3bd] px-5 py-2 text-sm font-medium tracking-wide text-white rounded-full shadow-sm hover:shadow-lg hover:bg-[#283996] transition">
       Nuevo Producto
     </button>
   </div>
 
   <!-- Métricas por categoría -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 px-2 sm:px-0">
     <ng-container *ngFor="let m of metrics()">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between px-4 pt-3">
@@ -35,7 +35,7 @@
 
   <!-- Filtros + lista -->
   <div class="mb-4">
-    <div class="flex items-center gap-3">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
       <div class="relative flex-1">
         <input
           [ngModel]="search()"
@@ -44,14 +44,15 @@
           placeholder="Buscar producto"
           class="w-full bg-white rounded-xl border border-slate-200 px-10 py-2.5 outline-none focus:ring-2 focus:ring-sky-200"
         />
-        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/>
         </svg>
       </div>
 
       <select
-        class="bg-white rounded-xl border border-slate-200 px-3 py-2.5 outline-none"
+        class="bg-white rounded-xl border border-slate-200 px-3 py-2.5 outline-none w-full sm:w-auto"
         [ngModel]="selectedCategory()"
         (ngModelChange)="selectedCategory.set($event)"
       >
@@ -60,9 +61,10 @@
       </select>
     </div>
 
+
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 mt-4 overflow-hidden">
       <!-- Header tabla -->
-      <div class="grid grid-cols-[120px_1fr_140px_160px] px-4 py-3 text-sm font-medium text-slate-500">
+      <div class="hidden md:grid grid-cols-[120px_1fr_140px_160px] px-4 py-3 text-sm font-medium text-slate-500">
         <div>Imagen</div>
         <div>Nombre</div>
         <div>Estado</div>
@@ -71,7 +73,9 @@
 
       <div class="divide-y">
         <ng-container *ngFor="let p of filtered(); trackBy: trackById">
-          <div class="grid grid-cols-[120px_1fr_140px_160px] items-center px-4 py-3">
+          <!-- 🖥️ Vista Desktop -->
+          <div class="hidden md:grid grid-cols-[120px_1fr_140px_160px] items-center px-4 py-3">
+            <!-- Imagen -->
             <div class="w-[90px] h-[64px] rounded-xl overflow-hidden ring-1 ring-slate-200 bg-slate-50">
               <img
                 [ngSrc]="img(p)"
@@ -81,14 +85,18 @@
               />
             </div>
 
+            <!-- Nombre -->
             <div class="pr-4">
               <div class="font-medium">
                 {{ p.name }}
-                <span class="text-slate-500">– {{ p.base_price | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <span class="text-slate-500">
+                  – {{ p.base_price | currency:'MXN':'symbol':'1.0-0' }}
+                </span>
               </div>
               <div class="text-xs text-slate-500">{{ p.category }} · {{ p.area }}</div>
             </div>
 
+            <!-- Estado -->
             <div>
               <span
                 class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm ring-1"
@@ -106,6 +114,7 @@
               </span>
             </div>
 
+            <!-- Acciones -->
             <div class="flex items-center justify-end gap-2">
               <!-- Editar -->
               <button (click)="openEdit(p)"
@@ -117,20 +126,71 @@
                 </svg>
               </button>
 
-            <label class="inline-flex items-center cursor-pointer select-none">
-              <input type="checkbox" class="sr-only"
-                    [checked]="p.is_active === 1"
-                    (change)="toggleAvailability(p)" />
-              <span class="relative w-10 h-6 rounded-full transition
-                          bg-slate-300"
-                    [class.bg-indigo-600]="p.is_active === 1">
-                <span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                      [class.translate-x-4]="p.is_active === 1"></span>
-              </span>
-            </label>
+              <!-- Toggle -->
+              <label class="inline-flex items-center cursor-pointer select-none">
+                <input type="checkbox" class="sr-only"
+                      [checked]="p.is_active === 1"
+                      (change)="toggleAvailability(p)" />
+                <span class="relative w-10 h-6 rounded-full transition bg-slate-300"
+                      [class.bg-indigo-600]="p.is_active === 1">
+                  <span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                        [class.translate-x-4]="p.is_active === 1"></span>
+                </span>
+              </label>
+            </div>
+          </div>
 
+          <!-- 📱 Vista Móvil -->
+          <div class="md:hidden p-4 flex flex-col gap-2 border-b">
+            <div class="flex items-center gap-3">
+              <img [ngSrc]="img(p)" width="80" height="80"
+                  class="w-20 h-16 rounded-xl object-cover ring-1 ring-slate-200" />
+              <div>
+                <div class="font-medium text-slate-800">
+                  {{ p.name }}
+                  <span class="text-slate-500 text-sm">
+                    – {{ p.base_price | currency:'MXN':'symbol':'1.0-0' }}
+                  </span>
+                </div>
+                <div class="text-xs text-slate-500">{{ p.category }} · {{ p.area }}</div>
+              </div>
             </div>
 
+            <div class="flex items-center justify-between mt-2">
+              <span
+                class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm ring-1"
+                [class.bg-green-50]="p.is_active === 1"
+                [class.text-green-700]="p.is_active === 1"
+                [class.ring-green-200]="p.is_active === 1"
+                [class.bg-rose-50]="p.is_active !== 1"
+                [class.text-rose-700]="p.is_active !== 1"
+                [class.ring-rose-200]="p.is_active !== 1">
+                <span class="w-2 h-2 rounded-full"
+                      [class.bg-green-500]="p.is_active === 1"
+                      [class.bg-rose-500]="p.is_active !== 1"></span>
+                {{ p.is_active === 1 ? 'Disponible' : 'No Disponible' }}
+              </span>
+
+              <div class="flex items-center gap-2">
+                <button (click)="openEdit(p)" class="p-2 hover:bg-slate-100 rounded-lg">
+                  <svg class="w-5 h-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 0 0 .707-.293l9.9-9.9a2 2 0 0 0 0-2.828l-1.172-1.172a2 2 0 0 0-2.828 0l-9.9 9.9A1 1 0 0 0 4 15.414V20z"/>
+                  </svg>
+                </button>
+
+                <label class="inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" class="sr-only"
+                        [checked]="p.is_active === 1"
+                        (change)="toggleAvailability(p)" />
+                  <span class="relative w-10 h-6 rounded-full transition bg-slate-300"
+                        [class.bg-indigo-600]="p.is_active === 1">
+                    <span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                          [class.translate-x-4]="p.is_active === 1"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
         </ng-container>
 
@@ -139,5 +199,6 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>

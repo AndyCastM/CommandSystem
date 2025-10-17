@@ -1,115 +1,119 @@
 <div class="max-w-6xl mx-auto">
-  <!-- header + CTA -->
-  <div class="flex items-center justify-between mb-4">
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
     <div>
-      <div class="text-sm text-slate-500">Admin / <span class="text-slate-700">Sucursales</span></div>
-      <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Sucursales</h1>
+      <div class="text-sm text-slate-500">
+        Admin / <span class="text-slate-700">Sucursales</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mt-1">
+        Gestión de Sucursales
+      </h1>
     </div>
+
     <button type="button"
-            (click)="openCreate()">
-      <span 
-      class="mb-2 md:mb-0 bg-[#16a3bd] px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-white rounded-full hover:shadow-lg hover:bg-gray-500"
-        >Nueva Sucursal</span>
+            (click)="openCreate()"
+            class="w-full md:w-auto bg-[#16a3bd] px-5 py-2 text-sm font-medium tracking-wide text-white rounded-full shadow-sm hover:shadow-lg hover:bg-[#283996] transition">
+      Nueva Sucursal
     </button>
   </div>
 
-  <!-- métricas -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-    <mat-card class="metric-card border border-slate-200">
+  <!-- MÉTRICAS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-2xl border border-slate-400 shadow-sm p-5 flex flex-col gap-2">
       <div class="flex items-center justify-between">
-        <div class="font-semibold">Total Sucursales</div>
-        <span class="material-symbols-outlined text-slate-400">corporate_fare</span>
+        <span class="font-medium text-slate-700">Total Sucursales</span>
+        <span class="material-symbols-outlined text-sky-500">corporate_fare</span>
       </div>
-      <div class="text-4xl font-bold mt-2">{{ total() }}</div>
-    </mat-card>
+      <div class="text-4xl font-bold text-slate-800">{{ total() }}</div>
+    </div>
 
-    <mat-card class="metric-card border-l-4 border-green-500 border border-slate-200">
+    <div class="bg-white rounded-2xl border-l-4 border-green-500 border border-green-400 shadow-sm p-5 flex flex-col gap-2">
       <div class="flex items-center justify-between">
-        <div class="font-semibold text-green-600">Activas</div>
-        <span class="material-symbols-outlined text-green-500">corporate_fare</span>
+        <span class="font-medium text-green-700">Activas</span>
+        <span class="material-symbols-outlined text-green-500">check_circle</span>
       </div>
-      <div class="text-4xl font-bold mt-2 text-green-700">{{ activas() }}</div>
-    </mat-card>
+      <div class="text-4xl font-bold text-green-700">{{ activas() }}</div>
+    </div>
 
-    <mat-card class="metric-card border-l-4 border-red-500 border border-slate-200">
+    <div class="bg-white rounded-2xl border-l-4 border-rose-500 border border-slate-200 shadow-sm p-5 flex flex-col gap-2">
       <div class="flex items-center justify-between">
-        <div class="font-semibold text-red-600">Inactivas</div>
-        <span class="material-symbols-outlined text-red-500">corporate_fare</span>
+        <span class="font-medium text-rose-700">Inactivas</span>
+        <span class="material-symbols-outlined text-rose-500">cancel</span>
       </div>
-      <div class="text-4xl font-bold mt-2 text-red-700">{{ inactivas() }}</div>
-    </mat-card>
+      <div class="text-4xl font-bold text-rose-700">{{ inactivas() }}</div>
+    </div>
   </div>
 
-  <!-- Filtro -->
-  <div class="mb-4">
-    <mat-form-field  class="w-64">
-      <mat-select
-        [value]="estado()"
-        (valueChange)="estado.set($event)"
-        [panelClass]="'filter-panel'"
-      >
-        <mat-option value="all" disabled="true">Estado</mat-option>
-        <mat-option value="active">Activas</mat-option>
-        <mat-option value="inactive">Inactivas</mat-option>
-      </mat-select>
+  <!-- Filtro --> 
+   <div class="mb-4"> 
+    <mat-form-field class="w-64"> 
+      <mat-select [value]="estado()" (valueChange)="estado.set($event)" [panelClass]="'filter-panel'" > 
+        <mat-option value="all" disabled="true">Estado</mat-option> 
+        <mat-option value="active">Activas</mat-option> 
+        <mat-option value="inactive">Inactivas</mat-option> 
+      </mat-select> 
     </mat-form-field>
   </div>
 
-
-  <!-- lista -->
+  <!-- LISTA DE SUCURSALES -->
   <div class="space-y-4">
-    <div *ngFor="let b of rows()" class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <!-- header card -->
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-3">
-            <a class="text-[#1f3b6f] font-semibold hover:underline">{{ b.name }}</a>
+    <div *ngFor="let b of rows()"
+         class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 hover:shadow-md transition-all">
+      
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex items-center flex-wrap gap-2">
+            <h2 class="text-lg font-semibold text-[#1f3b6f] hover:underline cursor-pointer">
+              {{ b.name }}
+            </h2>
             <span
               class="px-2 py-0.5 rounded-full text-xs font-medium"
               [class.bg-green-100]="b.is_active"
               [class.text-green-700]="b.is_active"
-              [class.bg-red-100]="!b.is_active"
-              [class.text-red-700]="!b.is_active"
-            >
+              [class.bg-rose-100]="!b.is_active"
+              [class.text-rose-700]="!b.is_active">
               {{ b.is_active ? 'Activa' : 'Inactiva' }}
             </span>
           </div>
 
+          <!-- Datos -->
           <div class="mt-3 space-y-2 text-slate-700">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-slate-500 text-base">location_on</span>
-              <span class="text-sm">
-                {{ b.street || '—' }} {{ b.num_ext || '' }}, {{ b.colony || '—' }}
-              </span>
+            <div class="flex items-center gap-2 text-sm">
+              <span class="material-symbols-outlined text-slate-400 text-base">location_on</span>
+              <span>{{ b.street || '—' }} {{ b.num_ext || '' }}, {{ b.colony || '—' }}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-slate-500 text-base">call</span>
-              <span class="text-sm">{{ b.phone || '—' }}</span>
+            <div class="flex items-center gap-2 text-sm">
+              <span class="material-symbols-outlined text-slate-400 text-base">call</span>
+              <span>{{ b.phone || '—' }}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-slate-500 text-base">mail</span>
-              <span class="text-sm">{{ b.email || '—' }}</span>
+            <div class="flex items-center gap-2 text-sm">
+              <span class="material-symbols-outlined text-slate-400 text-base">mail</span>
+              <span>{{ b.email || '—' }}</span>
             </div>
           </div>
         </div>
 
-        <!-- acciones -->
-        <div class="flex items-start gap-3">
-          <button class="icon-btn text-slate-500 hover:text-slate-700"
-                [disabled]="isPending(b.id_branch)"
-                [attr.aria-label]="b.is_active ? 'Desactivar' : 'Activar'"
-                (click)="toggleActive(b)">
-          <span class="material-symbols-outlined"
-                [class.text-green-600]="!b.is_active"
-                [class.text-red-600]="b.is_active">
-            {{b.is_active ? 'visibility_off' : 'visibility' }}
-          </span>
-        </button>
+        <!-- Acciones -->
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <!-- Activar/desactivar -->
+          <button
+            class="p-2 rounded-lg hover:bg-slate-100 transition"
+            [disabled]="isPending(b.id_branch)"
+            (click)="toggleActive(b)">
+            <span
+              class="material-symbols-outlined text-xl"
+              [class.text-green-600]="!b.is_active"
+              [class.text-rose-600]="b.is_active">
+              {{ b.is_active ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
 
-
-          <button class="icon-btn text-slate-500 hover:text-slate-700"
-                  aria-label="Editar" (click)="openEdit(b)">
-            <span class="material-symbols-outlined">edit</span>
+          <!-- Editar -->
+          <button
+            class="p-2 rounded-lg hover:bg-slate-100 transition"
+            (click)="openEdit(b)">
+            <span class="material-symbols-outlined text-slate-600">edit</span>
           </button>
         </div>
       </div>

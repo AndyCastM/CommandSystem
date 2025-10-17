@@ -1,14 +1,14 @@
 <div class="max-w-6xl mx-auto">
   <!-- Encabezado -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
     <div>
       <div class="text-sm text-slate-500">
-        {{ currentUser.role === 'admin' ? 'Admin' : 'Gerente' }}
+        {{ (currentUser()?.role ) === 'Admin' ? 'Admin' : 'Gerente' }}
         / <span class="text-slate-700">Usuarios</span>
       </div>
       <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Usuarios</h1>
       <p class="text-sm text-slate-500">
-        {{ currentUser.role === 'admin'
+        {{ currentUser()?.role === 'Admin'
           ? 'Usuarios de gerentes de sucursales'
           : 'Usuarios de tu sucursal' }}
       </p>
@@ -16,7 +16,7 @@
 
     <button type="button"
             (click)="openCreate()"
-            class="mb-2 md:mb-0 bg-[#16a3bd] px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-white rounded-full hover:shadow-lg hover:bg-[#283996]">
+            class="w-full md:w-auto bg-[#16a3bd] px-5 py-2 text-sm font-medium tracking-wide text-white rounded-full shadow-sm hover:shadow-lg hover:bg-[#283996] transition">
       Nuevo Usuario
     </button>
   </div>
@@ -28,7 +28,7 @@
       <div>
         <h2 class="text-lg font-semibold text-slate-700">Usuarios</h2>
         <p class="text-slate-500 text-sm">
-          {{ filtered().length }} activos de {{ users().length }} totales
+          {{ users().length }} activos de {{ users().length }} totales
         </p>
       </div>
       <mat-icon class="text-slate-400 text-xl">group</mat-icon>
@@ -58,7 +58,7 @@
         </thead>
         <tbody>
           <tr
-            *ngFor="let u of filtered()"
+            *ngFor="let u of users()"
             class="border-b last:border-0 hover:bg-slate-50 transition-all"
           >
             <td class="py-2 px-4">
@@ -80,21 +80,13 @@
             <td class="py-2 px-4">
               <span
                 [ngClass]="{
-                  'bg-orange-100 text-orange-700': u.id_role === 3,
-                  'bg-purple-100 text-purple-700': u.id_role === 4,
-                  'bg-cyan-100 text-cyan-700': u.id_role === 5
+                  'bg-orange-100 text-orange-700': u.role_name === 'Gerente',
+                  'bg-purple-100 text-purple-700': u.role_name === 'Mesero',
+                  'bg-cyan-100 text-cyan-700': u.role_name === 'Cajero'
                 }"
                 class="px-2 py-1 rounded-full text-xs font-medium"
               >
-                {{
-                  u.id_role === 3
-                    ? 'Mesero'
-                    : u.id_role === 4
-                    ? 'Cocina'
-                    : u.id_role === 5
-                    ? 'Bebidas'
-                    : 'Otro'
-                }}
+                {{ u.role_name }}
               </span>
             </td>
 

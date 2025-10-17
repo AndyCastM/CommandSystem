@@ -1,12 +1,14 @@
-import { Component, OnInit, computed, signal, inject } from '@angular/core';
+import { Component, OnInit, computed, signal, inject , effect} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { UsersService } from '../data-access/users.service';
-import { CreateUser } from '../data-access/user.model';
+import { User } from '../data-access/user.model';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { UserFormComponent } from '../UI/user-form.component';
+import { AuthService } from '../../../../auth/services/auth.service';
+import { Role } from '../../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-users-page',
@@ -14,49 +16,31 @@ import { UserFormComponent } from '../UI/user-form.component';
   imports: [CommonModule, RouterModule, MatIconModule, FormsModule],
   templateUrl: './users-page.html'
 })
-export class UsersPageComponent implements OnInit {
+export class UsersPageComponent {
   private dialog = inject(MatDialog);
+  private auth = inject(AuthService);
+  private usersService = inject(UsersService);
+  currentUser = computed(() => this.auth.currentUser());
+  private role = computed<Role | null>(() => {
+    const user = this.currentUser();
+    if (!user) return null;
+    return (user as any)?.role_name ?? (user as any)?.user?.role_name ?? null;
+  });
 
-  users = signal<CreateUser[]>([]);
+  users = computed<User[]>(() => this.usersService.users());
   search = signal('');
   loading = signal(true);
-
-  currentUser = {
-    role: 'admin', // Cambiar a 'gerente' según el usuario logueado
-    id_company: 1,
-    id_branch: 10
-  };
-
-  constructor(private usersService: UsersService) {}
-
-  ngOnInit() {
-    this.loadUsers();
-  }
-
-  loadUsers() {
-    this.loading.set(true);
-    const params =
-      this.currentUser.role === 'admin'
-        ? { company: this.currentUser.id_company }
-        : { branch: this.currentUser.id_branch };
-
-    this.usersService.getUsers(params).subscribe({
-      next: (res) => {
-        this.users.set(res);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
+  
+  constructor() {
+    effect( async () => {
+      const user = this.currentUser();
+      if (user) {
+        console.log('Usuario actual detectado:', user);
+        await this.usersService.load();
+        this.loading.set(this.usersService.loading());
+      }
     });
   }
-
-  filtered = computed(() => {
-    const s = this.search().toLowerCase();
-    return this.users().filter(
-      (u) =>
-        u.name.toLowerCase().includes(s) ||
-        u.username.toLowerCase().includes(s)
-    );
-  });
 
   async openCreate() {
     const ref = this.dialog.open(UserFormComponent, {
@@ -65,14 +49,14 @@ export class UsersPageComponent implements OnInit {
     });
   }
 
-  editUser(u: CreateUser) {
+  editUser(u: User) {
     console.log('Editar usuario', u);
     // TODO: abrir modal con datos cargados
   }
 
-  deleteUser(u: CreateUser) {
+  deleteUser(u: User) {
     if (confirm(`¿Eliminar usuario ${u.name}?`)) {
-      this.usersService.deleteUser(u.id_role).subscribe(() => this.loadUsers());
+      
     }
   }
 }
