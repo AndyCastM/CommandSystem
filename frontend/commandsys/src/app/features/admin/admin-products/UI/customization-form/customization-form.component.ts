@@ -38,14 +38,15 @@ export class CustomizationFormComponent implements AfterViewChecked, OnDestroy {
    * que aún no tenga la lógica de sincronización multi_select <-> max_selection.
    */
   ngAfterViewChecked(): void {
-    if (!this.options) return;
+    if (!this.options || !this.options.controls.length) return;
     for (const opt of this.options.controls as FormGroup[]) {
       if (!this.wired.has(opt)) {
-        this.wireOption(opt);
+        queueMicrotask(() => this.wireOption(opt)); // async evita doble ejecución
         this.wired.add(opt);
       }
     }
   }
+
 
   private wireOption(opt: FormGroup) {
     const multi = this.getControl<boolean>(opt, 'multi_select');
@@ -72,6 +73,7 @@ export class CustomizationFormComponent implements AfterViewChecked, OnDestroy {
         if ((max.value ?? 1) < 1) max.setValue(1, { emitEvent: false });
       }
     });
+    
     this.subs.push(s);
   }
 

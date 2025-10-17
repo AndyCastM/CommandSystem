@@ -1,0 +1,131 @@
+<div class="w-full flex flex-col gap-4 px-4 pb-6 overflow-y-auto max-h-[80vh] sm:max-h-[70vh] md:max-h-[85vh] custom-scroll">
+
+  <!-- Cada opción -->
+  <div *ngFor="let opt of options.controls; let i = index" [formGroup]="opt"
+       class="max-w-[900px] mx-auto rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 p-5">
+
+    <!-- Header -->
+    <div class="flex justify-between items-start mb-3">
+      <div class="flex-1">
+        <input
+          class="border rounded-lg px-3 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-full z-10 relative"
+          placeholder="Nombre de opción (ej: Tamaño)"
+          [formControl]="getControl(opt, 'name')" />
+      </div>
+
+      <button
+        type="button"
+        (click)="removeOption.emit(i)"
+        class="ml-2 flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-medium bg-rose-50 border border-transparent hover:border-rose-200 rounded-md px-2 py-1 transition-all duration-150">
+          <mat-icon class="!text-base leading-none align-middle">delete</mat-icon>
+      </button>
+    </div>
+
+    <!-- Configuración básica -->
+    <div class="flex flex-wrap gap-3 text-xs text-slate-600 mb-4">
+      <label class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-md">
+        <input type="checkbox" formControlName="is_required" class="accent-sky-500" />
+        <span>Requerido</span>
+      </label>
+
+      <label class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-md">
+        <input type="checkbox" formControlName="multi_select" class="accent-sky-500" />
+        <span>Multi-selección</span>
+      </label>
+
+      <label class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-md">
+        <span>Máx selec:</span>
+        <input type="number" min="1"
+               formControlName="max_selection"
+               class="w-16 border rounded-md px-1 text-right focus:ring-1 focus:ring-sky-200 disabled:bg-slate-100 disabled:text-slate-400" />
+      </label>
+    </div>
+
+    <!-- Valores -->
+    <div class="bg-slate-50 rounded-xl p-3 mb-3" formArrayName="values">
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <mat-icon class="!text-base text-sky-600 leading-none">list</mat-icon>
+          <span>Valores</span>
+        </h4>
+        <button type="button"
+                (click)="addValue.emit(i)"
+                class="text-xs flex items-center gap-1 text-sky-600 hover:text-sky-800 font-medium">
+          <mat-icon class="!text-base leading-none">add</mat-icon>
+          <span>Añadir valor</span>
+        </button>
+      </div>
+
+        <div *ngFor="let val of getArray(opt, 'values').controls; let j = index" [formGroupName]="j"
+             class="flex flex-wrap items-center gap-3">
+          <input
+            formControlName="name"
+            type="text"
+            autocomplete="off"
+            class="border rounded-lg px-3 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-full z-10 relative"
+            placeholder="Ej: Grande, Mediano, Chico" />
+
+          <!-- Precio adicional (>= 0) -->
+          <div class="relative flex items-center min-w-[120px]">
+            <span class="absolute left-2 text-slate-400 text-xs">$</span>
+            <input
+              class="border rounded-lg pl-5 pr-2 py-2 text-sm w-full text-right focus:ring-2 focus:ring-sky-100"
+              type="number" step="0.1" min="0"
+              placeholder="+$"
+              [formControl]="getControl(val,'extra_price')" />
+          </div>
+
+          <!-- Eliminar valor -->
+          <button type="button"
+                  (click)="removeValue.emit({optIdx: i, valIdx: j})"
+                  class="text-rose-500 hover:text-rose-700 transition-colors">
+            <mat-icon class="icon-sm">close</mat-icon>
+          </button>
+        </div>
+     </div>
+
+    <!-- Tiers -->
+    <div *ngIf="opt.get('multi_select')?.value" class="bg-slate-50 rounded-xl p-3" formArrayName="tiers">
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <mat-icon class="!text-base text-sky-600 leading-none">layers</mat-icon>
+          <span>Precios por cantidad seleccionada</span>
+        </h4>
+        <button type="button"
+                (click)="addTier.emit(i)"
+                class="text-xs flex items-center gap-1 text-sky-600 hover:text-sky-800 font-medium">
+          <mat-icon class="!text-base leading-none">add</mat-icon>
+          <span>Añadir nivel</span>
+        </button>
+      </div>
+
+      <div *ngFor="let t of getArray(opt, 'tiers').controls; let k = index" [formGroupName]="k"
+           class="flex flex-wrap items-center gap-3">
+        <input type="number" min="1" formControlName="selection_count"
+               class="border rounded-md px-2 py-2 text-sm w-24 text-right focus:ring-2 focus:ring-sky-100"
+               placeholder="Cant." />
+
+        <div class="relative flex items-center min-w-[120px]">
+          <span class="absolute left-2 text-slate-400 text-xs pointer-events-none select-none">$</span>
+          <input type="number" step="0.01" min="0" formControlName="extra_price"
+                 class="border rounded-md pl-5 pr-2 py-2 text-sm w-full text-right focus:ring-2 focus:ring-sky-100"
+                 placeholder="+$" />
+        </div>
+
+        <button type="button"
+                (click)="removeTier.emit({ optIdx: i, tierIdx: k })"
+                class="text-rose-500 hover:text-rose-700 flex items-center justify-center px-2">
+          <mat-icon class="!text-base leading-none">close</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón añadir opción -->
+  <button type="button"
+          (click)="addOption.emit()"
+          class="flex items-center justify-center w-full border-2 border-dashed border-sky-200 rounded-xl py-3 text-sky-600 hover:border-sky-400 hover:text-sky-800 transition-all duration-200 text-sm font-medium">
+    <mat-icon class="!text-base leading-none">add_circle</mat-icon>
+    <span>Añadir nueva opción</span>
+  </button>
+</div>

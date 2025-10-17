@@ -1,0 +1,137 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Encabezado -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <div class="text-sm text-slate-500">
+        {{ currentUser.role === 'admin' ? 'Admin' : 'Gerente' }}
+        / <span class="text-slate-700">Usuarios</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Usuarios</h1>
+      <p class="text-sm text-slate-500">
+        {{ currentUser.role === 'admin'
+          ? 'Usuarios de gerentes de sucursales'
+          : 'Usuarios de tu sucursal' }}
+      </p>
+    </div>
+
+    <button type="button"
+            (click)="openCreate()"
+            class="mb-2 md:mb-0 bg-[#16a3bd] px-5 py-2 text-sm shadow-sm font-medium tracking-wider border text-white rounded-full hover:shadow-lg hover:bg-[#283996]">
+      Nuevo Usuario
+    </button>
+  </div>
+
+  <!-- Tarjeta principal -->
+  <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 mb-8">
+    <!-- Métrica -->
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-700">Usuarios</h2>
+        <p class="text-slate-500 text-sm">
+          {{ filtered().length }} activos de {{ users().length }} totales
+        </p>
+      </div>
+      <mat-icon class="text-slate-400 text-xl">group</mat-icon>
+    </div>
+
+    <!-- Buscador -->
+    <div class="mb-4">
+      <input
+        type="text"
+        [(ngModel)]="search"
+        placeholder="Buscar usuario por nombre o rol"
+        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+      />
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto rounded-xl border border-slate-100 shadow-md">
+      <table class="min-w-full text-sm">
+        <thead class="text-slate-600 text-xs border-b bg-slate-50">
+          <tr>
+            <th class="text-left py-2 px-4">Usuario</th>
+            <th class="text-left py-2 px-4">Rol</th>
+            <th class="text-left py-2 px-4">Estado</th>
+            <th class="text-left py-2 px-4">Fecha de creación</th>
+            <th class="text-center py-2 px-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let u of filtered()"
+            class="border-b last:border-0 hover:bg-slate-50 transition-all"
+          >
+            <td class="py-2 px-4">
+              <div class="flex items-center gap-2">
+                <div
+                  class="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold uppercase"
+                >
+                  {{ u.name[0] }}{{ u.last_name[0] }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-800">
+                    {{ u.name }} {{ u.last_name }}
+                  </div>
+                  <div class="text-xs text-slate-500">@{{ u.username }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="py-2 px-4">
+              <span
+                [ngClass]="{
+                  'bg-orange-100 text-orange-700': u.id_role === 3,
+                  'bg-purple-100 text-purple-700': u.id_role === 4,
+                  'bg-cyan-100 text-cyan-700': u.id_role === 5
+                }"
+                class="px-2 py-1 rounded-full text-xs font-medium"
+              >
+                {{
+                  u.id_role === 3
+                    ? 'Mesero'
+                    : u.id_role === 4
+                    ? 'Cocina'
+                    : u.id_role === 5
+                    ? 'Bebidas'
+                    : 'Otro'
+                }}
+              </span>
+            </td>
+
+            <td class="py-2 px-4">
+              <span
+                class="flex items-center gap-1 text-xs"
+                [ngClass]="u.is_active ? 'text-green-600' : 'text-rose-600'"
+              >
+                <span
+                  class="h-2 w-2 rounded-full"
+                  [ngClass]="u.is_active ? 'bg-green-500' : 'bg-rose-500'"
+                ></span>
+                {{ u.is_active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+
+            <td class="py-2 px-4 text-slate-600 text-xs">
+              {{ u.created_at | date: 'dd/MM/yy' }}
+            </td>
+
+            <td class="py-2 px-4 flex justify-center gap-2">
+              <button
+                (click)="editUser(u)"
+                class="text-slate-500 hover:text-sky-600"
+              >
+                <mat-icon class="text-base">edit</mat-icon>
+              </button>
+              <button
+                (click)="deleteUser(u)"
+                class="text-slate-500 hover:text-rose-600"
+              >
+                <mat-icon class="text-base">delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

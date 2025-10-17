@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class AdminShellComponent {
   nav = [
+    { icon: 'people', label: 'Usuarios', path: '/admin/usuarios' },
     { icon: 'inventory_2', label: 'Productos', path: '/admin/productos' },
     { icon: 'apartment', label: 'Sucursales', path: '/admin/sucursales' },
     { icon: 'settings', label: 'Configuración', path: '/admin/configuracion' },

@@ -8,7 +8,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Branch } from '../../data-access/branches.models'; 
 import { BranchesApi } from '../../data-access/branches.api'; 
 import { BranchDialogComponent, DialogData } from '../../UI/branch-dialog.component'; 
-import { ToastService } from '../../../../shared/UI/toast.service';
+import { ToastService } from '../../../../../shared/UI/toast.service';
 import { firstValueFrom } from 'rxjs';
 
 type FilterState = 'all' | 'active' | 'inactive';
