@@ -27,12 +27,6 @@ export class UsersPageComponent {
   private toast = inject(ToastService);
 
   currentUser = computed(() => this.auth.currentUser());
-  private role = computed<Role | null>(() => {
-    const user = this.currentUser();
-    if (!user) return null;
-    return (user as any)?.role_name ?? (user as any)?.user?.role_name ?? null;
-  });
-
   users = computed<User[]>(() => this.usersService.users());
   search = signal('');
   loading = signal(true);
