@@ -152,6 +152,17 @@ export class UsersService {
 
         return formatResponse(`Usuario ${user.username} activado correctamente.`);
     }
+
+    async getRoles() {
+        const roles = await this.prisma.roles.findMany({
+            where: {
+                name: {
+                    not: 'Superadmin' // Excluir Superadmin
+                }
+            }
+        });
+        return roles;
+    }
 }
 
 

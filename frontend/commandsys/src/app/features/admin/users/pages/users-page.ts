@@ -6,9 +6,10 @@ import { UsersService } from '../data-access/users.service';
 import { User } from '../data-access/user.model';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { UserFormComponent } from '../UI/user-form.component';
+import { UserFormComponent, UserDialogData } from '../UI/user-form.component';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { Role } from '../../../../auth/services/auth.service';
+import { CreateUser } from '../data-access/user.model';
 
 @Component({
   selector: 'app-users-page',
@@ -43,15 +44,19 @@ export class UsersPageComponent {
   }
 
   async openCreate() {
+    const data: UserDialogData = { mode: 'create' };
     const ref = this.dialog.open(UserFormComponent, {
+      data,
       width: '720px',
       autoFocus: false
     });
   }
 
-  editUser(u: User) {
-    console.log('Editar usuario', u);
-    // TODO: abrir modal con datos cargados
+  async openEditUser(user: User) {
+    const ref = this.dialog.open(UserFormComponent, {
+      width: '720px',
+      data: { mode: 'edit', value: user } as const,
+    });
   }
 
   deleteUser(u: User) {

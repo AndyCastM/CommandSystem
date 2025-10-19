@@ -23,6 +23,12 @@ export class BranchesApi {
     }
   }
 
+  async getAll(){
+    return await firstValueFrom(
+      this.http.get<Branch[]>(`${this.baseUrl}/branches`, {  withCredentials: true })
+    );
+  }
+  
   async create(dto: CreateBranchDto) {
     const created = await firstValueFrom(
       this.http.post<Branch>(`${this.baseUrl}/branches`, dto, { withCredentials: true })

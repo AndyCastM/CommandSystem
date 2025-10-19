@@ -8,14 +8,16 @@ import { ProductDialogComponent } from '../UI/product-dialog/product-dialog.comp
 import { ProductService } from '../data-access/products.service';
 import type { CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
 import { take } from 'rxjs';
+import { MatOption, MatSelect } from '@angular/material/select';
 
 @Component({
   standalone: true,
   selector: 'app-products-admin',
-  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule],
+  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption],
   templateUrl: './products-admin.component.html',
 })
 export class ProductsAdminComponent {
+[x: string]: unknown;
   private dialog = inject(MatDialog);
   productSrv = inject(ProductService);
 
@@ -112,6 +114,15 @@ export class ProductsAdminComponent {
   // Manejo de error en <img> (caer a placeholder y evitar loops)
   onImgError(p: CompanyProduct, evt: Event) {
     (evt?.target as HTMLImageElement).src = this.placeholderDataUrl;
+  }
+
+  onCategoryChange(value: string) {
+    if (value === 'Todas') {
+      this.selectedCategory.set('Todas');
+      // no necesitas tocar filtered(); tu computed ya respeta 'Todas'
+    } else {
+      this.selectedCategory.set(value);
+    }
   }
 
   // Dialogs

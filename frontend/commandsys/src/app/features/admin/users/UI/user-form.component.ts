@@ -1,22 +1,35 @@
-import { Component, Input , inject} from '@angular/core';
+import { Component, Input , inject, signal, Inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { CreateUser } from '../data-access/user.model';
 import { UsersService } from '../data-access/users.service';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { RolesService } from '../../../../core/services/roles.service';
+import { BranchesApi } from '../../branches/data-access/branches.api';
+
+export type UserDialogMode = 'create' | 'edit';
+export type UserDialogData = { mode: UserDialogMode; value?: CreateUser };
 
 @Component({
   selector: 'app-user-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatDialogModule, MatSelectModule],
   templateUrl: './user-form.component.html'
 })
 export class UserFormComponent {
+
+  // === Signals ===
+  editing = signal<boolean>(false);
+  branches = signal<any[]>([]);
+  roles = signal<any[]>([]);
+  saving = signal(false);
+
   @Input() editingUser?: CreateUser;
   private fb = inject(FormBuilder);
-
-  saving = false;
+  private rolesSrv = inject(RolesService);
+  private branchesSrv = inject(BranchesApi);
 
   form = this.fb.group({
     id_branch: [null],
@@ -28,41 +41,57 @@ export class UserFormComponent {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    @Inject(MAT_DIALOG_DATA) public data: UserDialogData,
+    private ref: MatDialogRef<UserFormComponent>
+  ) {
+    this.editing.set(data?.mode === 'edit');
+  }
 
-  // Simulaciones de listas (puedes conectar con tus APIs)
-  companies = () => [{ id_company: 1, name: 'Wyndham Garden' }];
-  branches = () => [{ id_branch: 10, name: 'Los Mochis' }];
-  roles = () => [
-    { id_role: 1, name: 'Gerente' }, 
-  ];
+  // --- Getters --- //
+  title = computed(() => (this.editing() ? 'Editar Usuario' : 'Nuevo Usuario'));
+  subtitle = computed(() => (this.editing() ? 'Modifica los datos del usuario' : 'Completa los datos del usuario para registrarlo en el sistema.'));
 
+  ngOnInit() {
+    this.loadRoles();
+    this.loadBranches();
+  }
+
+  // === Carga desde el backend usando Signals ===
+  loadRoles() {
+    this.rolesSrv.getRoles().subscribe(roles => {
+      this.roles.set(roles);
+    });
+  }
+
+  loadBranches() {
+    // Cargar sucursales
+    this.branchesSrv.getAll().then(branches => {
+      this.branches.set(branches);
+    });
+  }
 
   showBranch() {
     return true;
   }
 
-  editing() {
-    return !!this.editingUser;
-  }
+  close() { this.ref.close(); }
 
-  close() {
-    window.history.back(); // o cerrar modal/dialog
-  }
 
   submit() {
     if (this.form.invalid) return;
-    this.saving = true;
+    this.saving.set(true);
     const data: CreateUser = this.form.value as unknown as CreateUser;
 
     this.usersService.createUser(data).subscribe({
       next: () => {
-        this.saving = false;
+        this.saving.set(false);
         alert('Usuario creado exitosamente');
         this.close();
       },
       error: err => {
-        this.saving = false;
+        this.saving.set(false);
         console.error(err);
         alert('Error al crear usuario');
       }

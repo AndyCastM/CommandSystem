@@ -1,6 +1,8 @@
 <!-- Contenedor del formulario dentro del modal -->
 <div
-  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden w-full sm:w-[450px] md:w-[600px] lg:w-[700px] max-h-[90vh]"
+  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden
+         w-full sm:w-[380px] md:w-[520px] lg:w-[560px] max-w-[92vw]
+         max-h-[85dvh]"
 >
   <!-- Encabezado -->
   <div
@@ -10,10 +12,10 @@
       class="text-2xl font-bold text-slate-800 flex items-center gap-2"
     >
       <mat-icon class="text-sky-600">person_add</mat-icon>
-      {{ editing() ? 'Editar Usuario' : 'Crear Usuario' }}
+      {{ title() }}
     </h2>
     <p class="text-slate-500 text-sm mt-1">
-      Completa los datos del usuario para registrarlo en el sistema.
+      {{ subtitle() }}
     </p>
   </div>
 
@@ -26,29 +28,31 @@
     <!-- Sucursal -->
     <div class="space-y-1.5" *ngIf="showBranch()">
       <label class="text-sm font-semibold text-slate-700">Sucursal</label>
-      <select
+      <mat-select
         formControlName="id_branch"
         class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        [panelClass]="'filter-panel'"
       >
-        <option [ngValue]="null" disabled>Selecciona una sucursal</option>
-        <option *ngFor="let b of branches()" [ngValue]="b.id_branch">
+        <mat-option [value]="null" disabled>Selecciona una sucursal</mat-option>
+        <mat-option *ngFor="let b of branches()" [value]="b.id_branch">
           {{ b.name }}
-        </option>
-      </select>
+        </mat-option>
+      </mat-select>
     </div>
 
     <!-- Rol -->
     <div class="space-y-1.5">
       <label class="text-sm font-semibold text-slate-700">Rol</label>
-      <select
+      <mat-select
         formControlName="id_role"
         class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        [panelClass]="'filter-panel'"
       >
-        <option [ngValue]="null" disabled>Selecciona un rol</option>
-        <option *ngFor="let r of roles()" [ngValue]="r.id_role">
+        <mat-option [value]="null" disabled>Selecciona un rol</mat-option>
+        <mat-option *ngFor="let r of roles()" [value]="r.id_role">
           {{ r.name }}
-        </option>
-      </select>
+        </mat-option>
+      </mat-select>
     </div>
 
     <!-- Nombre -->
@@ -58,7 +62,7 @@
         type="text"
         formControlName="name"
         placeholder="Ej: Juan"
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
       />
     </div>
 
@@ -70,7 +74,7 @@
           type="text"
           formControlName="last_name"
           placeholder="Ej: Pérez"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
         />
       </div>
       <div class="space-y-1.5">
@@ -79,7 +83,7 @@
           type="text"
           formControlName="last_name2"
           placeholder="Ej: Ramírez"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
         />
       </div>
     </div>
@@ -91,18 +95,18 @@
         type="text"
         formControlName="username"
         placeholder="Ej: juan.perez"
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
       />
     </div>
 
     <!-- Contraseña -->
-    <div class="space-y-1.5">
+    <div class="space-y-1.5" *ngIf="!editing()">
       <label class="text-sm font-semibold text-slate-700">Contraseña</label>
       <input
         type="password"
         formControlName="password"
         placeholder="Mínimo 6 caracteres"
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
       />
     </div>
   </form>
@@ -115,16 +119,18 @@
       type="button"
       class="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all"
       (click)="close()"
+      [disabled]="saving()"
     >
       Cancelar
     </button>
     <button
       type="submit"
-      class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all"
-      [disabled]="form.invalid"
-      (click)="submit()"
+      form="userForm"
+      class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+      [disabled]="form.invalid || saving"
     >
-      {{ editing() ? 'Actualizar' : 'Crear' }}
+      <mat-icon *ngIf="saving()" class="animate-spin !text-base">autorenew</mat-icon>
+      {{ saving() ? 'Guardando...' : (editing() ? 'Actualizar' : 'Crear') }}
     </button>
   </div>
 </div>

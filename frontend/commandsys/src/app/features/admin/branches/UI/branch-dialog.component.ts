@@ -1,4 +1,4 @@
-import { Component, Inject, inject, signal } from '@angular/core';
+import { Component, Inject, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 
-import type { Branch } from '../data-access/branches.models';
+import type { Branch, CreateBranchDto } from '../data-access/branches.models';
 
 export type DialogMode = 'create' | 'edit';
 export type DialogData = { mode: DialogMode; value?: Branch };
@@ -27,6 +27,8 @@ export type DialogData = { mode: DialogMode; value?: Branch };
   templateUrl: './branch-dialog.component.html',
 })
 export class BranchDialogComponent {
+
+  editing = signal<boolean>(false);
   private fb = inject(FormBuilder);
   private sb = inject(MatSnackBar);
   saving = signal(false);
@@ -39,6 +41,7 @@ export class BranchDialogComponent {
     private ref: MatDialogRef<BranchDialogComponent>
   ) {
     const v = data.value ?? {} as Branch;
+    this.editing.set(data?.mode === 'edit');
 
     this.form = this.fb.group({
       name:     [v.name ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(80), this.noOnlySpaces]],
@@ -54,6 +57,10 @@ export class BranchDialogComponent {
       logo:     [null], // File | null
     });
   }
+
+  // --- Getters --- //
+  title = computed(() => (this.editing() ? 'Editar Sucursal' : 'Nueva Sucursal'));
+  subtitle = computed(() => (this.editing() ? 'Modifica los datos de la sucursal' : 'Complete los datos de la nueva sucursal'));
 
   // --- Validadores
   noOnlySpaces(ctrl: AbstractControl): ValidationErrors | null {
@@ -108,4 +115,5 @@ export class BranchDialogComponent {
   }
 
   close() { this.ref.close(); }
+
 }

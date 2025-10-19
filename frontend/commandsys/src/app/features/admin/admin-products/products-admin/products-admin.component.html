@@ -51,14 +51,21 @@
         </svg>
       </div>
 
-      <select
-        class="bg-white rounded-xl border border-slate-200 px-3 py-2.5 outline-none w-full sm:w-auto"
+    <div class="inline-block w-auto">
+      <mat-select
+        class="min-w-[160px] max-w-[220px] w-auto bg-white rounded-xl border border-slate-200 px-3 py-2.5 outline-none text-sm text-slate-700"
         [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event)"
+        (ngModelChange)="onCategoryChange($event)"
+        [panelClass]="'filter-panel'"
+        [disableOptionCentering]="true"
       >
-        <option value="Todas">Todas las categorías</option>
-        <option *ngFor="let m of metrics()" [value]="m.name">{{ m.name }}</option>
-      </select>
+        <mat-option [value]="'Todas'">Todas las categorías</mat-option>
+        <mat-option *ngFor="let m of metrics()" [value]="m.name">
+          {{ m.name }}
+        </mat-option>
+      </mat-select>
+</div>
+
     </div>
 
 

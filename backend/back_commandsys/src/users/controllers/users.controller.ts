@@ -57,4 +57,10 @@ export class UsersController {
     activate(@Param('id') id: number){
         return this.usersService.activateUser(+id);
     }
+
+    @Get('/roles')
+    @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+    getRoles(){
+        return this.usersService.getRoles();
+    }
 }
