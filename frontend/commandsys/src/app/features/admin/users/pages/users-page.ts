@@ -32,6 +32,8 @@ export class UsersPageComponent {
   search = signal('');
   loading = signal(true);
   
+  togglingIds = new Set<number>();
+
   constructor() {
     effect( async () => {
       const user = this.currentUser();
@@ -59,9 +61,29 @@ export class UsersPageComponent {
     });
   }
 
-  deleteUser(u: User) {
-    if (confirm(`¿Eliminar usuario ${u.name}?`)) {
-      
-    }
+  toggleUserActive(u: User) {
+    // Evitar clicks múltiples
+    if (this.togglingIds.has(u.id_user)) return;
+    this.togglingIds.add(u.id_user);
+
+    const wasActive = u.is_active;
+    const next = !wasActive;
+    u.is_active = next; // cambio optimista inmediato
+
+    const obs = wasActive
+      ? this.usersService.deleteUser(u.id_user)   // desactivar
+      : this.usersService.activeUser(u.id_user);  // activar
+
+    obs.subscribe({
+      next: () => {
+        this.togglingIds.delete(u.id_user);
+      },
+      error: () => {
+        // Revertir si hubo error
+        u.is_active = wasActive;
+        this.togglingIds.delete(u.id_user);
+      }
+    });
   }
+
 }

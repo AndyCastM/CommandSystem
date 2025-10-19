@@ -1,125 +1,142 @@
 <div class="max-w-6xl mx-auto">
   <!-- Encabezado -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
     <div>
       <div class="text-sm text-slate-500">
         {{ (currentUser()?.role ) === 'Admin' ? 'Admin' : 'Gerente' }}
-        / <span class="text-slate-700">Usuarios</span>
+        / <span class="text-slate-700 font-medium">Usuarios</span>
       </div>
       <h1 class="text-3xl font-bold text-slate-800 mt-1">Gestión de Usuarios</h1>
       <p class="text-sm text-slate-500">
-        {{ currentUser()?.role === 'Admin'
-          ? 'Usuarios de gerentes de sucursales'
-          : 'Usuarios de tu sucursal' }}
+        {{
+          currentUser()?.role === 'Admin'
+            ? 'Usuarios de gerentes de sucursales'
+            : 'Usuarios de tu sucursal'
+        }}
       </p>
     </div>
 
-    <button type="button"
-            (click)="openCreate()"
-            class="w-full md:w-auto bg-[#16a3bd] px-5 py-2 text-sm font-medium tracking-wide text-white rounded-full shadow-sm hover:shadow-lg hover:bg-[#283996] transition">
+    <button
+      type="button"
+      (click)="openCreate()"
+      class="w-full md:w-auto bg-gradient-to-r from-[#16a3bd] to-[#283996] px-6 py-2.5 text-sm font-semibold tracking-wide text-white rounded-full shadow-md hover:shadow-lg hover:opacity-90 transition-all"
+    >
       Nuevo Usuario
     </button>
   </div>
 
   <!-- Tarjeta principal -->
-  <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 mb-8">
+  <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-12">
     <!-- Métrica -->
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-6">
       <div>
         <h2 class="text-lg font-semibold text-slate-700">Usuarios</h2>
         <p class="text-slate-500 text-sm">
           {{ users().length }} activos de {{ users().length }} totales
         </p>
       </div>
-      <mat-icon class="text-slate-400 text-xl">group</mat-icon>
+      <mat-icon class="text-slate-400 text-2xl">group</mat-icon>
     </div>
 
     <!-- Buscador -->
-    <div class="mb-4">
+    <div class="mb-6">
       <input
         type="text"
         [(ngModel)]="search"
         placeholder="Buscar usuario por nombre o rol"
-        class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 shadow-sm"
       />
     </div>
 
     <!-- Tabla -->
-    <div class="overflow-x-auto rounded-xl border border-slate-100 shadow-md">
-      <table class="min-w-full text-sm">
-        <thead class="text-slate-600 text-xs border-b bg-slate-50">
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
+      <table class="min-w-full table-auto text-sm text-slate-700">
+        <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 text-slate-600 md:text-[14px] text-xs font-semibold tracking-wide">
           <tr>
-            <th class="text-left py-2 px-4">Usuario</th>
-            <th class="text-left py-2 px-4">Rol</th>
-            <th class="text-left py-2 px-4">Estado</th>
-            <th class="text-left py-2 px-4">Fecha de creación</th>
-            <th class="text-center py-2 px-4">Acciones</th>
+            <th class="py-3 px-5 text-left w-[25%]">Usuario</th>
+            <th class="py-3 px-5 text-left w-[15%]">Rol</th>
+            <th class="py-3 px-5 text-left w-[20%]">Sucursal</th>
+            <th class="py-3 px-5 text-left w-[15%]">Estado</th>
+            <th class="py-3 px-5 text-left w-[15%]">Creación</th>
+            <th class="py-3 px-5 text-center w-[10%]">Acciones</th>
           </tr>
         </thead>
-        <tbody>
+
+        <tbody class="text-[15px] divide-y divide-slate-100">
           <tr
             *ngFor="let u of users()"
-            class="border-b last:border-0 hover:bg-slate-50 transition-all"
+            class="hover:bg-sky-50 transition-colors duration-200"
           >
-            <td class="py-2 px-4">
-              <div class="flex items-center gap-2">
-                <div
-                  class="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold uppercase"
-                >
+            <!-- Usuario -->
+            <td class="py-3 px-5">
+              <div class="flex items-center gap-3">
+                <div class="h-9 w-9 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-semibold uppercase shadow-sm">
                   {{ u.name[0] }}{{ u.last_name[0] }}
                 </div>
-                <div>
-                  <div class="font-medium text-slate-800">
-                    {{ u.name }} {{ u.last_name }}
-                  </div>
+                <div class="leading-tight">
+                  <div class="font-semibold text-slate-800">{{ u.name }} {{ u.last_name }}</div>
                   <div class="text-xs text-slate-500">@{{ u.username }}</div>
                 </div>
               </div>
             </td>
 
-            <td class="py-2 px-4">
+            <!-- Rol -->
+            <td class="py-3 px-5">
               <span
                 [ngClass]="{
                   'bg-orange-100 text-orange-700': u.role_name === 'Gerente',
                   'bg-purple-100 text-purple-700': u.role_name === 'Mesero',
                   'bg-cyan-100 text-cyan-700': u.role_name === 'Cajero'
                 }"
-                class="px-2 py-1 rounded-full text-xs font-medium"
+                class="inline-block px-3 py-1.5 rounded-full text-xs font-medium text-center min-w-[80px]"
               >
                 {{ u.role_name }}
               </span>
             </td>
 
-            <td class="py-2 px-4">
-              <span
-                class="flex items-center gap-1 text-xs"
-                [ngClass]="u.is_active ? 'text-green-600' : 'text-rose-600'"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [ngClass]="u.is_active ? 'bg-green-500' : 'bg-rose-500'"
-                ></span>
-                {{ u.is_active ? 'Activo' : 'Inactivo' }}
-              </span>
+            <!-- Sucursal -->
+            <td class="py-3 px-5 text-slate-600 text-sm">
+              {{ u.branch || 'Sin Sucursal' }}
             </td>
 
-            <td class="py-2 px-4 text-slate-600 text-xs">
+            <!-- Estado -->
+            <td class="py-3 px-5">
+              <div class="flex items-center gap-2 text-sm font-medium"
+                   [ngClass]="u.is_active ? 'text-green-600' : 'text-rose-600'">
+                <span class="h-2 w-2 rounded-full"
+                      [ngClass]="u.is_active ? 'bg-green-500' : 'bg-rose-500'">
+                </span>
+                {{ u.is_active ? 'Activo' : 'Inactivo' }}
+              </div>
+            </td>
+
+            <!-- Creación -->
+            <td class="py-3 px-5 text-slate-500 text-xs">
               {{ u.created_at | date: 'dd/MM/yy' }}
             </td>
 
-            <td class="py-2 px-4 flex justify-center gap-2">
-              <button
-                (click)="openEditUser(u)"
-                class="text-slate-500 hover:text-sky-600"
-              >
-                <mat-icon class="text-base">edit</mat-icon>
-              </button>
-              <button
-                (click)="deleteUser(u)"
-                class="text-slate-500 hover:text-rose-600"
-              >
-                <mat-icon class="text-base">delete</mat-icon>
-              </button>
+            <!-- Acciones -->
+            <td class="py-3 px-5 text-center">
+              <div class="flex justify-center items-center gap-3">
+                <!-- Editar -->
+                <button (click)="openEditUser(u)"
+                        class="p-2 hover:bg-slate-100 rounded-lg transition"
+                        title="Editar">
+                  <svg class="w-5 h-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 0 0 .707-.293l9.9-9.9a2 2 0 0 0 0-2.828l-1.172-1.172a2 2 0 0 0-2.828 0l-9.9 9.9A1 1 0 0 0 4 15.414V20z"/>
+                  </svg>
+                </button>
+
+                <!-- Toggle -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer"
+                         [checked]="u.is_active"
+                         (change)="toggleUserActive(u)" />
+                  <span class="block w-[42px] h-[22px] rounded-full transition-colors duration-300 bg-rose-400 peer-checked:bg-green-500"></span>
+                  <span class="absolute left-[3px] top-[3px] h-[16px] w-[16px] bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-[20px]"></span>
+                </label>
+              </div>
             </td>
           </tr>
         </tbody>

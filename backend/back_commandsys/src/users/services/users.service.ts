@@ -70,13 +70,14 @@ export class UsersService {
 
         const users = await this.prisma.users.findMany({
             where,
-            include: { roles: true },
+            include: { roles: true , branches: true},
         });
 
         const formattedUsers = users.map((u) => ({
             id_user: u.id_user,
             username: u.username,
             name: u.name,
+            branch: u.branches?.name,
             last_name: u.last_name,
             role_name: u.roles.name,
             is_active: Boolean(u.is_active),

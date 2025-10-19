@@ -55,22 +55,28 @@ export class ProductService {
       categories: this.categoriesLoaded ? of(this.categoriesSig()) : this.http.get<Category[]>(urlCats),
       areas: this.areasLoaded ? of(this.areasSig()) : this.http.get<Area[]>(urlAreas),
       products: this.http.get<CompanyProductApiResponse>(urlProducts),
-    });
-
-    return req$.pipe(
+    }).pipe(
       map(({ categories, areas, products }) => ({
         categories,
         areas,
-        products: products.data, // wrapper.data
+        products: products.data,
       })),
       tap(({ categories, areas, products }) => {
         if (!this.categoriesLoaded) { this.categoriesSig.set(categories); this.categoriesLoaded = true; }
         if (!this.areasLoaded)      { this.areasSig.set(areas);         this.areasLoaded = true; }
         this.productsSig.set(products);
+        this.loadingSig.set(false);
       }),
-      tap(() => this.loadingSig.set(false))
-    ).subscribe({ error: () => this.loadingSig.set(false) });
+      catchError(err => {
+        this.loadingSig.set(false);
+        return throwError(() => err);
+      }),
+      shareReplay(1)
+    );
+
+    return req$; 
   }
+
 
   // === SUBIR IMAGEN LIGADA A PRODUCTO ===
   // Usa 'file' porque tu FileInterceptor('file') lo espera con ese nombre
@@ -247,4 +253,57 @@ export class ProductService {
 
   get categoriesCached(): Category[] | null { return this.categoriesLoaded ? this.categoriesSig() : null; }
   get areasCached(): Area[] | null { return this.areasLoaded ? this.areasSig() : null; }
+
+  getAreaStyle(areaName: string) {
+    const n = (areaName || '').toLowerCase();
+
+    // Cocina o preparación
+    if (n.includes('cocina')) {
+      return {
+        color: 'bg-amber-400',
+        textColor: 'text-amber-700',
+        barColor: 'from-amber-400 to-amber-500',
+        icon: 'restaurant_menu',
+      };
+    }
+
+    // Bebidas o cafetería
+    if (n.includes('bebida') || n.includes('café') || n.includes('barista')) {
+      return {
+        color: 'bg-cyan-400',
+        textColor: 'text-cyan-700',
+        barColor: 'from-cyan-400 to-cyan-500',
+        icon: 'local_cafe',
+      };
+    }
+
+    // Bar o tragos
+    if (n.includes('bar') || n.includes('tragos')) {
+      return {
+        color: 'bg-emerald-400',
+        textColor: 'text-emerald-700',
+        barColor: 'from-emerald-400 to-emerald-500',
+        icon: 'wine_bar',
+      };
+    }
+
+    // Postres o repostería
+    if (n.includes('postre') || n.includes('repostería') || n.includes('panadería')) {
+      return {
+        color: 'bg-pink-400',
+        textColor: 'text-pink-700',
+        barColor: 'from-pink-400 to-pink-500',
+        icon: 'cake',
+      };
+    }
+
+    // Fallback neutro
+    return {
+      color: 'bg-slate-400',
+      textColor: 'text-slate-700',
+      barColor: 'from-slate-300 to-slate-400',
+      icon: 'storefront',
+    };
+  }
+
 }

@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject, effect } from '@angular/core';
+import { Component, computed, signal, inject, effect, OnInit } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -9,14 +9,15 @@ import { ProductService } from '../data-access/products.service';
 import type { CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
 import { take } from 'rxjs';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   standalone: true,
   selector: 'app-products-admin',
-  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption],
+  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption, MatIcon],
   templateUrl: './products-admin.component.html',
 })
-export class ProductsAdminComponent {
+export class ProductsAdminComponent implements OnInit{
 [x: string]: unknown;
   private dialog = inject(MatDialog);
   productSrv = inject(ProductService);
@@ -50,9 +51,6 @@ export class ProductsAdminComponent {
     `);
 
   constructor() {
-    // Carga de productos/catálogos
-    this.productSrv.loadAll();
-
     // Diagnóstico opcional
     effect(() => {
       const list = this.productsSig();
@@ -64,6 +62,11 @@ export class ProductsAdminComponent {
       const visible = this.filtered().slice(0, 24); // ajusta N
       this.productSrv.warmImagesFor(visible, 4);
     });
+  }
+
+  ngOnInit(){
+    // Carga de productos/catálogos
+      this.productSrv.loadAll().pipe(take(1)).subscribe();
   }
 
   // Lista filtrada
@@ -82,10 +85,23 @@ export class ProductsAdminComponent {
   });
 
   // Métricas por categoría
+  metricsCat = computed(() => {
+     const map = new Map<string, { total: number; disponibles: number }>();
+     for (const p of this.productsSig()) {
+       const key = p.category ?? 'Sin categoría';
+       if (!map.has(key)) map.set(key, { total: 0, disponibles: 0 });
+       const m = map.get(key)!;
+       m.total += 1;
+       if (p.is_active === 1) m.disponibles += 1;
+     }
+     return Array.from(map.entries()).map(([name, v]) => ({ name, ...v }));
+    });
+
+  // Metricas por area
   metrics = computed(() => {
     const map = new Map<string, { total: number; disponibles: number }>();
     for (const p of this.productsSig()) {
-      const key = p.category ?? 'Sin categoría';
+      const key = p.area ?? 'Sin área';
       if (!map.has(key)) map.set(key, { total: 0, disponibles: 0 });
       const m = map.get(key)!;
       m.total += 1;
@@ -94,22 +110,26 @@ export class ProductsAdminComponent {
     return Array.from(map.entries()).map(([name, v]) => ({ name, ...v }));
   });
 
+
   private thumbMap = new WeakMap<CompanyProduct, string>();
 
   img(p: CompanyProduct) {
     const current = this.thumbMap.get(p);
     if (current) return current;
 
-    // devuelve placeholder ahora y resuelve asincrónicamente
-    this.productSrv.getThumbUrl$(p.id_company_product).pipe(take(1)).subscribe(url => {
-      const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
-      this.thumbMap.set(p, finalUrl);
-      // forzamos change detection tocando una signal “tonta” si hiciera falta
-      // (Angular 17 con signals normalmente refresca cuando cambia filtered(); si no, crea una signal "bump" y set(bump()+1))
-    });
+    this.productSrv.getThumbUrl$(p.id_company_product)
+      .pipe(take(1))
+      .subscribe(url => {
+        const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
+        this.thumbMap.set(p, finalUrl);
+
+        //forzamos a Angular a redibujar en el siguiente tick
+        queueMicrotask(() => { this.productsSig.set([...this.productsSig()]); });
+      });
 
     return this.placeholderDataUrl;
   }
+
 
   // Manejo de error en <img> (caer a placeholder y evitar loops)
   onImgError(p: CompanyProduct, evt: Event) {

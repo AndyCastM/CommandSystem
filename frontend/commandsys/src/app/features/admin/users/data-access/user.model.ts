@@ -16,6 +16,7 @@ export interface User {
   id_user: number;
   id_company?: number;
   id_branch?: number;
+  branch?: string;
   role_name: string;
   name: string;
   last_name: string;

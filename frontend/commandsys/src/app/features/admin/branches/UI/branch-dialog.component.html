@@ -28,9 +28,9 @@
         <!-- Nombre + Email -->
         <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
           <div class="mb-3 space-y-2 w-full">
-            <label class="font-semibold text-gray-600 py-2">Nombre <abbr title="required">*</abbr></label>
+            <label class="text-sm font-medium text-slate-700">Nombre <abbr title="required">*</abbr></label>
             <input placeholder="Ej. Sucursal Centro"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="name">
             <p class="text-[11px] text-red-600" *ngIf="showError('name','required')">El nombre es obligatorio.</p>
             <p class="text-[11px] text-red-600" *ngIf="showError('name','minlength')">Mínimo 2 caracteres.</p>
@@ -38,9 +38,9 @@
           </div>
 
           <div class="mb-3 space-y-2 w-full">
-            <label class="font-semibold text-gray-600 py-2">Email</label>
+            <label class="text-sm font-medium text-slate-700">Email</label>
             <input placeholder="correo@empresa.com"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="email" formControlName="email">
             <p class="text-[11px] text-red-600" *ngIf="showError('email','email')">Correo inválido.</p>
           </div>
@@ -49,47 +49,47 @@
         <!-- Dirección -->
         <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Calle</label>
+            <label class="text-sm font-medium text-slate-700">Calle</label>
             <input placeholder="Calle y número"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="street">
           </div>
 
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Colonia</label>
+            <label class="text-sm font-medium text-slate-700">Colonia</label>
             <input placeholder="Colonia / Barrio"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="suburb">
           </div>
         </div>
 
         <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Número Exterior</label>
+            <label class="text-sm font-medium text-slate-700">Número Exterior</label>
             <input placeholder="Número exterior"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="num_ext">
           </div>
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Ciudad</label>
+            <label class="text-sm font-medium text-slate-700">Ciudad</label>
             <input placeholder="Ciudad"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="city">
           </div>
         </div>
 
         <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Estado</label>
+            <label class="text-sm font-medium text-slate-700">Estado</label>
             <input placeholder="Estado"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="state">
           </div>
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Código Postal</label>
+            <label class="text-sm font-medium text-slate-700">Código Postal</label>
             <input placeholder="#####"
                    maxlength="5"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="zip">
             <p class="text-[11px] text-red-600" *ngIf="showError('zip','pattern')">CP inválido (5 dígitos).</p>
           </div>
@@ -98,9 +98,9 @@
         <!-- Teléfono + Activa -->
         <div class="md:flex md:flex-row md:space-x-4 w-full text-xs">
           <div class="w-full flex flex-col mb-3">
-            <label class="font-semibold text-gray-600 py-2">Teléfono</label>
+            <label class="text-sm font-medium text-slate-700">Teléfono</label>
             <input placeholder="+52 668 123 4567"
-                   class="appearance-none block w-full bg-white border rounded-lg h-10 px-4 focus:outline-none focus:ring-2 focus:ring-[#16a3bd]"
+                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                    type="text" formControlName="phone">
             <p class="text-[11px] text-gray-500">10–15 caracteres: números, +, espacios o guiones.</p>
             <p class="text-[11px] text-red-600" *ngIf="showError('phone','pattern')">Formato de teléfono inválido.</p>
@@ -109,7 +109,7 @@
 
         <!-- Footer -->
         <div
-          class="p-4 border-t bg-white flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0"
+          class="p-2 border-t bg-white flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0"
         >
             <button
               type="button"
