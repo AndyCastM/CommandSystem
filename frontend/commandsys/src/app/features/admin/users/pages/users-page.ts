@@ -10,6 +10,8 @@ import { UserFormComponent, UserDialogData } from '../UI/user-form.component';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { Role } from '../../../../auth/services/auth.service';
 import { CreateUser } from '../data-access/user.model';
+import { firstValueFrom } from 'rxjs';
+import { ToastService } from '../../../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-users-page',
@@ -21,6 +23,8 @@ export class UsersPageComponent {
   private dialog = inject(MatDialog);
   private auth = inject(AuthService);
   private usersService = inject(UsersService);
+  private toast = inject(ToastService);
+
   currentUser = computed(() => this.auth.currentUser());
   private role = computed<Role | null>(() => {
     const user = this.currentUser();
@@ -54,11 +58,22 @@ export class UsersPageComponent {
     });
   }
 
-  async openEditUser(user: User) {
+  async openEditUser(user: any) {
     const ref = this.dialog.open(UserFormComponent, {
       width: '720px',
       data: { mode: 'edit', value: user } as const,
     });
+
+    const value = await firstValueFrom(ref.afterClosed());
+    if (!value) return;
+
+    try {
+      await this.usersService.updateUser(user.id_user, value);
+      this.toast.success('Usuario actualizado');
+    } catch (e){
+      this.toast.error('No se pudo actualizar el usuario');
+      console.error(e);
+    }
   }
 
   toggleUserActive(u: User) {

@@ -1,18 +1,14 @@
-import { Component, inject, Input } from '@angular/core';
-import { MatSnackBarRef } from '@angular/material/snack-bar';
-import { NgClass } from '@angular/common';          
-import { MatIconModule } from '@angular/material/icon'; 
-import { ViewEncapsulation } from '@angular/core';
-
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgClass } from '@angular/common';
 @Component({
   selector: 'app-toast',
   standalone: true,
-  encapsulation: ViewEncapsulation.None,
-  imports: [NgClass, MatIconModule],
-  template: `,
-    <div class="flex items-start gap-3 p-3 pr-2 rounded-xl shadow-md border
-                bg-white text-slate-800 min-w-[260px] max-w-[420px]">
-
+  imports: [NgClass],
+  template: `
+    <div
+      class="flex items-start gap-3 p-3 pr-2 rounded-xl shadow-md border
+             bg-white text-slate-800 min-w-[260px] max-w-[420px]
+             animate-slide-in hover:translate-x-1 transition-transform duration-200">
       <div class="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
            [ngClass]="{
              'bg-emerald-100 text-emerald-700': variant==='success',
@@ -28,18 +24,26 @@ import { ViewEncapsulation } from '@angular/core';
         <div class="text-[13px] text-slate-600 mt-0.5 leading-snug">{{ message }}</div>
       </div>
 
-      <button class="p-1 rounded-md hover:bg-slate-100" (click)="ref.dismiss()">
+      <button class="p-1 rounded-md hover:bg-slate-100" (click)="close.emit()">
         <span class="material-symbols-outlined text-[18px] text-slate-500">close</span>
       </button>
     </div>
   `,
-  styleUrls: ['toast.css'],
+  styles: [`
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+  `],
 })
 export class ToastComponent {
-  ref = inject(MatSnackBarRef<ToastComponent>);
-  @Input() message = '';
   @Input() title = '';
+  @Input() message = '';
   @Input() variant: 'success' | 'error' | 'info' | 'warning' = 'info';
+  @Output() close = new EventEmitter<void>();
 
   get icon() {
     return this.variant === 'success' ? 'check_circle'

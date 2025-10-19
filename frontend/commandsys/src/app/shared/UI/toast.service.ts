@@ -1,65 +1,58 @@
-import { Injectable, inject } from '@angular/core';
-import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+import { Injectable, ApplicationRef, ComponentRef, createComponent, EnvironmentInjector, inject } from '@angular/core';
 import { ToastComponent } from './toast.component';
 
 type Variant = 'success' | 'error' | 'info' | 'warning';
 
-interface ToastOpts {
-  title?: string;
-  message: string;
-  variant?: Variant;
-  duration?: number; // ms
-}
-
 @Injectable({ providedIn: 'root' })
 export class ToastService {
-  private sb = inject(MatSnackBar);
+  private appRef = inject(ApplicationRef);
+  private injector = inject(EnvironmentInjector);
 
-  private open(opts: ToastOpts) {
-    const {
-      title = this.defaultTitle(opts.variant),
-      message,
-      variant = 'info',
-      duration = this.defaultDuration(variant),
-    } = opts;
-
-    const config: MatSnackBarConfig = {
-      duration,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['snackbar-container'], // contenedor limpio
-      data: { title, message, variant },
-    };
-
-    const ref = this.sb.openFromComponent(ToastComponent, config);
-    // Pasar @Input() al componente
-    const instance = ref.instance;
-    instance.title = title;
-    instance.message = message;
-    instance.variant = variant;
-    return ref;
+  success(message: string, title = 'Éxito', duration = 3000) {
+    this.show({ title, message, variant: 'success', duration });
+  }
+  error(message: string, title = 'Error', duration = 4000) {
+    this.show({ title, message, variant: 'error', duration });
+  }
+  info(message: string, title = 'Información', duration = 3000) {
+    this.show({ title, message, variant: 'info', duration });
+  }
+  warning(message: string, title = 'Aviso', duration = 3500) {
+    this.show({ title, message, variant: 'warning', duration });
   }
 
-  success(message: string, title = 'Éxito', duration?: number) {
-    return this.open({ title, message, variant: 'success', duration });
-  }
-  error(message: string, title = 'Error', duration?: number) {
-    return this.open({ title, message, variant: 'error', duration });
-  }
-  info(message: string, title = 'Información', duration?: number) {
-    return this.open({ title, message, variant: 'info', duration });
-  }
-  warning(message: string, title = 'Aviso', duration?: number) {
-    return this.open({ title, message, variant: 'warning', duration });
+  private show({ title, message, variant, duration }: { title: string; message: string; variant: Variant; duration: number }) {
+    // Crear componente dinámicamente
+    const compRef: ComponentRef<ToastComponent> = createComponent(ToastComponent, {
+      environmentInjector: this.injector,
+    });
+
+    compRef.instance.title = title;
+    compRef.instance.message = message;
+    compRef.instance.variant = variant;
+    compRef.instance.close.subscribe(() => this.remove(compRef));
+
+    // Insertar en DOM
+    this.appRef.attachView(compRef.hostView);
+    const el = (compRef.hostView as any).rootNodes[0] as HTMLElement;
+
+    // Crear contenedor global si no existe
+    let container = document.querySelector('.toast-container') as HTMLElement;
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container fixed top-4 right-4 z-[9999] flex flex-col gap-3';
+      document.body.appendChild(container);
+    }
+
+    // Agregar toast
+    container.appendChild(el);
+
+    // Quitar automáticamente después del tiempo indicado
+    setTimeout(() => this.remove(compRef), duration);
   }
 
-  private defaultTitle(v?: Variant) {
-    return v === 'success' ? 'Éxito'
-         : v === 'error'   ? 'Error'
-         : v === 'warning' ? 'Aviso'
-         : 'Información';
-  }
-  private defaultDuration(v: Variant) {
-    return v === 'error' ? 5000 : 3200;
+  private remove(compRef: ComponentRef<ToastComponent>) {
+    this.appRef.detachView(compRef.hostView);
+    compRef.destroy();
   }
 }

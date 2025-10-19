@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { SettingsApi } from '../../../settings/data-access/settings.api';
 import { CompanySettings } from '../../../settings/data-access/settings.models';
+import { ToastService } from '../../../../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-admin-settings',
@@ -38,7 +39,7 @@ export class AdminSettingsComponent {
   }
   
   private fb = inject(FormBuilder);
-  private snack = inject(MatSnackBar);
+  private toast = inject(ToastService);
   private api = inject(SettingsApi);
 
   // Tab activa
@@ -67,20 +68,17 @@ export class AdminSettingsComponent {
 
   saveCompany() {
     if (this.companyForm.invalid) {
-      this.snack.open('Revisa los campos requeridos.', 'OK', { duration: 2200 });
+      this.toast.warning('Revisa los campos requeridos.');
       this.companyForm.markAllAsTouched();
       return;
     }
     this.api.saveCompany(this.company);
-    this.snack.open('Configuración de la empresa guardada', 'OK', { duration: 2200 });
+    this.toast.success('Configuración de la empresa guardada');
   }
 
   saveFiscal() {
     this.api.saveCompany(this.company);
-    this.snack.open('Configuración fiscal guardada', 'OK', { duration: 2200 });
+    this.toast.success('Configuración fiscal guardada');
   }
 
-  download(b: { date: string; size: string }) {
-    this.snack.open(`Descargando: ${b.date}`, 'OK', { duration: 1600 });
-  }
 }

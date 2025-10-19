@@ -18,6 +18,7 @@ export interface User {
   id_branch?: number;
   branch?: string;
   role_name: string;
+  id_role?: number;
   name: string;
   last_name: string;
   last_name2?: string;

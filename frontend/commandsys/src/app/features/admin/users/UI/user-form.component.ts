@@ -1,7 +1,7 @@
 import { Component, Input , inject, signal, Inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { CreateUser } from '../data-access/user.model';
+import { CreateUser, User } from '../data-access/user.model';
 import { UsersService } from '../data-access/users.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,7 +10,7 @@ import { RolesService } from '../../../../core/services/roles.service';
 import { BranchesApi } from '../../branches/data-access/branches.api';
 
 export type UserDialogMode = 'create' | 'edit';
-export type UserDialogData = { mode: UserDialogMode; value?: CreateUser };
+export type UserDialogData = { mode: UserDialogMode; value?: User };
 
 @Component({
   selector: 'app-user-form',
@@ -31,15 +31,7 @@ export class UserFormComponent {
   private rolesSrv = inject(RolesService);
   private branchesSrv = inject(BranchesApi);
 
-  form = this.fb.group({
-    id_branch: [null],
-    id_role: [null, Validators.required],
-    name: ['', Validators.required],
-    last_name: ['', Validators.required],
-    last_name2: [''],
-    username: ['', Validators.required],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
+  form!: FormGroup;
 
   constructor(
     private usersService: UsersService,
@@ -47,6 +39,16 @@ export class UserFormComponent {
     private ref: MatDialogRef<UserFormComponent>
   ) {
     this.editing.set(data?.mode === 'edit');
+
+    this.form = this.fb.group({
+      id_branch: [null],
+      id_role: [null, Validators.required],
+      name: ['', Validators.required],
+      last_name: ['', Validators.required],
+      last_name2: [''],
+      username: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+    });
   }
 
   // --- Getters --- //
@@ -56,6 +58,19 @@ export class UserFormComponent {
   ngOnInit() {
     this.loadRoles();
     this.loadBranches();
+
+    if (this.editing() && this.data?.value) {
+    const user = this.data.value;
+    this.form.patchValue({
+      id_branch: user.id_branch ?? null,
+      id_role: user.id_role ?? null,
+      name: user.name ?? '',
+      last_name: user.last_name ?? '',
+      last_name2: user.last_name2 ?? '',
+      username: user.username ?? '',
+      password: '' // opcional, vacío al editar
+    });
+  }
   }
 
   // === Carga desde el backend usando Signals ===
@@ -77,8 +92,7 @@ export class UserFormComponent {
   }
 
   close() { this.ref.close(); }
-
-
+  
   submit() {
     if (this.form.invalid) return;
     this.saving.set(true);
