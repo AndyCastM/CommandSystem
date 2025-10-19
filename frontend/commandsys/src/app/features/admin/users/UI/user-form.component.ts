@@ -1,8 +1,8 @@
 import { Component, Input , inject, signal, Inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { CreateUser, User } from '../data-access/user.model';
-import { UsersService } from '../data-access/users.service';
+import { CreateUser, User } from '../../../../core/services/users/user.model';;
+import { UsersService } from '../../../../core/services/users/users.service';;
 import { MatIconModule } from '@angular/material/icon';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';

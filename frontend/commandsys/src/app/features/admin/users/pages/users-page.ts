@@ -2,17 +2,18 @@ import { Component, OnInit, computed, signal, inject , effect} from '@angular/co
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { UsersService } from '../data-access/users.service';
-import { User } from '../data-access/user.model';
+import { UsersService } from '../../../../core/services/users/users.service';
+import { User } from '../../../../core/services/users/user.model';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { UserFormComponent, UserDialogData } from '../UI/user-form.component';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { Role } from '../../../../auth/services/auth.service';
-import { CreateUser } from '../data-access/user.model';
+import { CreateUser } from '../../../../core/services/users/user.model';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../../shared/UI/toast.service';
 import {  NgFor } from '@angular/common';
+
 @Component({
   selector: 'app-users-page',
   standalone: true,
