@@ -33,28 +33,32 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700">Categoría</label>
-          <mat-select 
+          <div class="rounded-xl border border-slate-300 bg-white px-3">
+            <mat-select
               [formControl]="form.controls.id_category"
               [disabled]="loadingCategories()"
-              class="w-full bg-white rounded-xl border border-slate-300 text-sm text-slate-800"
+              class="w-full text-sm text-slate-800"
               [panelClass]="'filter-panel'"
-          >
-            <mat-option [value]="null" disabled>Selecciona</mat-option>
-            <mat-option *ngFor="let c of categories()" [value]="c.id_category">{{ c.name }}</mat-option>
-          </mat-select>
+            >
+              <mat-option [value]="null" disabled>Selecciona</mat-option>
+              <mat-option *ngFor="let c of categories()" [value]="c.id_category">{{ c.name }}</mat-option>
+            </mat-select>
+          </div>
         </div>
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700">Área</label>
-          <mat-select 
-              [formControl]="form.controls.id_area"
-              [disabled]="loadingAreas()"
-              class="w-full bg-white rounded-xl border border-slate-300 text-sm text-slate-800"
-              [panelClass]="'filter-panel'"
-          >
-            <mat-option [value]="null" disabled>Selecciona</mat-option>
-            <mat-option *ngFor="let a of areas()" [value]="a.id_area">{{ a.name }}</mat-option>
-          </mat-select>
+          <div class="rounded-xl border border-slate-300 bg-white px-3">
+            <mat-select 
+                [formControl]="form.controls.id_area"
+                [disabled]="loadingAreas()"
+                class="w-full text-sm text-slate-800"
+                [panelClass]="'filter-panel'"
+            >
+              <mat-option [value]="null" disabled>Selecciona</mat-option>
+              <mat-option *ngFor="let a of areas()" [value]="a.id_area">{{ a.name }}</mat-option>
+            </mat-select>
+          </div>
         </div>
       </div>
 

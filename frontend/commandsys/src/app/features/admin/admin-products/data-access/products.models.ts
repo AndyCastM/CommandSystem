@@ -34,6 +34,8 @@ export interface CompanyProduct {
   name: string;
   category: string;   // Ej: "Pizzas"
   area: string;       // Ej: "Cocina"
+  id_category?: number;
+  id_area?: number;
   base_price: number;
   description?: string;
   image_url?: string;

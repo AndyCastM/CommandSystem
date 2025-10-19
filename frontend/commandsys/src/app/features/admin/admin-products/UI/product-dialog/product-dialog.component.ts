@@ -137,6 +137,22 @@ export class ProductDialogComponent {
       }
     });
 
+    // === Cargar selección de categoría/área una vez listas ===
+    effect(() => {
+      const catsReady = !this.loadingCategories();
+      const areasReady = !this.loadingAreas();
+      const v = this.data?.value;
+
+      if (this.editing() && v && catsReady && areasReady) {
+        // Evita re-patchear si ya se cargó correctamente
+        if (!this.form.value.id_category && !this.form.value.id_area) {
+          this.form.patchValue({
+            id_category: v.id_category ?? null,
+            id_area: v.id_area ?? null,
+          });
+        }
+      }
+    });
   }
 
   // ======= Helpers =======
