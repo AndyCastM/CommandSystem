@@ -1,0 +1,76 @@
+<div class="bg-white rounded-2xl shadow-xl w-full sm:w-[420px] max-w-[92vw] overflow-hidden">
+  <!-- Header -->
+  <div class="p-5 border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-sky-50">
+    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+      <mat-icon class="text-sky-600">table_restaurant</mat-icon>
+      {{ title() }}
+    </h2>
+  </div>
+
+  <!-- Form completo -->
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col">
+    <!-- Body -->
+    <div class="p-5 space-y-4 flex-1">
+      <div>
+        <label class="text-sm font-semibold text-slate-700">Localización</label>
+        <mat-select
+          formControlName="id_location"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none"
+          [panelClass]="'filter-panel'"
+        >
+          <mat-option [value]="null" disabled>Selecciona</mat-option>
+          <mat-option *ngFor="let l of locations()" [value]="l.id_location">
+            {{ l.name }}
+          </mat-option>
+        </mat-select>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700">Nombre</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Ej: Mesa 5"
+          class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-200 outline-none"
+        />
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700">Asientos</label>
+        <input
+          type="number"
+          min="1"
+          formControlName="seats"
+          class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-200 outline-none"
+        />
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t bg-white flex justify-end gap-3">
+      <button
+        type="button"
+        class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
+        (click)="close()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="px-4 py-2 rounded-xl text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
+        [disabled]="saving()"
+        [attr.aria-busy]="saving()"
+      >
+        <ng-container *ngIf="!saving(); else loading">
+          Guardar
+        </ng-container>
+
+        <ng-template #loading>
+          <mat-icon class="animate-spin !text-base !text-white">autorenew</mat-icon>
+          Guardando...
+        </ng-template>
+      </button>
+    </div>
+  </form>
+</div>

@@ -16,6 +16,7 @@ export class ManagerShellComponent {
   nav = [
     { icon: 'people', label: 'Usuarios', path: '/gerente/usuarios' },
     { icon: 'inventory_2', label: 'Productos', path: '/gerente/productos' },
+    { icon: 'table_restaurant', label: 'Mesas', path:'/gerente/mesas'},
     { icon: 'settings', label: 'Configuración', path: '/gerente/configuracion' },
   ];
 
