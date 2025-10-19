@@ -26,7 +26,7 @@
     class="flex-1 overflow-y-auto p-6 space-y-5 custom-scroll"
   >
     <!-- Sucursal -->
-    <div class="space-y-1.5" *ngIf="showBranch()">
+    <div class="space-y-1.5" *ngIf="shouldShowBranch(data.currentUser)">
       <label class="text-sm font-semibold text-slate-700">Sucursal</label>
       <mat-select
         formControlName="id_branch"
@@ -44,14 +44,15 @@
     <div class="space-y-1.5">
       <label class="text-sm font-semibold text-slate-700">Rol</label>
       <mat-select
-        [value]="roles()[1]?.id_role"
         formControlName="id_role"
         class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
         [panelClass]="'filter-panel'"
       >
-        <mat-option *ngFor="let r of filteredRoles()" [value]="r.id_role">
-          {{ r.name }}
+        <mat-option [value]="null" disabled>Selecciona un rol</mat-option>
+        <mat-option *ngFor="let r of roles()" [value]="r.id_role">
+            {{ r.name }}
         </mat-option>
+            
       </mat-select>
     </div>
 

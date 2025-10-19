@@ -18,7 +18,7 @@ import {  NgFor } from '@angular/common';
   selector: 'app-users-page',
   standalone: true,
   imports: [CommonModule, RouterModule, MatIconModule, FormsModule,],
-  templateUrl: './users-page.html'
+  templateUrl: './users-page.component.html'
 })
 export class UsersPageComponent {
   private dialog = inject(MatDialog);
@@ -51,7 +51,7 @@ export class UsersPageComponent {
   }
 
   async openCreate() {
-    const data: UserDialogData = { mode: 'create' };
+    const data: UserDialogData = { mode: 'create' , currentUser: this.currentUser() };
     const ref = this.dialog.open(UserFormComponent, {
       data,
       width: '720px',
@@ -62,7 +62,7 @@ export class UsersPageComponent {
   async openEditUser(user: any) {
     const ref = this.dialog.open(UserFormComponent, {
       width: '720px',
-      data: { mode: 'edit', value: user } as const,
+      data: { mode: 'edit', value: user, currentUser: this.currentUser() } as const,
     });
 
     const value = await firstValueFrom(ref.afterClosed());

@@ -60,8 +60,10 @@ export class UsersService {
             break;
 
             case 'Gerente':
-            // Gerente ve usuarios de su sucursal
             where.id_branch = currentUser.id_branch;
+            where.roles = {
+                name: { in: ['Mesero', 'Cajero'] },
+            };
             break;
 
             default:
@@ -157,16 +159,34 @@ export class UsersService {
         return formatResponse(`Usuario ${user.username} activado correctamente.`);
     }
 
-    async getRoles() {
-        const roles = await this.prisma.roles.findMany({
-            where: {
-                name: {
-                    not: 'Superadmin' // Excluir Superadmin
-                }
-            }
-        });
-        return roles;
+    async getRoles(currentUser: any) {
+        const where: any = {
+            name: { not: 'Superadmin' } // por defecto, nunca devolver Superadmin
+        };
+
+        switch (currentUser.role) {
+            case 'Superadmin':
+            // Superadmin solo puede crear Admins
+            where.name = 'Admin';
+            break;
+
+            case 'Admin':
+            // Admin solo crea Gerentes
+            where.name = 'Gerente';
+            break;
+
+            case 'Gerente':
+            // Gerente crea Meseros y Cajeros
+            where.name = { in: ['Mesero', 'Cajero'] };
+            break;
+
+            default:
+            throw new ForbiddenException('No tienes permiso para acceder a los roles.');
+        }
+
+        return this.prisma.roles.findMany({ where });
     }
+
 }
 
 

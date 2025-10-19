@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { UsersPageComponent } from './users/pages/users-page.component';
+import { UsersPageComponent } from '../../shared/pages/users/pages/users-page.component';
 
 export const MANAGER_ROUTES: Routes = [
 

@@ -60,7 +60,9 @@ export class UsersController {
 
     @Get('/roles')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
-    getRoles(){
-        return this.usersService.getRoles();
+    getRoles(
+        @CurrentUser() user : any
+    ){
+        return this.usersService.getRoles(user);
     }
 }
