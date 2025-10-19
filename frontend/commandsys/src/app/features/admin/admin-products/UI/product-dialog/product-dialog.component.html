@@ -96,18 +96,64 @@
       <!-- Imagen -->
       <div class="space-y-2">
         <label class="text-sm font-medium text-slate-700">Imagen del producto</label>
-        <div class="flex flex-wrap items-center gap-2">
-          <input id="image-upload" type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
-          <button type="button"
-                  class="px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  (click)="triggerFilePick()">Subir archivo</button>
-          <button *ngIf="imagePreview()" type="button"
-                  class="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
-                  (click)="clearImage()">Quitar</button>
+
+        <!-- Contenedor principal -->
+        <div class="relative w-full">
+          <!-- Input oculto -->
+          <input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            hidden
+            (change)="onFileSelected($event)"
+          />
+
+          <!-- Si hay imagen: vista previa -->
+          <div
+            *ngIf="imagePreview(); else uploadBox"
+            class="relative group rounded-xl border border-slate-300 overflow-hidden w-full h-52 flex items-center justify-center bg-slate-100"
+          >
+            <img
+              [src]="imagePreview()!"
+              alt="preview"
+              class="object-cover w-full h-full"
+            />
+
+            <!-- Overlay al hacer hover -->
+            <div
+              class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <button
+                type="button"
+                class="px-4 py-2 bg-white/90 text-rose-600 font-medium rounded-lg hover:bg-white"
+                (click)="clearImage()"
+              >
+                Quitar imagen
+              </button>
+            </div>
+          </div>
+
+          <!-- Si NO hay imagen -->
+          <ng-template #uploadBox>
+            <button
+              type="button"
+              (click)="triggerFilePick()"
+              class="w-full h-52 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-sky-400 hover:bg-sky-50 transition-all"
+            >
+              <span
+                class="material-symbols-outlined text-5xl text-slate-400 group-hover:text-sky-500 mb-1"
+              >
+                add_photo_alternate
+              </span>
+              <span class="text-sm text-slate-600 font-medium">
+                Subir imagen
+              </span>
+              <span class="text-xs text-slate-400 mt-1">(JPG, PNG o WEBP)</span>
+            </button>
+          </ng-template>
         </div>
-        <img *ngIf="imagePreview()" [src]="imagePreview()!" alt="preview"
-             class="w-full h-48 object-cover rounded-xl border border-slate-200 mt-2" />
       </div>
+
 
       <!-- Checkbox Personalizable -->
       <div class="flex items-center gap-2 border-t border-slate-200 pt-3 mt-4">
