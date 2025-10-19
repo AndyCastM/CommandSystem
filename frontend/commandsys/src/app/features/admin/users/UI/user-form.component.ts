@@ -8,6 +8,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatSelectModule } from '@angular/material/select';
 import { RolesService } from '../../../../core/services/roles.service';
 import { BranchesApi } from '../../branches/data-access/branches.api';
+import { NgClass } from '@angular/common';
 
 export type UserDialogMode = 'create' | 'edit';
 export type UserDialogData = { mode: UserDialogMode; value?: User };
@@ -92,7 +93,7 @@ export class UserFormComponent {
   }
 
   close() { this.ref.close(); }
-  
+
   submit() {
     if (this.form.invalid) return;
     this.saving.set(true);

@@ -14,11 +14,12 @@ import { ToastService } from '../../../../shared/UI/toast.service';
 import { AreaFormComponent } from '../UI/area-form/area-form.component';
 import { ProductAreasService } from '../data-access/products-area.service';
 import { firstValueFrom } from 'rxjs';
+import { NgClass } from '@angular/common';
 
 @Component({
   standalone: true,
   selector: 'app-products-admin',
-  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption, MatIcon],
+  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption, MatIcon, NgClass],
   templateUrl: './products-admin.component.html',
 })
 export class ProductsAdminComponent implements OnInit{

@@ -12,11 +12,11 @@ import { Role } from '../../../../auth/services/auth.service';
 import { CreateUser } from '../data-access/user.model';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../../shared/UI/toast.service';
-
+import {  NgFor } from '@angular/common';
 @Component({
   selector: 'app-users-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, FormsModule],
+  imports: [CommonModule, RouterModule, MatIconModule, FormsModule,],
   templateUrl: './users-page.html'
 })
 export class UsersPageComponent {
