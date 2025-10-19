@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { forkJoin, of, switchMap, tap, map, shareReplay, take, mergeMap, toArray, catchError, throwError } from 'rxjs';
 import { Observable } from 'rxjs';
+import { ProductAreasService } from './products-area.service';
+import { ProductCategoriesService } from './products-category.service';
 
 import {
   CompanyProduct,
@@ -19,7 +21,7 @@ import {
 export class ProductService {
   private http = inject(HttpClient);
   private base = 'http://localhost:3000';
-
+  
   loadingSig = signal<boolean>(false);
   productsSig = signal<CompanyProduct[]>([]);
   
@@ -171,18 +173,6 @@ export class ProductService {
         );
         return throwError(() => err);
       })
-    );
-  }
-
-  // On-demand (si quieres usarlos por separado)
-  fetchCategories() {
-    return this.http.get<Category[]>(`${this.base}/api/product-categories`).pipe(
-      tap(list => { this.categoriesSig.set(list); this.categoriesLoaded = true; })
-    );
-  }
-  fetchAreas() {
-    return this.http.get<Area[]>(`${this.base}/api/print-areas`).pipe(
-      tap(list => { this.areasSig.set(list); this.areasLoaded = true; })
     );
   }
 

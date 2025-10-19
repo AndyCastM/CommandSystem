@@ -1,20 +1,36 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import type { Area } from './products.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProductAreasService {
   private http = inject(HttpClient);
-  private areas$ = new BehaviorSubject<Area[] | null>(null);
+  private url = 'http://localhost:3000/api/print-areas';
 
-  /** Carga áreas desde el backend */
-  fetchAreas(): Observable<Area[]> {
-    // Ajusta la URL a tu backend:
-    const url = 'http://localhost:3000/api/print-areas'
-    return this.http.get<Area[]>(url).pipe(tap(list => this.areas$.next(list)));
+  readonly areasSig = signal<Area[]>([]);
+  readonly loadingSig = signal(false);
+
+  /** Cargar áreas desde el backend */
+  fetchAreas() {
+    this.loadingSig.set(true);
+    return this.http.get<Area[]>(this.url).pipe(
+      tap({
+        next: areas => {
+          this.areasSig.set(areas);
+          this.loadingSig.set(false);
+        },
+        error: () => this.loadingSig.set(false)
+      })
+    );
   }
 
-  /** Último valor cacheado (útil para no recargar al reabrir el diálogo) */
-  get cached(): Area[] | null { return this.areas$.value; }
+  /**  Crear un área nueva y actualizar signal global */
+  createArea(name: string) {
+    return this.http.post<Area>(this.url, { name }).pipe(
+      tap(newArea => {
+        this.areasSig.update(prev => [...prev, newArea]);
+      })
+    );
+  }
 }

@@ -6,9 +6,8 @@ export interface Category {
 }
 
 export interface Area {
-  id_area: number;
+  id_area?: number;
   name: string;
-  code?: string;
 }
 
 export interface ProductImage {

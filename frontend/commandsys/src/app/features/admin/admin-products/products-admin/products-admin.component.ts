@@ -6,10 +6,14 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ProductDialogComponent } from '../UI/product-dialog/product-dialog.component';
 import { ProductService } from '../data-access/products.service';
-import type { CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
+import type { Area, CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
 import { take } from 'rxjs';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatIcon } from '@angular/material/icon';
+import { ToastService } from '../../../../shared/UI/toast.service';
+import { AreaFormComponent } from '../UI/area-form/area-form.component';
+import { ProductAreasService } from '../data-access/products-area.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -21,7 +25,8 @@ export class ProductsAdminComponent implements OnInit{
 [x: string]: unknown;
   private dialog = inject(MatDialog);
   productSrv = inject(ProductService);
-
+  toast = inject(ToastService);
+  areasService = inject(ProductAreasService);
   // UI
   search = signal('');
   selectedCategory = signal<'Todas' | string>('Todas');
@@ -54,7 +59,6 @@ export class ProductsAdminComponent implements OnInit{
     // Diagnóstico opcional
     effect(() => {
       const list = this.productsSig();
-      console.log('Products loaded:', list.length, list.slice(0, 2));
     });
 
     // Prefetch con concurrencia limitada para los visibles (mejora UX y reduce parpadeo)
@@ -170,6 +174,20 @@ export class ProductsAdminComponent implements OnInit{
         this.thumbMap.set(p, finalUrl);
       });
     });
+  }
+
+  async openCreateArea() {
+    const ref = this.dialog.open(AreaFormComponent, { width: '480px' });
+    const value = await firstValueFrom(ref.afterClosed());
+    if (!value) return;
+
+    try {
+      await firstValueFrom(this.areasService.createArea(value));
+      this.toast.success('Área creada correctamente');
+    } catch (e) {
+      console.error('Error al crear área:', e);
+      this.toast.error('No se pudo crear el área');
+    }
   }
 
 

@@ -15,6 +15,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { ProductService } from '../../data-access/products.service';
 import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../../data-access/products.models';
 import { CustomizationFormComponent } from '../customization-form/customization-form.component';
+import { ProductAreasService } from '../../data-access/products-area.service';
+import { ProductCategoriesService } from '../../data-access/products-category.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 export type DialogMode = 'create' | 'edit';
 export interface ProductDialogData {
@@ -39,7 +42,7 @@ export interface ProductDialogData {
     MatInputModule,
     MatSelectModule,
     MatFormFieldModule,
-    CustomizationFormComponent
+    CustomizationFormComponent,
   ],
   templateUrl: './product-dialog.component.html',
   styleUrls: ['./product-dialog.component.css']
@@ -48,15 +51,19 @@ export class ProductDialogComponent {
   private fb = inject(FormBuilder);
   private sb = inject(MatSnackBar);
   private productSrv = inject(ProductService);
+  private areasSrv = inject(ProductAreasService);
+  private catSrv = inject(ProductCategoriesService);
+  private cdr = inject(ChangeDetectorRef);
 
   saving = signal(false);
   imagePreview = signal<string | null>(null);
   editing = signal<boolean>(false);
 
-  categories = signal<Category[]>([]);
-  areas = signal<Area[]>([]);
-  loadingCategories = signal<boolean>(true);
-  loadingAreas = signal<boolean>(true);
+  categories = this.catSrv.categoriesSig;
+  areas = this.areasSrv.areasSig;
+
+  loadingCategories = this.catSrv.loadingSig;
+  loadingAreas = this.areasSrv.loadingSig;
 
   form = this.fb.nonNullable.group({
     id_category: <number | null>null,
@@ -92,27 +99,24 @@ export class ProductDialogComponent {
       preparation_time: (v as any).preparation_time ?? null,
     });
 
-    const catsCached = data?.categories ?? this.productSrv.categoriesCached;
-    if (catsCached?.length) {
-      this.categories.set(catsCached);
-      this.loadingCategories.set(false);
-    } else {
-      this.productSrv.fetchCategories().subscribe({
-        next: list => { this.categories.set(list); this.loadingCategories.set(false); },
-        error: () => { this.loadingCategories.set(false); this.sb.open('No se pudieron cargar las categorías', 'OK', { duration: 2500 }); }
+    // === Cargar categorías y áreas si aún no existen ===
+    if (!this.catSrv.categoriesSig().length) {
+      this.catSrv.fetchCategories().subscribe({
+        error: () => this.sb.open('No se pudieron cargar las categorías', 'OK', { duration: 2500 })
       });
     }
 
-    const areasCached = data?.areas ?? this.productSrv.areasCached;
-    if (areasCached?.length) {
-      this.areas.set(areasCached);
-      this.loadingAreas.set(false);
-    } else {
-      this.productSrv.fetchAreas().subscribe({
-        next: list => { this.areas.set(list); this.loadingAreas.set(false); },
-        error: () => { this.loadingAreas.set(false); this.sb.open('No se pudieron cargar las áreas', 'OK', { duration: 2500 }); }
-      });
-    }
+    this.areasSrv.fetchAreas().subscribe({
+      next: () => {
+        this.cdr.detectChanges(); 
+      },
+      error: () => {
+        this.loadingAreas.set(false);
+        this.sb.open('No se pudieron cargar las áreas', 'OK', { duration: 2500 });
+      }
+    });
+
+
 
     if (this.editing() && v?.id_company_product) {
       this.productSrv.getProductImages(v.id_company_product).subscribe(list => {
