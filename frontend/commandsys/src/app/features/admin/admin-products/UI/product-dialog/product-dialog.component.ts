@@ -12,11 +12,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
-import { ProductService } from '../../data-access/products.service';
-import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../../data-access/products.models';
+import { ProductService } from '../../../../../core/services/products/products.service';
+import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../../../../../core/services/products/products.models';
 import { CustomizationFormComponent } from '../customization-form/customization-form.component';
-import { ProductAreasService } from '../../data-access/products-area.service';
-import { ProductCategoriesService } from '../../data-access/products-category.service';
+import { ProductAreasService } from '../../../../../core/services/products/products-area.service';
+import { ProductCategoriesService } from '../../../../../core/services/products/products-category.service';
 import { ChangeDetectorRef } from '@angular/core';
 
 export type DialogMode = 'create' | 'edit';

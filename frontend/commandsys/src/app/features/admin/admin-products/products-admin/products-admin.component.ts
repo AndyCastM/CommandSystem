@@ -5,14 +5,14 @@ import { RouterModule } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ProductDialogComponent } from '../UI/product-dialog/product-dialog.component';
-import { ProductService } from '../data-access/products.service';
-import type { Area, CompanyProduct, CreateCompanyProductDto } from '../data-access/products.models';
+import { ProductService } from '../../../../core/services/products/products.service';
+import type { Area, CompanyProduct, CreateCompanyProductDto } from '../../../../core/services/products/products.models';
 import { take } from 'rxjs';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatIcon } from '@angular/material/icon';
 import { ToastService } from '../../../../shared/UI/toast.service';
 import { AreaFormComponent } from '../UI/area-form/area-form.component';
-import { ProductAreasService } from '../data-access/products-area.service';
+import { ProductAreasService } from '../../../../core/services/products/products-area.service';
 import { firstValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';
 

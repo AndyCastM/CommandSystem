@@ -15,6 +15,22 @@ export class CompanyProductsController {
     private readonly companyImagesService: CompanyImagesService,
   ) {}
 
+  // ESTO ES PARA EL GERENTE, GET BRANCH PRODUCTS
+  @Get('branch_products')
+  @Roles(Role.Gerente)
+  getBranchProducts(
+    @CurrentUser() user: any,
+    @Query('id_category') id_category?: string,
+    @Query('id_area') id_area?: string,
+    @Query('search') search?: string,
+  ){
+    return this.companyProductsService.getBranchProducts(+user.id_branch, {
+      id_category: id_category ? +id_category : undefined,
+      id_area: id_area ? +id_area : undefined,
+      search,
+  });
+  }
+
   @Get(':id')
   @Roles(Role.Admin, Role.Gerente, Role.Mesero)
   async getProductDetail(@Param('id') id_company_product: string) {

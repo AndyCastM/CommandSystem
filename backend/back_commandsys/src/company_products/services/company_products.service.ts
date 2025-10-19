@@ -367,4 +367,52 @@ async getCompanyProducts(
   })));
 }
 
+async getBranchProducts(
+  id_branch: number,
+  filters: { id_category?: number; id_area?: number; search?: string },
+) {
+  const { id_category, id_area, search } = filters;
+
+  const products = await this.prisma.branch_products.findMany({
+    where: {
+      id_branch,
+      company_products: {
+        is: {
+          ...(id_category ? { id_category } : {}),
+          ...(id_area ? { id_area } : {}),
+          ...(search ? { name: { contains: search } } : {}),
+        },
+      },
+    },
+    include: {
+      company_products: {
+        include: {
+          product_categories: true,
+          print_areas: true,
+        },
+      },
+    },
+    orderBy: {
+      company_products: { id_category: 'asc' },
+    },
+  });
+
+  // === Formato de salida unificado ===
+  const formatted = products.map((bp) => ({
+    id_branch_product: bp.id_branch_product,
+    id_company_product: bp.id_company_product,
+    name: bp.company_products.name,
+    category: bp.company_products.product_categories?.name,
+    area: bp.company_products.print_areas?.name,
+    id_category: bp.company_products.id_category,
+    id_area: bp.company_products.id_area,
+    base_price: Number(bp.company_products.base_price),
+    preparation_time: bp.company_products.preparation_time,
+    is_active: bp.is_active, 
+    image_url: bp.company_products.image_url,
+  }));
+
+  return formatResponse('Lista de productos de la sucursal', formatted);
+}
+
 }
