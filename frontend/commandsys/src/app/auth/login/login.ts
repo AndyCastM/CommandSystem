@@ -56,6 +56,8 @@ export class Login {
     // Ejemplos de destinos
     if (role === 'Admin') {
       this.router.navigate(['/admin/configuracion']); // Panel admin
-    } 
+    } else if (role === 'Gerente'){
+      this.router.navigate(['/gerente/usuarios']); // Panel Gerente
+    }
   }
 }
