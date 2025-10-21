@@ -1,0 +1,114 @@
+<div class="max-w-6xl mx-auto">
+  <!-- ENCABEZADO -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+    <div>
+      <div class="text-sm text-slate-500">
+        Gerente / <span class="text-slate-700">Configuración</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">Configuración</h1>
+      <p class="text-sm text-slate-500">
+        Administra los datos de tu restaurante y su horario de atención.
+      </p>
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- INFORMACIÓN DEL RESTAURANTE -->
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <mat-icon class="text-sky-600">restaurant</mat-icon>
+        <h2 class="text-lg font-semibold text-slate-700">Información del Restaurante</h2>
+      </div>
+      <p class="text-slate-500 text-sm mb-4">
+        Datos básicos que aparecerán en tickets y documentos.
+      </p>
+
+      <form [formGroup]="form" class="space-y-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">Nombre del Restaurante</label>
+          <input type="text" formControlName="name" placeholder="Restaurante El Buen Sabor"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:border-sky-300" />
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700">Dirección</label>
+          <input type="text" formControlName="address" placeholder="Av. Principal 123, Centro"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:border-sky-300" />
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700">Teléfono</label>
+          <input type="text" formControlName="phone" placeholder="(668) 178-901"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:border-sky-300" />
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700">Email</label>
+          <input type="email" formControlName="email" placeholder="contacto@elbuensabor.com"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:border-sky-300" />
+        </div>
+
+        <div class="pt-4 text-right">
+          <button type="button" (click)="saveInfo()"
+            class="bg-gradient-to-r from-sky-500 to-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition">
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- HORARIOS DE ATENCIÓN -->
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <mat-icon class="text-sky-600">schedule</mat-icon>
+        <h2 class="text-lg font-semibold text-slate-700">Horarios de Atención</h2>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngFor="let d of days()"
+  class="border border-slate-200 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white shadow-sm">
+
+  <!-- IZQUIERDA: Toggle + Día -->
+  <div class="flex items-center gap-2 min-w-[120px] sm:min-w-[150px]">
+    <!-- Toggle -->
+    <label class="relative inline-flex items-center cursor-pointer select-none">
+      <input type="checkbox" class="sr-only peer" [checked]="d.enabled" (change)="d.enabled = !d.enabled" />
+      <span
+        class="relative w-8 h-5 rounded-full bg-slate-400 peer-checked:bg-green-500 transition-colors duration-300">
+        <span
+          class="absolute top-[2px] left-[2px] h-4 w-4 rounded-full bg-white shadow transition-transform duration-300"
+          [class.translate-x-3]="d.enabled"></span>
+      </span>
+    </label>
+
+    <!-- Día -->
+    <span class="text-sm font-medium"
+      [ngClass]="d.enabled ? 'text-slate-800' : 'text-slate-400'">
+      {{ d.name }}
+    </span>
+  </div>
+
+  <!-- DERECHA: Horarios -->
+  <div *ngIf="d.enabled"
+    class="flex items-center justify-start sm:justify-end flex-wrap gap-2 w-full">
+    <input type="time" [(ngModel)]="d.open"
+      class="border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-700 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-[6.5rem] text-center" />
+    <span class="text-slate-500 text-sm">–</span>
+    <input type="time" [(ngModel)]="d.close"
+      class="border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-700 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-[6.5rem] text-center" />
+  </div>
+</div>
+
+
+      </div>
+
+      <div class="pt-4 text-right">
+        <button (click)="saveSchedule()"
+          class="bg-gradient-to-r from-indigo-500 to-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition">
+          Guardar horario
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
