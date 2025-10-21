@@ -28,8 +28,6 @@ export class ManagerShellComponent {
   closeSidebar() { this.sidebarOpen = false; }
 
   onLogout() {
-    // TODOOO
-    // aquí invocarías AuthService.logout() y redirigir a login
-    console.log('logout');
+    this.auth.logout()    
   }
  }

@@ -4,7 +4,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient , HttpContext} from '@angular/common/http';
 import { tap, catchError, map, of } from 'rxjs';
 import { SKIP_AUTH_REDIRECT } from '../../core/interceptors/auth-error.interceptor';
-
+import { firstValueFrom } from 'rxjs';
+import { ToastService } from '../../shared/UI/toast.service';
 export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero';
 
 export interface LoginResponse {
@@ -22,6 +23,7 @@ export interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private cookies = inject(CookieService);
+  private toast = inject(ToastService);
   // store only the user object (that's what we persist in the cookie and set on login)
   currentUser = signal<LoginResponse['user'] | null>(null);
 
@@ -48,11 +50,21 @@ export class AuthService {
       }));
   }
 
-  logout() {
-    this.cookies.delete('access_token', '/');
+  async logout() {
+  try {
+    // Llama al backend para limpiar la cookie HttpOnly
+    await firstValueFrom(this.http.post(`${this.apiUrl}/auth/logout`, {}));
+
+    // Limpia valores locales (no HttpOnly)
     this.cookies.delete('user', '/');
     this.currentUser.set(null);
+
+    this.toast.success('Sesión cerrada correctamente');
+  } catch (err) {
+    this.toast.error('Error al cerrar sesión');
+    console.error(err);
   }
+}
 
   get token(): string | null {
     const t = this.cookies.get('access_token');

@@ -43,11 +43,11 @@ export class UsersService {
     return this.http.patch(`${this.base}/${id}`, data);
   }
 
-  deleteUser(id: number): Observable<any> {
+  deleteUser(id: number){
     return this.http.delete(`${this.base}/${id}`);
   }
 
-  activeUser(id: number) : Observable<any> {
+  activeUser(id: number) {
     return this.http.patch(`${this.base}/${id}/activate`, {});
   }
 }

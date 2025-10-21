@@ -85,9 +85,17 @@
 
 
     <!-- Footer -->
-    <div class="px-4 py-4 border-t border-slate-200">
-      <button (click)="onLogout()" class="text-red-600 hover:text-red-700 text-sm flex items-center gap-2">
-        <span class="material-icons">logout</span> Cerrar sesión
+    <div class="px-5 py-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
+      <button
+        (click)="onLogout()"
+        [routerLink]="'/'"
+        class="group w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-semibold text-rose-600 bg-white border border-rose-200 rounded-xl px-5 py-2.5 shadow-sm 
+              hover:bg-gradient-to-r hover:from-rose-500 hover:to-rose-600 hover:text-white hover:shadow-md transition-all duration-300 ease-out active:scale-[0.98]"
+      >
+        <mat-icon class="text-base transition-transform duration-300 group-hover:rotate-[-20deg] group-hover:scale-110">
+          logout
+        </mat-icon>
+        <span class="tracking-wide">Cerrar sesión</span>
       </button>
     </div>
   </aside>

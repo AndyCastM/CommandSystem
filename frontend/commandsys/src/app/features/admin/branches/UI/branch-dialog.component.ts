@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 
 import type { Branch, CreateBranchDto } from '../data-access/branches.models';
+import { User } from '../../../../core/services/users/user.model';
 
 export type DialogMode = 'create' | 'edit';
 export type DialogData = { mode: DialogMode; value?: Branch };
@@ -33,6 +34,7 @@ export class BranchDialogComponent {
   private sb = inject(MatSnackBar);
   saving = signal(false);
   logoPreview = signal<string | null>(null);
+  gerente = signal<User | null>(null);
 
   form!: FormGroup;
 

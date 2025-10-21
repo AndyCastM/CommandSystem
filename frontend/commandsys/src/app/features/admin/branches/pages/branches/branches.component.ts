@@ -28,11 +28,11 @@ export class BranchesPageComponent {
   companyId = signal<number>(1);
   estado = signal<FilterState>('all');
 
-  // lee el signal del servicio (¡bien!)
+  // lee el signal del servicio 
   branches = computed<Branch[]>(() => this.api.branches());
   total = computed(() => this.branches().length);
-  activas = computed(() => this.branches().filter(b => b.is_active).length);
-  inactivas = computed(() => this.total() - this.activas());
+  actives = computed(() => this.branches().filter(b => b.is_active).length);
+  inactives = computed(() => this.total() - this.actives());
 
   // ---- PENDING como signal ----
   private _pendingIds = signal<Set<number>>(new Set());

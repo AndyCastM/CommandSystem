@@ -28,6 +28,10 @@ export class UsersPageComponent {
 
   currentUser = computed(() => this.auth.currentUser());
   users = computed<User[]>(() => this.usersService.users());
+  total = computed(() => this.users().length);
+  actives = computed(() => this.users().filter(u => u.is_active).length);
+  inactives = computed(() => this.total() - this.actives());
+
   search = signal('');
   loading = signal(true);
   
@@ -43,6 +47,17 @@ export class UsersPageComponent {
       }
     });
   }
+
+  // Para filtrar usuarios por búsqueda
+  filteredUsers = computed(() => {
+    const term = this.search().toLowerCase().trim();
+    return this.users().filter(u =>
+      [u.name, u.last_name, u.role_name, u.username]
+        .join(' ')
+        .toLowerCase()
+        .includes(term)
+    );
+  });
 
   async openCreate() {
     const data: UserDialogData = { mode: 'create' , currentUser: this.currentUser() };
