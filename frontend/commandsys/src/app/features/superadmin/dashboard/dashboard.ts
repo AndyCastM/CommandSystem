@@ -5,7 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIcon } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { CompanyFormComponent } from '../UI/company-form.component';
+import { CompanyFormComponent } from '../UI/company-form/company-form.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,6 +17,11 @@ export class Dashboard {
   companies = signal<any[]>([]);
   metrics = signal({ companies: 0, users: 0, active: 0, inactive: 0 });
   showModal = signal(false);
+  
+  selectedCompany = signal<any | null>(null);
+  showUsersModal = signal(false);
+  showEditModal = signal(false);
+  
   form: FormGroup;
 
   constructor(
@@ -71,11 +76,23 @@ export class Dashboard {
     }
   }
 
-  editCompany(c: any) {
-    console.log('Editar empresa', c);
+  openUsersSupportModal(c: any) {
+    this.selectedCompany.set(c);
+    this.showUsersModal.set(true);
   }
 
-  manageUsers(c: any) {
-    console.log('Ver usuarios de empresa', c);
+  closeUsersModal() {
+    this.selectedCompany.set(null);
+    this.showUsersModal.set(false);
+  }
+
+  openEditCompanyModal(c: any) {
+    this.selectedCompany.set(c);
+    this.showEditModal.set(true);
+  }
+
+  closeEditCompanyModal() {
+    this.selectedCompany.set(null);
+    this.showEditModal.set(false);
   }
  }

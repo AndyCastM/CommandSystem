@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { Superadmin } from '../data-access/superadmin';
+import { Superadmin } from '../../data-access/superadmin';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
