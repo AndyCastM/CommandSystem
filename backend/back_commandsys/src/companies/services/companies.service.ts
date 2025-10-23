@@ -57,11 +57,18 @@ export class CompaniesService {
         },
       });
 
+      const adminRole = await this.prisma.roles.findFirst({
+        where: { name: 'Admin' },
+      });
+
+      if (!adminRole) {
+        throw new Error('No se encontró el rol Admin en la base de datos');
+      }
       // Crear el usuario admin asociado a la empresa
       const adminUser = await prisma.users.create({
         data: {
           id_company: company.id_company,
-          id_role: 2, // Asignar rol de admin (2)
+          id_role: adminRole.id_role, // Asignar rol de admin 
           name: dto.admin_name,
           last_name: dto.admin_last_name,
           last_name2: dto.admin_last_name2,
@@ -95,7 +102,28 @@ export class CompaniesService {
   }
 
   async findAll() {
-    return this.prisma.companies.findMany();
+    const companies = await this.prisma.companies.findMany({
+      include: {
+        users: {
+          where: { roles: { name: 'Admin' } },
+          select: {
+            id_user: true,
+            name: true,
+            last_name: true,
+            username: true,
+            roles: { select: { name: true } },
+          },
+        },
+      },
+    });
+
+    return companies.map((c) => ({
+      ...c,
+      admin_name: c.users[0]?.name || null,
+      admin_last_name: c.users[0]?.last_name || null,
+      admin_username: c.users[0]?.username || null,
+      admin_role: c.users[0]?.roles?.name || null,
+    }));
   }
 
   async findOne(id: number) {

@@ -58,6 +58,8 @@ export class Login {
       this.router.navigate(['/admin/configuracion']); // Panel admin
     } else if (role === 'Gerente'){
       this.router.navigate(['/gerente/usuarios']); // Panel Gerente
+    } else if (role === 'Superadmin'){
+      this.router.navigate(['/superadmin/dashboard']); // Panel Superadmin
     }
   }
 }

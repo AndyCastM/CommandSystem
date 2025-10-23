@@ -1,0 +1,221 @@
+<!-- Contenedor principal -->
+<div
+  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden
+         w-full sm:w-[380px] md:w-[520px] lg:w-[560px] max-w-[92vw]
+         max-h-[85dvh]"
+>
+  <!-- Encabezado -->
+  <div
+    class="p-5 border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-sky-50"
+  >
+    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+      <mat-icon class="text-sky-600">business</mat-icon>
+      {{ title() }}
+    </h2>
+    <p class="text-slate-500 text-sm mt-1">{{ subtitle() }}</p>
+  </div>
+
+  <!-- Contenido -->
+  <form
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    class="flex-1 overflow-y-auto p-6 space-y-5 custom-scroll"
+  >
+    <!-- Nombre comercial -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Nombre comercial</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ej: Restaurante El Buen Sabor"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+      />
+    </div>
+
+    <!-- Razón social -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Razón social</label>
+      <input
+        type="text"
+        formControlName="legal_name"
+        placeholder="Ej: Buen Sabor S.A. de C.V."
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+      />
+    </div>
+
+    <!-- RFC -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">RFC</label>
+      <input
+        type="text"
+        formControlName="rfc"
+        placeholder="Ej: BS123456789"
+        class="uppercase w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+      />
+    </div>
+
+    <!-- Dirección -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Calle</label>
+        <input
+          type="text"
+          formControlName="street"
+          placeholder="Ej: Av. Principal"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Número</label>
+        <input
+          type="text"
+          formControlName="num_ext"
+          placeholder="Ej: 123"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Colonia</label>
+        <input
+          type="text"
+          formControlName="colony"
+          placeholder="Ej: Centro"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Código postal</label>
+        <input
+          type="text"
+          formControlName="cp"
+          placeholder="Ej: 81200"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+
+    <!-- Ciudad / Estado -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Ciudad</label>
+        <input
+          type="text"
+          formControlName="city"
+          placeholder="Ej: Los Mochis"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Estado</label>
+        <input
+          type="text"
+          formControlName="state"
+          placeholder="Ej: Sinaloa"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+
+    <!-- Contacto -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Teléfono</label>
+        <input
+          type="text"
+          formControlName="phone"
+          placeholder="Ej: (668) 123-4567"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Correo electrónico</label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="contacto@empresa.com"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+
+    <!-- Datos del administrador -->
+    <hr class="my-4 border-slate-200" />
+    <h3 class="text-slate-700 font-semibold">Usuario administrador</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Nombre</label>
+        <input
+          type="text"
+          formControlName="admin_name"
+          placeholder="Ej: María"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Primer apellido</label>
+        <input
+          type="text"
+          formControlName="admin_last_name"
+          placeholder="Ej: López"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+
+    <div class="space-y-1.5">
+      <label class="text-sm font-semibold text-slate-700">Segundo apellido (opcional)</label>
+      <input
+        type="text"
+        formControlName="admin_last_name2"
+        placeholder="Ej: Martínez"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+      />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Usuario</label>
+        <input
+          type="text"
+          formControlName="admin_username"
+          placeholder="Ej: maria.lopez"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">Contraseña</label>
+        <input
+          type="password"
+          formControlName="admin_password"
+          placeholder="Mínimo 6 caracteres"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        />
+      </div>
+    </div>
+  </form>
+
+  <!-- Footer -->
+  <div class="p-4 border-t bg-white flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0">
+    <button
+      type="button"
+      class="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all"
+      (click)="close()"
+      [disabled]="saving()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="submit"
+      (click)="submit()"
+      class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+      [disabled]="form.invalid || saving()"
+    >
+      <mat-icon *ngIf="saving()" class="animate-spin !text-base">autorenew</mat-icon>
+      {{ saving() ? 'Guardando...' : 'Crear empresa' }}
+    </button>
+  </div>
+</div>

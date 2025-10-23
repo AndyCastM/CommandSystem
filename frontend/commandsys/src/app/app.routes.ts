@@ -5,6 +5,11 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
     { path : '', component: Login },
     {
+      path: 'superadmin',
+      loadComponent: () => import('./layouts/superadmin-shell/superadmin-shell').then(m => m.SuperadminShell),
+      loadChildren: () => import('./features/superadmin/superadmin.routes').then(m => m.SUPERADMIN_ROUTES),
+    },
+    {
       path: 'admin',
       loadComponent: () => import('./layouts/admin-shell/admin-shell.component').then(m => m.AdminShellComponent),      
       loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
