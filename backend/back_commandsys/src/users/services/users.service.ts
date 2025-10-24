@@ -187,6 +187,34 @@ export class UsersService {
         return this.prisma.roles.findMany({ where });
     }
 
+    async getUsersByCompany(id_company: number) {
+    const users = await this.prisma.users.findMany({
+        where: { id_company },
+        include: {
+        roles: {
+            select: { name: true },
+        },
+        },
+        orderBy: { created_at: 'desc' },
+    });
+
+    // Mapear el formato 
+    const listUsers = users.map((u) => ({
+        id_user: u.id_user,
+        username: u.username,
+        name: u.name,
+        last_name: u.last_name,
+        role_name: u.roles?.name || null,
+        created_at: u.created_at,
+        updated_at: u.updated_at,
+        is_active: u.is_active,
+    }));
+
+    return formatResponse(
+        `Listado de usuarios de la empresa ${id_company}.`,
+        listUsers
+    );
+    }
 }
 
 

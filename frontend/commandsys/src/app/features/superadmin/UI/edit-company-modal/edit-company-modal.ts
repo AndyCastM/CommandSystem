@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { MatIconModule } from '@angular/material/icon';
 import { Superadmin } from '../../data-access/superadmin';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-edit-company-modal',
@@ -21,8 +22,7 @@ export class EditCompanyModalComponent {
 
   constructor(
     private fb: FormBuilder,
-    private srv: Superadmin,
-    private sb: MatSnackBar
+    private toast: ToastService
   ) {
     this.form = this.fb.group({
     name: ['', Validators.required],
@@ -44,11 +44,11 @@ export class EditCompanyModalComponent {
     this.saving.set(true);
     try {
       //await this.srv.updateCompany(this.company.id_company, this.form.value);
-      this.sb.open('Empresa actualizada con éxito', 'OK', { duration: 3000 });
+      this.toast.success('Empresa actualizada con éxito');
       this.close();
     } catch (err) {
       console.error(err);
-      this.sb.open('Error al actualizar empresa', 'OK', { duration: 3000 });
+      this.toast.error('Error al actualizar empresa');
     } finally {
       this.saving.set(false);
     }

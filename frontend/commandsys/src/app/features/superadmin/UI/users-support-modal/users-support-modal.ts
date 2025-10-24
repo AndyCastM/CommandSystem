@@ -1,8 +1,9 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Superadmin } from '../../data-access/superadmin';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UsersService } from '../../../../core/services/users/users.service';
+import { ToastService } from '../../../../shared/UI/toast.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-users-support-modal',
@@ -10,25 +11,34 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   imports: [CommonModule, MatIconModule],
   templateUrl: './users-support-modal.html',
 })
-export class UsersSupportModalComponent {
+export class UsersSupportModalComponent implements OnChanges {
   @Input() company!: any;
   @Input() close!: () => void;
+
+  private userSrv = inject(UsersService);
+  private toast = inject(ToastService);
 
   users = signal<any[]>([]);
   loading = signal(false);
 
-  constructor(private srv: Superadmin, private sb: MatSnackBar) {
-    this.loadUsers();
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['company']?.currentValue) {
+      //console.log('Company recibida:', this.company);
+      this.loadUsers();
+    }
   }
 
   async loadUsers() {
     try {
       this.loading.set(true);
-      //const data = await this.srv.getCompanyUsers(this.company.id_company);
-      //this.users.set(data);
+      const res: any = await firstValueFrom(
+        this.userSrv.getUsersByCompany(this.company.id_company)
+      );
+      //console.log('Respuesta del backend:', res);
+      this.users.set(res?.data || []);
     } catch (err) {
       console.error(err);
-      this.sb.open('Error al cargar usuarios', 'OK', { duration: 3000 });
+      this.toast.error('Error al cargar usuarios');
     } finally {
       this.loading.set(false);
     }
@@ -36,20 +46,18 @@ export class UsersSupportModalComponent {
 
   async resetPassword(u: any) {
     try {
-      //await this.srv.resetUserPassword(u.id_user);
-      this.sb.open(`Contraseña restablecida para ${u.username}`, 'OK', { duration: 3000 });
+      this.toast.success(`Contraseña restablecida para ${u.username}`);
     } catch {
-      this.sb.open('Error al restablecer contraseña', 'OK', { duration: 3000 });
+      this.toast.error('Error al restablecer contraseña');
     }
   }
 
   async toggleActive(u: any) {
     try {
-      //await this.srv.toggleUserActive(u.id_user);
-      this.sb.open(`Usuario ${u.is_active ? 'desactivado' : 'activado'}`, 'OK', { duration: 3000 });
+      this.toast.success(`Usuario ${u.is_active ? 'desactivado' : 'activado'}`);
       this.loadUsers();
     } catch {
-      this.sb.open('Error al cambiar estado del usuario', 'OK', { duration: 3000 });
+      this.toast.error('Error al cambiar estado del usuario');
     }
   }
 }

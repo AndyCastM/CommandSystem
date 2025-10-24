@@ -50,4 +50,8 @@ export class UsersService {
   activeUser(id: number) {
     return this.http.patch(`${this.base}/${id}/activate`, {});
   }
+
+  getUsersByCompany(id_company: number){
+    return this.http.get(`${this.base}/${id_company}`);
+  }
 }

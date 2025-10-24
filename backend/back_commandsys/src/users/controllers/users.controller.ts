@@ -40,6 +40,12 @@ export class UsersController {
         return this.usersService.getUsers(user);
     } 
 
+    @Get(':id_company')
+    @Roles(Role.Superadmin)
+    getUsersCompany(@Param('id_company') id_company: number){
+        return this.usersService.getUsersByCompany(+id_company);
+    }
+
     @Patch(':id')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
     update(@Param('id') id: number, @Body()dto: UpdateUserDto){
