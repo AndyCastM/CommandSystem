@@ -4,6 +4,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoginResponse } from '../services/auth.service';
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +16,7 @@ export class Login {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   logoSrc = '/assets/logo.png';
   illustrationSrc = '/assets/login-ilustration.png';
@@ -24,7 +26,7 @@ export class Login {
 
   form = this.fb.group({
     usuario: ['', [Validators.required]],
-    contrasena: ['', [Validators.required, Validators.minLength(4)]],
+    contrasena: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   onLogoError() { this.logoSrc = '/assets/fallback-logo.png'; }
@@ -43,7 +45,7 @@ export class Login {
       const res = await this.auth.login(usuario!, contrasena!).toPromise();
       this.redirectByRole(res!);
     } catch (e: any) {
-      this.errorMsg.set(e?.error?.message ?? 'Usuario o contraseña incorrectos');
+      this.toast.error(e?.error?.message ?? 'Usuario o contraseña incorrectos');
     } finally {
       this.loading.set(false);
     }

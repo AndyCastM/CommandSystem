@@ -25,7 +25,11 @@ export class UsersService {
                 last_name2: dto.last_name2,
                 username: dto.username,
                 password: hashedPassword
-            }
+            },
+            include: {
+                roles: true,
+                branches: true,
+            },
         });
 
         const userCreated =  {
@@ -34,7 +38,10 @@ export class UsersService {
             name: user.name,
             last_name: user.last_name,
             id_role: user.id_role,
+            role_name : user.roles.name,
+            branch: user.branches?.name,
             created_at: user.created_at,
+            is_active: user.is_active,
         };
 
         return userCreated;

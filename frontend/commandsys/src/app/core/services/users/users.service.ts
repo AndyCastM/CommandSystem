@@ -36,7 +36,10 @@ export class UsersService {
   }
 
   async createUser(data: CreateUser) {
-    return this.http.post(this.base, data);
+    const created = await firstValueFrom(
+      this.http.post<User>(this.base, data, { withCredentials: true })
+    );
+    return created;
   }
 
   async updateUser(id: number, dto: UpdateUser) {
