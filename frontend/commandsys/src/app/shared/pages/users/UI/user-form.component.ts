@@ -8,6 +8,7 @@ import { CreateUser, User } from '../../../../core/services/users/user.model';
 import { UsersService } from '../../../../core/services/users/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
 import { BranchesApi } from '../../../../core/services/branches/branches.api';
+import { ToastService } from '../../../UI/toast.service';
 
 export type UserDialogMode = 'create' | 'edit';
 export type UserDialogData = {
@@ -35,6 +36,7 @@ export class UserFormComponent {
   private rolesSrv = inject(RolesService);
   private branchesSrv = inject(BranchesApi);
   private usersService = inject(UsersService);
+  private toast = inject(ToastService);
 
   form: FormGroup;
 
@@ -148,13 +150,13 @@ export class UserFormComponent {
     this.usersService.createUser(data).subscribe({
       next: () => {
         this.saving.set(false);
-        alert('Usuario creado exitosamente');
+        this.toast.success('Usuario creado exitosamente');
         this.close();
       },
       error: (err) => {
         this.saving.set(false);
         console.error(err);
-        alert('Error al crear usuario');
+        this.toast.error('Error al crear usuario');
       },
     });
   }
