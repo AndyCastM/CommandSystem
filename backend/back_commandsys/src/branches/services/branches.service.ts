@@ -28,10 +28,7 @@ export class BranchesService {
     // Crear los 7 días default de horarios
     await this.branchSchedulesService.createDefaultWeek(branch.id_branch, branch.id_company);
     await this.companyProductsService.syncProductsToBranch(branch.id_company, branch.id_branch);
-    return formatResponse(
-      `Sucursal ${branch.name} creada correctamente.`,
-      branch,
-    );
+    return branch;
   }
 
   async findAll(id_company: number, is_active?: number) {
@@ -68,10 +65,7 @@ export class BranchesService {
       data: dto,
     });
 
-    return formatResponse(
-      `Sucursal ${branch.name} actualizada correctamente.`,
-      branch,
-    );
+    return branch;
   }
 
   async delete(id: number, id_company: number) {
