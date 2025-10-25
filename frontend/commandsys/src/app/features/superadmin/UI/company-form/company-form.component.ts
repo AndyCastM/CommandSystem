@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Superadmin } from '../../data-access/superadmin';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-company-create-modal',
@@ -20,27 +20,27 @@ export class CompanyFormComponent {
   constructor(
     private fb: FormBuilder,
     private srv: Superadmin,
-    private sb: MatSnackBar
+    private toast: ToastService
   ) {
     this.form = this.fb.group({
       // Empresa
       name: ['', Validators.required],
       legal_name: ['', Validators.required],
       rfc: ['', [Validators.required, Validators.minLength(12)]],
-      street: [''],
+      street: ['', [Validators.required]],
       num_ext: [''],
       colony: [''],
-      cp: [''],
-      city: [''],
-      state: [''],
-      phone: [''],
+      cp: ['', [Validators.required]],
+      city: ['', [Validators.required]],
+      state: ['', [Validators.required]],
+      phone: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
 
       // Admin
+      admin_username: ['', Validators.required],
       admin_name: ['', Validators.required],
       admin_last_name: ['', Validators.required],
       admin_last_name2: [''],
-      admin_username: ['', Validators.required],
       admin_password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
@@ -50,10 +50,10 @@ export class CompanyFormComponent {
     this.saving.set(true);
     try {
       await this.srv.createCompany(this.form.value);
-      this.sb.open('Empresa creada con éxito', 'OK', { duration: 3000 });
+      this.toast.success('Empresa creada con éxito');
       this.close();
     } catch (err: any) {
-      this.sb.open(err.error?.message || 'Error al crear empresa', 'OK', { duration: 4000 });
+      this.toast.error(err.error?.message || 'Error al crear empresa');
     } finally {
       this.saving.set(false);
     }

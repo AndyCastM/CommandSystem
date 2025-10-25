@@ -195,7 +195,7 @@ export class UsersService {
             select: { name: true },
         },
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { id_role: 'asc' },
     });
 
     // Mapear el formato 

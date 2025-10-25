@@ -6,19 +6,19 @@ export interface CreateCompanyDto {
   name: string;
   legal_name: string;
   rfc: string;
-  street?: string;
+  street: string;
   num_ext?: string;
-  colony?: string;
-  cp?: string;
-  city?: string;
-  state?: string;
-  phone?: string;
+  colony: string;
+  cp: string;
+  city: string;
+  state: string;
+  phone: string;
   email: string;
 
+  admin_username: string;
   admin_name: string;
   admin_last_name: string;
   admin_last_name2?: string;
-  admin_username: string;
   admin_password: string;
 }
 
@@ -71,9 +71,9 @@ export class Superadmin {
   }
 
   // Crear una nueva empresa
-  async createCompany(dto: CreateCompanyDto): Promise<CompanyResponseDto> {
+  async createCompany(dto: CreateCompanyDto){
     const res = await this.http.post<CompanyResponseDto>(this.API_URL, dto).toPromise();
-    if (!res) throw new Error('No se recibió respuesta del servidor');
-    return res;
+      if (!res) throw new Error('No se recibió respuesta del servidor');
+      return res;
   }
 }

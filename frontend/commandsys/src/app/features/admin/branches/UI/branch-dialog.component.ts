@@ -5,10 +5,12 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ToastService } from '../../../../shared/UI/toast.service';
 
 import type { Branch, CreateBranchDto } from '../data-access/branches.models';
 import { User } from '../../../../core/services/users/user.model';
+import { BranchesApi } from '../data-access/branches.api';
 
 export type DialogMode = 'create' | 'edit';
 export type DialogData = { mode: DialogMode; value?: Branch };
@@ -31,7 +33,9 @@ export class BranchDialogComponent {
 
   editing = signal<boolean>(false);
   private fb = inject(FormBuilder);
-  private sb = inject(MatSnackBar);
+  private toast = inject(ToastService);
+  private branchSrv = inject(BranchesApi);
+
   saving = signal(false);
   logoPreview = signal<string | null>(null);
   gerente = signal<User | null>(null);
@@ -49,14 +53,12 @@ export class BranchDialogComponent {
       name:     [v.name ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(80), this.noOnlySpaces]],
       email:    [v.email ?? '', [Validators.email]],
       street:   [v.street ?? ''],
-      suburb:   [(v as any).suburb ?? (v as any).colony ?? ''],
+      colony:   [v.colony ?? ''],
       num_ext:  [v.num_ext ?? ''],
       city:     [v.city ?? ''],
       state:    [v.state ?? ''],
-      zip:      [(v as any).zip ?? (v as any).cp ?? '', [Validators.pattern(/^\d{5}$/)]],
-      phone:    [v.phone ?? '', [Validators.pattern(/^[\d+\-\s]{10,15}$/)]],
-      is_active:[v.is_active ?? true],
-      logo:     [null], // File | null
+      cp:       [v.cp ?? '', [Validators.pattern(/^\d{5}$/)]],
+      phone:    [v.phone ?? '', [Validators.required]],
     });
   }
 
@@ -93,10 +95,10 @@ export class BranchDialogComponent {
   }
 
   // --- Submit
-  submit() {
+  async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.sb.open('Corrige los campos marcados antes de guardar', 'OK', { duration: 3000 });
+      this.toast.warning('Corrige los campos marcados antes de guardar');
       return;
     }
     this.saving.set(true);
@@ -106,14 +108,19 @@ export class BranchDialogComponent {
       Object.entries(raw).map(([k, v]) => [k, (typeof v === 'string') ? v.trim() : v])
     ) as any;
 
-    // Mapeos opcionales si tu backend espera cp/colony
     const payload = {
       ...trimmed,
-      cp: trimmed.zip,
-      colony: trimmed.suburb,
     };
 
-    this.ref.close(payload);
+    try {
+      await this.branchSrv.create(payload);
+      this.toast.success('Sucursal creada con éxito');
+      this.close();
+    } catch (err: any) {
+      this.toast.error(err.error?.message || 'Error al crear la sucursal');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   close() { this.ref.close(); }

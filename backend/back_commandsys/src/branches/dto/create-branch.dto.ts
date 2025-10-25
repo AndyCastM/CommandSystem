@@ -32,8 +32,7 @@ export class CreateBranchDto {
     @IsNotEmpty()
     state: string;
 
-    @IsString()
-    @IsOptional()
+    @IsNotEmpty()
     @IsPhoneNumber("MX")
     phone: string;
 

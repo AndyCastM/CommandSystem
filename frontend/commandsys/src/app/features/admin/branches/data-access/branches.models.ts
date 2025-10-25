@@ -4,7 +4,7 @@ export interface Branch {
   name: string;
   street: string;
   num_ext?: string;
-  colony?: string;       
+  colony: string;       
   cp: string;
   city: string;
   state: string;
@@ -22,7 +22,7 @@ export interface Branch {
   }[]
 }
 
-export type CreateBranchDto = Omit<Branch, 'id_branch' | 'is_active' | 'created_at' | 'updated_at'> & {
+export type CreateBranchDto = Omit<Branch, 'id_branch' | 'is_active' | 'created_at' | 'updated_at' |'users'> & {
   is_active?: boolean;
 };
 
