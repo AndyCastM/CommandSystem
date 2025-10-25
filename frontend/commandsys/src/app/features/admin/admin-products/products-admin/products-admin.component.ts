@@ -12,7 +12,9 @@ import { MatOption, MatSelect } from '@angular/material/select';
 import { MatIcon } from '@angular/material/icon';
 import { ToastService } from '../../../../shared/UI/toast.service';
 import { AreaFormComponent } from '../UI/area-form/area-form.component';
+import { CategoryForm } from '../UI/category-form/category-form';
 import { ProductAreasService } from '../../../../core/services/products/products-area.service';
+import { ProductCategoriesService } from '../data-access/products-category.service';
 import { firstValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';
 
@@ -28,6 +30,8 @@ export class ProductsAdminComponent implements OnInit{
   productSrv = inject(ProductService);
   toast = inject(ToastService);
   areasService = inject(ProductAreasService);
+  categoriesService = inject(ProductCategoriesService);
+
   // UI
   search = signal('');
   selectedCategory = signal<'Todas' | string>('Todas');
@@ -155,11 +159,21 @@ export class ProductsAdminComponent implements OnInit{
     this.dialog.open(ProductDialogComponent, {
       data: { mode: 'create' },
       panelClass: 'rounded-2xl',
-    }).afterClosed().subscribe((res: { dto: CreateCompanyProductDto; file: File | null } | null) => {
+    }).afterClosed().subscribe((res) => {
       if (!res) return;
-      this.productSrv.create(res.dto, res.file ?? undefined);
+      
+      // ahora sí: el componente controla el subscribe
+      this.productSrv.create(res.dto, res.file ?? undefined).subscribe({
+        next: (created) => {
+          console.log('Producto creado:', created);
+        },
+        error: (err) => {
+          console.error('Error en creación o subida:', err);
+        },
+      });
     });
   }
+
 
   openEdit(p: CompanyProduct) {
     this.dialog.open(ProductDialogComponent, {
@@ -191,6 +205,19 @@ export class ProductsAdminComponent implements OnInit{
     }
   }
 
+  async openCreateCategory(){
+    const ref = this.dialog.open(CategoryForm, { width: '480px' });
+    const value = await firstValueFrom(ref.afterClosed());
+    if (!value) return;
+
+    try {
+      await firstValueFrom(this.categoriesService.createCategory(value));
+      this.toast.success('Categoría creada correctamente');
+    } catch (e) {
+      console.error('Error al crear categoría:', e);
+      this.toast.error('No se pudo crear la caategoría');
+    }
+  }
 
   toggleAvailability(p: CompanyProduct) {
     if (!p) return;

@@ -31,6 +31,7 @@ export class CompanyProductsService {
           id_area: dto.id_area,
           id_category: dto.id_category,
           name: dto.name.trim(),
+          preparation_time: dto.preparation_time,
           description: dto.description ?? undefined,
           base_price: Number(dto.base_price),
         },
@@ -88,10 +89,7 @@ export class CompanyProductsService {
         });
       }
 
-      return formatResponse(
-        `Producto ${product.name} creado correctamente y replicado a ${branches.length} sucursal(es).`,
-        product,
-      );
+      return product;
     });
   }
 

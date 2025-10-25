@@ -183,8 +183,9 @@
         <button
           type="submit"
           form="userForm"
+          (click)="submit()"
           class="w-full sm:w-auto px-4 py-2 rounded-xl text-white bg-gradient-to-r from-[#3aa3bd] to-[#283996] hover:opacity-90 transition-all flex items-center justify-center gap-2"
-          [disabled]="form.invalid || saving"
+          [disabled]="form.invalid"
         >
           <mat-icon *ngIf="saving()" class="animate-spin !text-base">autorenew</mat-icon>
           {{ saving() ? 'Guardando...' : (editing() ? 'Actualizar' : 'Crear') }}

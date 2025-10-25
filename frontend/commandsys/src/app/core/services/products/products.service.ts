@@ -90,7 +90,7 @@ export class ProductService {
   }
 
   // ---------- CRUD ----------
-  create(input: CreateCompanyProductDto, imageFile?: File) {
+  create(input: CreateCompanyProductDto, imageFile?: File): Observable<CompanyProduct> {
     const createUrl = `${this.base}/api/company-products`;
 
     return this.http.post<CompanyProduct>(createUrl, input).pipe(
@@ -99,15 +99,25 @@ export class ProductService {
           this.productsSig.set([created, ...this.productsSig()]);
           return of(created);
         }
+
+        // luego subir imagen
         return this.uploadImageForProduct(created.id_company_product, imageFile).pipe(
           map(uploadRes => {
             const updated = (uploadRes?.product ?? uploadRes) as CompanyProduct || created;
-            this.productsSig.set([updated, ...this.productsSig().filter(p => p.id_company_product !== created.id_company_product)]);
+            this.productsSig.set([
+              updated,
+              ...this.productsSig().filter(p => p.id_company_product !== created.id_company_product),
+            ]);
             return updated;
           })
         );
+      }),
+      tap(() => console.log('Producto creado y/o imagen subida correctamente')),
+      catchError(err => {
+        console.error('Error creando producto o subiendo imagen:', err);
+        return throwError(() => err);
       })
-    ).subscribe();
+    );
   }
 
   update(id_company_product: number, patch: UpdateCompanyProductDto, imageFile?: File) {
