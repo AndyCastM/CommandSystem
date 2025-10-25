@@ -32,8 +32,8 @@ export class TableFormDialogComponent {
 
   form = this.fb.group({
     id_location: [0 as number | null, Validators.required],
-    name: ['', Validators.required],
-    seats: [2 as number | null, [Validators.required, Validators.min(1)]],
+    number: ['', Validators.required],
+    capacity: [2 as number | null, [Validators.required, Validators.min(1)]],
   });
 
   constructor(
