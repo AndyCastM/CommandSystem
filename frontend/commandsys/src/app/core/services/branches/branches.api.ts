@@ -23,6 +23,17 @@ export class BranchesApi {
     }
   }
 
+  async getById(id_branch?: number) {
+    const url = id_branch
+      ? `${this.baseUrl}/branches/${id_branch}`
+      : `${this.baseUrl}/branches/specific`;
+
+    return await firstValueFrom(
+      this.http.get<any>(url, { withCredentials: true })
+    );
+  }
+
+
   async getAll(){
     return await firstValueFrom(
       this.http.get<Branch[]>(`${this.baseUrl}/branches`, {  withCredentials: true })

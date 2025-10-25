@@ -19,6 +19,15 @@ export class BranchesController {
     return this.branchesService.create(user.id_company, createBranchDto);
   }
 
+  @Get('/specific')
+  @Roles(Role.Admin, Role.Gerente)
+  async findOwn(@CurrentUser() user: any) {
+    if (!user?.id_branch) {
+      throw new Error('El usuario no tiene una sucursal asignada');
+    }
+    return this.branchesService.findOne(user.id_branch, user.id_company);
+  }
+
   // Obtener todas las sucursales de una empresa
   @Get()
   @Roles(Role.Admin)
@@ -32,7 +41,7 @@ export class BranchesController {
 
   // Obtener una sucursal por id
   @Get(':id')
-  @Roles(Role.Admin)
+  @Roles(Role.Admin, Role.Gerente)
   findOne(
     @Param('id') id: string,
     @CurrentUser() user: any
