@@ -1,24 +1,22 @@
-import { Component, OnInit, computed, signal, inject , effect} from '@angular/core';
+import { Component, computed, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { UsersService } from '../../../../core/services/users/users.service';
-import { User } from '../../../../core/services/users/user.model';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
+
+import { UsersService } from '../../../../core/services/users/users.service';
+import { User } from '../../../../core/services/users/user.model';
 import { UserFormComponent, UserDialogData } from '../UI/user-form.component';
 import { AuthService } from '../../../../auth/services/auth.service';
-import { Role } from '../../../../auth/services/auth.service';
-import { CreateUser } from '../../../../core/services/users/user.model';
-import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../../shared/UI/toast.service';
-import {  NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-users-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, FormsModule,],
-  templateUrl: './users-page.component.html'
+  imports: [CommonModule, RouterModule, MatIconModule, FormsModule],
+  templateUrl: './users-page.component.html',
 })
 export class UsersPageComponent {
   private dialog = inject(MatDialog);
@@ -34,21 +32,19 @@ export class UsersPageComponent {
 
   search = signal('');
   loading = signal(true);
-  
   togglingIds = new Set<number>();
 
   constructor() {
-    effect( async () => {
+    effect(async () => {
       const user = this.currentUser();
       if (user) {
-        console.log('Usuario actual detectado:', user);
         await this.usersService.load();
         this.loading.set(this.usersService.loading());
       }
     });
   }
 
-  // Para filtrar usuarios por búsqueda
+  // === Filtro === //
   filteredUsers = computed(() => {
     const term = this.search().toLowerCase().trim();
     return this.users().filter(u =>
@@ -59,41 +55,57 @@ export class UsersPageComponent {
     );
   });
 
+  // === Crear usuario === //
   async openCreate() {
-    const data: UserDialogData = { mode: 'create' , currentUser: this.currentUser() };
+    const data: UserDialogData = {
+      mode: 'create',
+      currentUser: this.currentUser(),
+    };
+
     const ref = this.dialog.open(UserFormComponent, {
       data,
       width: '720px',
-      autoFocus: false
+      autoFocus: false,
     });
+
+    const created = await firstValueFrom(ref.afterClosed());
+    if (!created) return;
+
+    // Actualiza la signal local sin recargar
+    this.usersService.users.update(list => [created, ...list]);
+    this.toast.success('Usuario creado correctamente');
   }
 
-  async openEditUser(user: any) {
+  // === Editar usuario === //
+  async openEditUser(user: User) {
     const ref = this.dialog.open(UserFormComponent, {
       width: '720px',
-      data: { mode: 'edit', value: user, currentUser: this.currentUser() } as const,
+      data: {
+        mode: 'edit',
+        value: user,
+        currentUser: this.currentUser(),
+      } as const,
     });
 
-    const value = await firstValueFrom(ref.afterClosed());
-    if (!value) return;
+    const updated = await firstValueFrom(ref.afterClosed());
+    if (!updated) return;
 
-    try {
-      await this.usersService.updateUser(user.id_user, value);
-      this.toast.success('Usuario actualizado');
-    } catch (e){
-      this.toast.error('No se pudo actualizar el usuario');
-      console.error(e);
-    }
+    this.usersService.users.update(list =>
+      list.map(u =>
+        u.id_user === updated.id_user ? { ...u, ...updated } : u
+      )
+    );
+    this.toast.success('Usuario actualizado correctamente');
   }
 
+  // === Activar / Desactivar usuario === //
   toggleUserActive(u: User) {
-    // Evitar clicks múltiples
     if (this.togglingIds.has(u.id_user)) return;
     this.togglingIds.add(u.id_user);
 
     const wasActive = u.is_active;
     const next = !wasActive;
-    u.is_active = next; // cambio optimista inmediato
+    u.is_active = next; // cambio optimista
 
     const obs = wasActive
       ? this.usersService.deleteUser(u.id_user)   // desactivar
@@ -102,13 +114,13 @@ export class UsersPageComponent {
     obs.subscribe({
       next: () => {
         this.togglingIds.delete(u.id_user);
+        this.toast.success(`Usuario ${next ? 'activado' : 'desactivado'} correctamente`);
       },
       error: () => {
-        // Revertir si hubo error
-        u.is_active = wasActive;
+        u.is_active = wasActive; // revertir
         this.togglingIds.delete(u.id_user);
-      }
+        this.toast.error('Error al cambiar estado');
+      },
     });
   }
-
 }

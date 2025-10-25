@@ -5,6 +5,7 @@ import { UserResponseDto } from '../dto/user-response.dto';
 import { encrypt } from "src/libs/bcrypt";
 import { UpdateUserDto } from "../dto/update-user.dto";
 import { formatResponse } from "src/common/helpers/response.helper";
+import { last } from "rxjs";
 
 @Injectable()
 export class UsersService {
@@ -36,11 +37,7 @@ export class UsersService {
             created_at: user.created_at,
         };
 
-        return formatResponse(
-            `Usuario ${user.username} creado correctamente.`, 
-            userCreated, 
-            201
-        );
+        return userCreated;
 
     }
 
@@ -119,7 +116,7 @@ export class UsersService {
             where: { id_user: id },
             data,
             // Evitamos multiples consultas incluyendo el rol
-            include: { roles: true }, // Se incluye la relación con roles para obtener el nombre del rol
+            include: { roles: true, branches: true }, // Se incluye la relación con roles para obtener el nombre del rol
         });
 
         const userUpdated = {
@@ -127,17 +124,17 @@ export class UsersService {
             username: user.username,
             name: user.name,
             last_name: user.last_name,
+            last_name2: user.last_name2,
             id_role: user.id_role,
             role_name: user.roles.name,
+            id_branch: user.id_branch,
+            branch: user.branches?.name,
             created_at: user.created_at,
             updated_at: user.updated_at,
+            is_active: user.is_active,
         };
 
-        return formatResponse(
-            `Usuario ${user.username} actualizado correctamente.`, 
-            userUpdated, 
-            201
-        );
+        return userUpdated;
     }
 
     // (soft delete)

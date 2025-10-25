@@ -26,3 +26,5 @@ export interface User {
   is_active: boolean;
   created_at: string;
 }
+
+export type UpdateUser = Partial<Omit<User, 'id_company'  | 'role_name' | 'created_at'>>;

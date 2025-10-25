@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateUser, User } from './user.model';
+import { CreateUser, UpdateUser, User } from './user.model';
 import { sign } from 'crypto';
 import { firstValueFrom } from 'rxjs';
 import { map} from 'rxjs';
@@ -35,13 +35,17 @@ export class UsersService {
       .pipe(map((res) => res.data));
   }
 
-  createUser(data: CreateUser): Observable<any> {
+  async createUser(data: CreateUser) {
     return this.http.post(this.base, data);
   }
 
-  updateUser(id: number, data: Partial<CreateUser>): Observable<any> {
-    return this.http.patch(`${this.base}/${id}`, data);
-  }
+  async updateUser(id: number, dto: UpdateUser) {
+      const updated = await firstValueFrom(
+        this.http.patch<User>(`${this.base}/${id}`, dto, { withCredentials: true })
+      );
+      this.users.update(list => list.map(u => u.id_user=== id ? updated : u));
+      return updated;
+    }
 
   deleteUser(id: number){
     return this.http.delete(`${this.base}/${id}`);
@@ -53,5 +57,9 @@ export class UsersService {
 
   getUsersByCompany(id_company: number){
     return this.http.get(`${this.base}/${id_company}`);
+  }
+
+  getUserById(id_user: number){
+    return this.http.get(`${this.base}/${id_user}`);
   }
 }

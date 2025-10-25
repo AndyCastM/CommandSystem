@@ -71,24 +71,26 @@ export class UserFormComponent {
     const currentUser = this.data?.currentUser;
 
     this.loadRoles(currentUser);
-
-    // Solo carga sucursales si no es Gerente
     if (this.shouldShowBranch(currentUser)) {
       this.loadBranches();
     }
 
-    // Si está editando, rellena el form
     if (this.editing() && this.data?.value) {
-      const user = this.data.value;
+      // Obtener la versión actualizada del usuario desde el signal
+      const user = this.usersService.users().find(u => u.id_user === this.data.value!.id_user) || this.data.value;
+
       this.form.patchValue({
-        id_branch: user.id_branch ?? null,
-        id_role: user.id_role ?? null,
+        id_branch: user.id_branch,
+        id_role: user.id_role,
         name: user.name ?? '',
         last_name: user.last_name ?? '',
         last_name2: user.last_name2 ?? '',
         username: user.username ?? '',
-        password: '', // vacío al editar
+        password: '',
       });
+
+      this.form.get('password')?.clearValidators();
+      this.form.get('password')?.updateValueAndValidity();
     }
   }
 
@@ -124,7 +126,7 @@ export class UserFormComponent {
       console.error('Error al cargar sucursales:', err);
     }
   }
-
+  
   // === Lógica condicional para mostrar campo de sucursal ===
   shouldShowBranch(currentUser: any): boolean {
     // Los gerentes solo pueden crear usuarios dentro de su propia sucursal
@@ -141,23 +143,39 @@ export class UserFormComponent {
     this.ref.close();
   }
 
-  submit() {
+  async submit() {
     if (this.form.invalid) return;
 
     this.saving.set(true);
     const data: CreateUser = this.form.value as CreateUser;
 
-    this.usersService.createUser(data).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.toast.success('Usuario creado exitosamente');
-        this.close();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        console.error(err);
-        this.toast.error('Error al crear usuario');
-      },
-    });
+    try {
+      if (this.editing()) {
+        // --- Actualizar usuario ---
+        const id = this.data?.value?.id_user;
+        if (!id) {
+          this.toast.error('No se encontró el ID del usuario');
+          return;
+        }
+
+        if (!data.password) delete (data as any).password;
+
+        const updated = await this.usersService.updateUser(id, data);
+        this.ref.close(updated); // devuelve el objeto actualizado
+
+      } else {
+        // --- Crear usuario ---
+        const created = await this.usersService.createUser(data);
+        this.ref.close(created); // devuelve el objeto creado
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      this.toast.error(err?.error?.message || 'Error al guardar el usuario');
+    } finally {
+      this.saving.set(false);
+    }
   }
+
+
 }

@@ -100,7 +100,7 @@ export class BranchDialogComponent {
   private async createBranch(payload: CreateBranchDto) {
     const created = await this.branchSrv.create(payload);
     this.toast.success('Sucursal creada con éxito');
-    this.ref.close(created); // ✅ devuelve el branch creado
+    this.ref.close(created); // devuelve el branch creado
   }
 
   private async updateBranch(payload: Partial<Branch>) {
