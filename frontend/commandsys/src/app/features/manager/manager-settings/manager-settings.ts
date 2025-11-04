@@ -98,7 +98,7 @@ export class ManagerSettings {
   formatTime(isoTime: string) {
     const date = new Date(isoTime);
     return date.toISOString().substring(11, 16); // HH:mm
-    // Ejemplo: "1970-01-01T09:00:00Z" → "09:00"
+    // Ejemplo: "1970-01-01T09:00:00Z" = "09:00"
   }
 
   async toggleDay(day: any) {

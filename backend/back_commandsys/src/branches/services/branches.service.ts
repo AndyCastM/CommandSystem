@@ -142,7 +142,7 @@ export class BranchesService {
         id_branch,
         is_active: true,
         company_products: {
-          id_company
+          id_company: id_company,
         },
       },
       include: {
@@ -204,7 +204,8 @@ export class BranchesService {
       products,
     }));
 
-    return formatResponse(`Menú de la sucursal ${id_branch}`, menu);
+    //console.log(JSON.stringify(menu, null, 2));
+    return { menu };
   }
 
 }

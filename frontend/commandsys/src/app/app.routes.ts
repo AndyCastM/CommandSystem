@@ -18,6 +18,10 @@ export const routes: Routes = [
       path:'gerente',
       loadComponent:() => import('./layouts/manager-shell/manager-shell.component').then(m => m.ManagerShellComponent),
       loadChildren: () => import('./features/manager/manager.routes').then(m => m.MANAGER_ROUTES),
-    }
-
+    },
+    {
+      path:'mesero',
+      loadComponent:() => import('./layouts/waiter-shell/waiter-shell').then(m => m.WaiterShellComponent),
+      loadChildren: () => import('./features/waiter/waiter.routes').then(m => m.WAITER_ROUTES),
+    },
 ];

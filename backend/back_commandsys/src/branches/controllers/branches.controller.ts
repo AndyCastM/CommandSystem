@@ -19,6 +19,14 @@ export class BranchesController {
     return this.branchesService.create(user.id_company, createBranchDto);
   }
 
+  @Get('/menu')
+  @Roles(Role.Gerente, Role.Mesero)
+  async getBranchMenu(
+    @CurrentUser() user: any, 
+  ) {
+    return this.branchesService.getBranchMenu(+user.id_company, +user.id_branch);
+  }
+
   @Get('/specific')
   @Roles(Role.Admin, Role.Gerente)
   async findOwn(@CurrentUser() user: any) {
@@ -80,15 +88,6 @@ export class BranchesController {
   ) {
     // Asegurar que la sucursal pertenece a la empresa del usuario
     return this.branchesService.activate(+id, user.id_company);
-  }
-
-  @Get(':id_branch/menu')
-  @Roles(Role.Gerente, Role.Mesero)
-  async getBranchMenu(
-    @Param('id_branch') id_branch: string,
-    @CurrentUser() user: any, 
-  ) {
-    return this.branchesService.getBranchMenu(+user.id_company, +id_branch);
   }
 
 }

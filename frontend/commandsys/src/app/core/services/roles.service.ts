@@ -11,9 +11,7 @@ export class RolesService {
   private http = inject(HttpClient);
   private roles$ = new BehaviorSubject<Role[] | null>(null);
 
-  /** Carga áreas desde el backend */
   getRoles(): Observable<Role[]> {
-    // Ajusta la URL a tu backend:
     const url = 'http://localhost:3000/api/users/roles'
     return this.http.get<Role[]>(url).pipe(tap(list => this.roles$.next(list)));
   }
