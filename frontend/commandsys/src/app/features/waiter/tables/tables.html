@@ -1,0 +1,109 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Encabezado -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+    <div>
+      <div class="text-sm text-slate-500">
+        Mesero / <span class="text-slate-700">Mesas</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">
+        Gestión de Mesas
+      </h1>
+      <p class="text-sm text-slate-500">
+        Selecciona una mesa para abrir, tomar comanda o ver el estado actual
+      </p>
+    </div>
+  </div>
+
+    <!-- Filtros -->
+    <div class="flex gap-3 mb-6">
+      <select class="border rounded-md px-3 py-2 text-sm">
+        <option>Estado</option>
+      </select>
+      <select class="border rounded-md px-3 py-2 text-sm">
+        <option>Ubicación</option>
+      </select>
+    </div>
+
+    <!-- Grid de mesas -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div
+        *ngFor="let table of tables()"
+        class="rounded-xl shadow-md border p-4 relative"
+        [ngClass]="{
+          'border-green-200 bg-green-50': table.status === 'Disponible',
+          'border-yellow-200 bg-yellow-50': table.status === 'Abierta',
+          'border-red-200 bg-red-50': table.status === 'Ocupada'
+        }"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-semibold text-slate-800">{{ table.name }}</h3>
+          <span
+            class="text-xs font-medium px-2 py-1 rounded-full"
+            [ngClass]="{
+              'bg-green-100 text-green-700': table.status === 'Disponible',
+              'bg-yellow-100 text-yellow-700': table.status === 'Abierta',
+              'bg-red-100 text-red-700': table.status === 'Ocupada'
+            }"
+          >
+            {{ table.status }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-sm text-slate-600 mb-1">
+          <mat-icon class="text-slate-400" fontIcon="group"></mat-icon>
+          {{ table.seats }} asientos
+        </div>
+        <div class="flex items-center gap-2 text-sm text-slate-600 mb-3">
+          <mat-icon class="text-slate-400" fontIcon="place"></mat-icon>
+          {{ table.location }}
+        </div>
+
+        <div *ngIf="table.time" class="text-xs text-yellow-700 mb-2 flex items-center gap-1">
+          <mat-icon fontIcon="timer" class="text-yellow-600 text-sm"></mat-icon>
+          {{ table.time }}
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <!-- Botones dinámicos -->
+          <button
+            *ngIf="table.status === 'Disponible'"
+            (click)="openTable(table)"
+            class="flex-1 bg-green-100 text-green-700 border border-green-300 rounded-md py-1 text-sm font-medium hover:bg-green-200"
+          >
+            + Abrir Mesa
+          </button>
+
+          <button
+            *ngIf="table.status === 'Abierta'"
+            (click)="takeOrder(table)"
+            class="flex-1 bg-yellow-400 text-yellow-900 rounded-md py-1 text-sm font-medium hover:bg-yellow-500"
+          >
+            + Tomar Comanda
+          </button>
+
+          <div *ngIf="table.status === 'Ocupada'" class="flex flex-col w-full gap-2">
+            <button
+              (click)="viewOrder(table)"
+              class="w-full bg-white border border-slate-300 text-slate-800 rounded-md py-1 text-sm font-medium hover:bg-slate-100"
+            >
+              Ver Comanda
+            </button>
+            <div class="flex gap-2">
+              <button
+                (click)="takeOrder(table)"
+                class="flex-1 bg-red-500 text-white rounded-md py-1 text-sm font-medium hover:bg-red-600"
+              >
+                + Agregar
+              </button>
+              <button
+                (click)="releaseTable(table)"
+                class="flex-1 bg-red-700 text-white rounded-md py-1 text-sm font-medium hover:bg-red-800"
+              >
+                Liberar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>

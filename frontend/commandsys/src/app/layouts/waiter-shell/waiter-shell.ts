@@ -15,7 +15,7 @@ import { CapitalizePipe } from '../../shared/pipes/capitalize.pipe';
 export class WaiterShellComponent {
   nav = [
     { icon: 'table_restaurant', label: 'Mesas', path:'/mesero/mesas'},
-    { icon: 'settings', label: 'Comandas', path: '/gerente/comandas' },
+    { icon: 'receipt_long', label: 'Comandas', path: '/mesero/comandas' },
   ];
 
 

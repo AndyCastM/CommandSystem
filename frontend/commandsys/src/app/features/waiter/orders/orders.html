@@ -1,0 +1,172 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Encabezado -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+    <div>
+      <div class="text-sm text-slate-500">
+        Mesero / <span class="text-slate-700">Comandas</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">
+        Mis Comandas
+      </h1>
+      <p class="text-sm text-slate-500">
+        Estado en tiempo real de todas tus comandas activas
+      </p>
+    </div>
+  </div>
+
+    <!-- Controles superiores -->
+    <div class="flex justify-between items-center mb-4">
+      <div class="flex gap-3">
+        <button
+          (click)="viewMode.set('mesa')"
+          [ngClass]="{
+            'bg-sky-100 text-sky-700 font-medium': viewMode() === 'mesa',
+            'text-slate-500 hover:text-slate-700': viewMode() !== 'mesa'
+          }"
+          class="px-3 py-1 rounded-md text-sm"
+        >
+          <mat-icon fontIcon="table_restaurant" class="mr-1 text-sm"></mat-icon>
+          Por Mesa ({{ orders().length }})
+        </button>
+
+        <button
+          (click)="viewMode.set('producto')"
+          [ngClass]="{
+            'bg-sky-100 text-sky-700 font-medium': viewMode() === 'producto',
+            'text-slate-500 hover:text-slate-700': viewMode() !== 'producto'
+          }"
+          class="px-3 py-1 rounded-md text-sm"
+        >
+          <mat-icon fontIcon="inventory_2" class="mr-1 text-sm"></mat-icon>
+          Por Producto
+        </button>
+      </div>
+
+      <div class="text-sm flex items-center gap-3">
+        <span class="bg-slate-200 text-slate-800 px-3 py-1 rounded-full">
+          {{ orders().length }} comandas activas
+        </span>
+        <span
+          class="bg-green-100 text-green-700 px-3 py-1 rounded-full"
+          *ngIf="readyProducts().length > 0"
+        >
+          {{ readyProducts().length }} listos
+        </span>
+      </div>
+    </div>
+
+    <!-- =================== VISTA POR MESA =================== -->
+    <div *ngIf="viewMode() === 'mesa'">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          *ngFor="let order of orders()"
+          class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+        >
+          <div class="flex justify-between items-start mb-2">
+            <h2 class="font-semibold text-slate-800">{{ order.table }}</h2>
+            <span class="font-semibold text-slate-700">
+              {{ formatTotal(order) }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">
+            Comanda #{{ order.id }} • {{ order.time }} •
+            {{ order.products.length }} productos
+          </p>
+
+          <ul class="text-sm text-slate-700 space-y-1 mb-3">
+            <li *ngFor="let p of order.products" class="flex justify-between">
+              <span>{{ p.name }} <small>x{{ p.qty }}</small></span>
+              <span class="text-slate-500 text-xs">
+                {{ p.qty * p.price | currency }}
+              </span>
+            </li>
+          </ul>
+
+          <div class="flex flex-wrap gap-2">
+            <span
+              *ngFor="let p of order.products"
+              class="px-2 py-1 rounded-full text-xs font-medium"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-700': p.status === 'preparando',
+                'bg-green-100 text-green-700': p.status === 'listo',
+                'bg-red-100 text-red-700': p.status === 'pendiente',
+                'bg-slate-100 text-slate-600': p.status === 'entregado'
+              }"
+            >
+              {{ p.status }}
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+            <mat-icon fontIcon="access_time" class="text-xs"></mat-icon>
+            Creada: {{ order.created }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== VISTA POR PRODUCTO =================== -->
+    <div *ngIf="viewMode() === 'producto'">
+      <!-- LISTOS -->
+      <h2
+        *ngIf="readyProducts().length"
+        class="text-green-700 font-semibold flex items-center gap-2 mb-3 mt-4"
+      >
+        <mat-icon fontIcon="notifications_active" class="text-green-600"></mat-icon>
+        Productos Listos para Servir ({{ readyProducts().length }})
+      </h2>
+
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
+        <div
+          *ngFor="let p of readyProducts()"
+          class="border border-green-300 bg-green-50 rounded-lg p-3 text-sm"
+        >
+          <div class="flex justify-between font-medium mb-1">
+            <span>{{ p.name }}</span>
+            <span class="text-green-700 text-xs">listo</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-2">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+          <button
+            (click)="markDelivered(p)"
+            class="w-full bg-green-500 text-white rounded-md text-xs py-1 hover:bg-green-600"
+          >
+            ✓ Marcar como Entregado
+          </button>
+        </div>
+      </div>
+
+      <!-- EN PREPARACIÓN -->
+      <h2 *ngIf="preparingProducts().length" class="text-blue-700 font-semibold mb-2">
+        En Preparación ({{ preparingProducts().length }})
+      </h2>
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
+        <div
+          *ngFor="let p of preparingProducts()"
+          class="border border-blue-300 bg-blue-50 rounded-lg p-3 text-sm"
+        >
+          <div class="flex justify-between font-medium">
+            <span>{{ p.name }}</span>
+            <span class="text-blue-700 text-xs">preparando</span>
+          </div>
+          <p class="text-xs text-slate-500">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+        </div>
+      </div>
+
+      <!-- PENDIENTES -->
+      <h2 *ngIf="pendingProducts().length" class="text-red-700 font-semibold mb-2">
+        Pendiente ({{ pendingProducts().length }})
+      </h2>
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div
+          *ngFor="let p of pendingProducts()"
+          class="border border-red-300 bg-red-50 rounded-lg p-3 text-sm"
+        >
+          <div class="flex justify-between font-medium">
+            <span>{{ p.name }}</span>
+            <span class="text-red-700 text-xs">pendiente</span>
+          </div>
+          <p class="text-xs text-slate-500">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+        </div>
+      </div>
+    </div>
+</div>
