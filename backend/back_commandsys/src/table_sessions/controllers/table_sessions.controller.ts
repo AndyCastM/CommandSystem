@@ -1,34 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Param, Body, Patch } from '@nestjs/common';
 import { TableSessionsService } from '../services/table_sessions.service';
-import { CreateTableSessionDto } from '../dto/create-table_session.dto';
-import { UpdateTableSessionDto } from '../dto/update-table_session.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+import { OpenTableSessionDto } from '../dto/open-table_session.dto';
 
 @Controller('table-sessions')
 export class TableSessionsController {
   constructor(private readonly tableSessionsService: TableSessionsService) {}
 
-  @Post()
-  create(@Body() createTableSessionDto: CreateTableSessionDto) {
-    return this.tableSessionsService.create(createTableSessionDto);
+  @Post('open/:id_table')
+  @Roles(Role.Mesero, Role.Gerente)
+  async openTable(
+    @Param('id_table') id_table: string,
+    @Body() dto: OpenTableSessionDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.tableSessionsService.openTableSession(+id_table, user.id_user, dto.guests);
   }
 
-  @Get()
-  findAll() {
-    return this.tableSessionsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tableSessionsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTableSessionDto: UpdateTableSessionDto) {
-    return this.tableSessionsService.update(+id, updateTableSessionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tableSessionsService.remove(+id);
+  @Patch('close/:id_table')
+  @Roles(Role.Mesero, Role.Gerente)
+  async closeTable(
+    @Param('id_table') id_table: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.tableSessionsService.closeTableSession(+id_table, user.id_user);
   }
 }
+

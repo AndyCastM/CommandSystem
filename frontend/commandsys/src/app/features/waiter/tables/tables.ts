@@ -16,7 +16,7 @@ export class Tables {
   tables = signal<any[]>([]);
 
   async ngOnInit() {
-    // 🔹 Aquí luego conectarás a tu API de mesas
+    //  Aquí luego conectarás a tu API de mesas
     this.tables.set([
       { id: 1, name: 'Mesa 1', seats: 2, location: 'Terraza', status: 'Disponible' },
       { id: 2, name: 'Mesa 2', seats: 4, location: 'Piso 1', status: 'Abierta', time: 'Recién abierta' },
