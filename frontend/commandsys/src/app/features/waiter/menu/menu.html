@@ -1,32 +1,61 @@
-<div class="max-w-5xl mx-auto p-4">
-  <h1 class="text-2xl font-bold text-slate-800 mb-6">Menú del Restaurante</h1>
+<div class="max-w-6xl mx-auto p-5">
+  <!-- ENCABEZADO -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <div class="text-sm text-slate-500 mb-1">
+        Mesero / <span class="text-slate-700">Menú</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-800">
+        Menú del Restaurante
+      </h1>
+    </div>
 
-  <div *ngIf="loading()" class="text-slate-500">Cargando menú...</div>
+    <button
+      type="button"
+      (click)="goBack()"
+      class="bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700 px-5 py-2 rounded-xl font-medium hover:opacity-90 transition-all flex items-center gap-2"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+  </div>
 
-  <div *ngIf="!loading()">
+  <!-- CONTENIDO -->
+  <div *ngIf="loading()" class="text-slate-500 text-center mt-10">
+    Cargando menú...
+  </div>
+
+  <div *ngIf="!loading() && menu().length > 0">
     <div *ngFor="let section of menu()" class="mb-8">
-      <h2 class="text-lg font-semibold text-sky-700 border-b pb-1 mb-3">
+      <h2
+        class="text-lg font-semibold text-sky-700 border-b border-slate-200 pb-1 mb-3"
+      >
         {{ section.category }}
       </h2>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           *ngFor="let product of section.products"
-          class="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all border border-slate-100"
+          class="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all border border-slate-100 relative overflow-hidden"
         >
-          <img
-            *ngIf="product.image"
-            [src]="product.image"
-            alt="{{ product.name }}"
-            class="rounded-xl w-full h-40 object-cover mb-3"
-          />
-          <h3 class="text-slate-800 font-semibold text-base">
+          <!-- Imagen del producto -->
+          <div class="relative w-full h-44 mb-3 bg-slate-100 rounded-xl overflow-hidden">
+            <img
+              [src]="product.image || 'https://placehold.co/400x300?text=Sin+Imagen'"
+              alt="{{ product.name }}"
+              class="w-full h-full object-cover object-center rounded-xl transition-transform duration-300 hover:scale-105"
+              (error)="onImageError($event)"
+            />
+          </div>
+
+          <!-- Información -->
+          <h3 class="text-slate-800 font-semibold text-base truncate">
             {{ product.name }}
           </h3>
-          <p class="text-slate-500 text-sm mb-2">
+          <p class="text-slate-500 text-sm mb-2 line-clamp-2">
             {{ product.description || 'Sin descripción' }}
           </p>
-          <p class="text-sky-700 font-semibold text-sm">
+          <p class="text-sky-700 font-semibold text-sm mb-2">
             {{ formatPrice(product.price) }}
           </p>
 
@@ -42,8 +71,25 @@
               </li>
             </ul>
           </div>
+
+          <!-- BOTÓN AGREGAR -->
+          <button
+            class="mt-4 w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-medium py-2 rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
+          >
+            <span class="material-symbols-outlined text-[18px]">
+              add_shopping_cart
+            </span>
+            Agregar
+          </button>
         </div>
       </div>
     </div>
+  </div>
+
+  <div
+    *ngIf="!loading() && menu().length === 0"
+    class="text-center text-slate-500 mt-10"
+  >
+    No hay productos disponibles.
   </div>
 </div>

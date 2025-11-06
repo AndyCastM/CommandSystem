@@ -5,10 +5,15 @@ import { ToastService } from '../../../shared/UI/toast.service';
 import { NotificationsService } from '../../../core/services/notifications/notifications.service';
 import { Subscription } from 'rxjs';
 import { TablesService } from '../../../core/services/tables/tables.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { OpenTableDialogComponent } from '../../../shared/modals/open-table-dialog/open-table-dialog.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { TableAlert } from '../../../core/services/notifications/notifications.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-tables',
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, MatDialogModule, ReactiveFormsModule],
   templateUrl: './tables.html',
   styleUrl: './tables.css',
 })
@@ -17,9 +22,14 @@ export class Tables implements OnInit, OnDestroy{
   private notif = inject(NotificationsService);
   private sub?: Subscription;
   private tablesService = inject(TablesService);
+  private dialog = inject(MatDialog);
+
+  private router = inject(Router);
 
   loading = signal(false);
   tables = signal<any[]>([]);
+
+  lastAlert?: TableAlert;
 
   async ngOnInit() {
     this.loading.set(true);
@@ -40,11 +50,7 @@ export class Tables implements OnInit, OnDestroy{
 
     //  Reacciona a alertas si quieres actualizar UI además del toast
     this.sub = this.notif.onAlert().subscribe((alert) => {
-      if (alert) {
-        console.log(' Mesa abierta más de 5 min:', alert.table);
-        // ejemplo: refrescar lista de mesas si es necesario
-        // this.loadTables();
-      }
+      if (alert) this.lastAlert = alert;
     });
   }
 
@@ -53,12 +59,45 @@ export class Tables implements OnInit, OnDestroy{
     this.notif.disconnect();
   }
 
-  openTable(table: any) {
-    this.toast.success(`Mesa ${table.id} abierta`);
+  async openTable(table: any) {
+    const dialog = this.dialog.open(OpenTableDialogComponent, {
+      width: '420px',
+      data: { table },
+    });
+
+    dialog.afterClosed().subscribe(async (guests) => {
+      if (!guests) return; // cancelado
+
+      try {
+        const res = await this.tablesService.openTable(table.id, guests);
+        this.toast.success(res.message);
+        await this.reloadTables(); // refresca mesas
+      } catch (err: any) {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Error al abrir la mesa');
+      }
+    });
   }
 
-  takeOrder(table: any) {
-    this.toast.info(`Tomando comanda en ${table.name}`);
+  async reloadTables() {
+    try {
+      const data = await this.tablesService.getTablesByBranch();
+      this.tables.set(data);
+    } catch {
+      this.toast.error('Error al actualizar las mesas');
+    }
+  }
+
+  async takeOrder(table: any) {
+    try {
+        const res = await this.tablesService.occupyTable(table.id);
+        this.toast.success(res.message);
+        this.router.navigate([`/mesero/menu/${table.id}`]);
+        await this.reloadTables(); // refresca mesas
+    } catch (err: any) {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Error al ocupar la mesa');
+    }
   }
 
   viewOrder(table: any) {

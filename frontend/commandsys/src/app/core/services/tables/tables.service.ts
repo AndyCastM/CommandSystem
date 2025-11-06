@@ -80,4 +80,23 @@ export class TablesService {
       this.http.get<TableInfo[]>(`${this.base}/branch`, { withCredentials: true })
     );
   }
+
+  async openTable(id_table: number, guests: number) {
+    return await firstValueFrom(
+      this.http.post<any>(
+        `${this.base.replace('/tables', '/table-sessions')}/open/${id_table}`,
+        { guests },
+        { withCredentials: true }
+      )
+    );
+  }
+
+  async occupyTable(id_table: number){
+    return await firstValueFrom(
+      this.http.patch<any>(
+        `${this.base.replace('/tables', '/table-sessions')}/occupy/${id_table}`,
+        { withCredentials: true }
+      )
+    );
+  }
 }

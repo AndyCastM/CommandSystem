@@ -361,7 +361,6 @@ async getCompanyProducts(
     base_price: Number(p.base_price),
     preparation_time: p.preparation_time,
     is_active: p.is_active,
-    image_url: p.image_url,
   })));
 }
 
@@ -407,7 +406,6 @@ async getBranchProducts(
     base_price: Number(bp.company_products.base_price),
     preparation_time: bp.company_products.preparation_time,
     is_active: bp.is_active, 
-    image_url: bp.company_products.image_url,
   }));
 
   return formatResponse('Lista de productos de la sucursal', formatted);

@@ -1,45 +1,57 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MenuResponse, MenuService } from '../../../core/services/menu/menu.service';
+import { MatIconModule } from '@angular/material/icon';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService } from '../../../shared/UI/toast.service';
+import { MenuService } from '../../../core/services/menu/menu.service';
 
 @Component({
-  selector: 'app-waiter-menu',
+  selector: 'app-menu-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
 export class Menu implements OnInit {
-  private api = inject(MenuService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private toast = inject(ToastService);
+  private menuApi = inject(MenuService);
 
-  loading = signal(true);
-  menu = signal<{ category: string; products: any[] }[]>([]);
+  menu = signal<any[]>([]);
+  loading = signal(false);
+  idTable?: number;
+  idBranch?: number;
 
-  async ngOnInit() {
+  ngOnInit() {
+    this.idTable = Number(this.route.snapshot.paramMap.get('id_table'));
+    this.loadMenu();
+  }
+
+  async loadMenu() {
+    this.loading.set(true);
     try {
-      const response: MenuResponse = await this.api.getBranchMenu();
-
-      //  Asegura que el formato sea un arreglo de { category, products }
-      if (Array.isArray(response)) {
-        this.menu.set(response);
-      } else if (response?.data) {
-        this.menu.set(response.data);
-      } else {
-        this.menu.set([]);
-      }
-
-      console.log('Menú cargado:', this.menu());
+      const res = await this.menuApi.getBranchMenu();
+      console.log(' Menú cargado:', res.data);
+      this.menu.set([...res.data]); // fuerza render con nueva referencia
     } catch (err) {
-      console.error(err);
+      console.error(' Error al cargar menú:', err);
       this.toast.error('Error al cargar el menú');
     } finally {
       this.loading.set(false);
     }
   }
 
-  formatPrice(price: number) {
-    return `$${price.toFixed(2)}`;
+  formatPrice(value: number): string {
+    return '$' + Number(value).toFixed(2);
+  }
+
+  goBack() {
+    this.router.navigate(['/mesero/mesas']);
+  }
+
+  onImageError(event: Event) {
+    (event.target as HTMLImageElement).src =
+      'https://placehold.co/400x300?text=Imagen+no+disponible';
   }
 }
