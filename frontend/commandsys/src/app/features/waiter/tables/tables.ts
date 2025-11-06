@@ -104,8 +104,15 @@ export class Tables implements OnInit, OnDestroy{
     this.toast.info(`Viendo comanda de ${table.name}`);
   }
 
-  releaseTable(table: any) {
-    this.toast.warning(`Liberando ${table.name}`);
+  async releaseTable(table: any) {
+    try {
+        const res = await this.tablesService.closeTable(table.id);
+        this.toast.success(res.message);
+        await this.reloadTables(); // refresca mesas
+    } catch (err: any) {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Error al liberar la mesa');
+    }
   }
 
 }

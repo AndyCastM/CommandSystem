@@ -99,4 +99,13 @@ export class TablesService {
       )
     );
   }
+
+  async closeTable(id_table: number){
+    return await firstValueFrom(
+      this.http.patch<any>(
+         `${this.base.replace('/tables', '/table-sessions')}/close/${id_table}`,
+        { withCredentials: true }       
+      )
+    );
+  }
 }
