@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, tap, catchError, throwError, shareReplay } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 export interface Table {
   id_table: number;
@@ -9,6 +10,15 @@ export interface Table {
   capacity: number;
   is_active: number;
   table_locations: {id_location: number, name: string};
+}
+
+export interface TableInfo {
+  id: number;
+  name: string;
+  seats: number;
+  location: string;
+  status: string;
+  opened_at?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -62,6 +72,12 @@ export class TablesService {
         );
       }),
       catchError((err) => throwError(() => err))
+    );
+  }
+
+  async getTablesByBranch(): Promise<TableInfo[]> {
+    return await firstValueFrom(
+      this.http.get<TableInfo[]>(`${this.base}/branch`, { withCredentials: true })
     );
   }
 }

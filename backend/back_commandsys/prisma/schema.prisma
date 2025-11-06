@@ -388,13 +388,6 @@ model company_product_images {
   @@index([id_company_product], map: "id_company_product")
 }
 
-enum table_sessions_status {
-  open
-  closed
-  pending_payment
-  occupied
-}
-
 enum orders_status {
   pending
   in_progress
@@ -415,4 +408,12 @@ enum payments_method {
   cash
   card
   transfer
+}
+
+enum table_sessions_status {
+  open
+  closed
+  pending_payment
+  occupied
+  available
 }

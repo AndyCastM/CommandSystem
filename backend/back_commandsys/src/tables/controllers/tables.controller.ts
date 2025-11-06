@@ -18,6 +18,12 @@ export class TablesController {
       return this.tablesService.create(user.id_branch, createTableDto);
   }
 
+  @Get('branch')
+  @Roles(Role.Mesero, Role.Gerente)
+  async getTablesByBranch(@CurrentUser() user: any) {
+    return this.tablesService.getTablesWithStatus(user.id_branch);
+  }
+
   @Get()
   @Roles(Role.Gerente, Role.Mesero)
   async findAll(

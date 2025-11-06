@@ -1,7 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
+import { NotificationsService } from '../../../core/services/notifications/notifications.service';
+import { Subscription } from 'rxjs';
+import { TablesService } from '../../../core/services/tables/tables.service';
 
 @Component({
   selector: 'app-tables',
@@ -9,23 +12,45 @@ import { ToastService } from '../../../shared/UI/toast.service';
   templateUrl: './tables.html',
   styleUrl: './tables.css',
 })
-export class Tables { 
+export class Tables implements OnInit, OnDestroy{ 
   private toast = inject(ToastService);
+  private notif = inject(NotificationsService);
+  private sub?: Subscription;
+  private tablesService = inject(TablesService);
 
   loading = signal(false);
   tables = signal<any[]>([]);
 
   async ngOnInit() {
-    //  Aquí luego conectarás a tu API de mesas
-    this.tables.set([
-      { id: 1, name: 'Mesa 1', seats: 2, location: 'Terraza', status: 'Disponible' },
-      { id: 2, name: 'Mesa 2', seats: 4, location: 'Piso 1', status: 'Abierta', time: 'Recién abierta' },
-      { id: 3, name: 'Mesa 3', seats: 8, location: 'Piso 1', status: 'Ocupada' },
-      { id: 4, name: 'Mesa 4', seats: 4, location: 'Piso 2', status: 'Disponible' },
-      { id: 7, name: 'Mesa 7', seats: 6, location: 'Terraza', status: 'Abierta', time: '5 min' },
-      { id: 8, name: 'Mesa 8', seats: 3, location: 'Piso 2', status: 'Ocupada' },
-      { id: 9, name: 'Mesa 9', seats: 2, location: 'Piso 1', status: 'Ocupada' },
-    ]);
+    this.loading.set(true);
+
+    try {
+      const data = await this.tablesService.getTablesByBranch();
+      this.tables.set(data);
+      console.log('Mesas cargadas:', data);
+    } catch (err) {
+      console.error(err);
+      this.toast.error('Error al cargar las mesas');
+    } finally {
+      this.loading.set(false);
+    }
+
+    //  Conecta al socket
+    this.notif.connect();
+
+    //  Reacciona a alertas si quieres actualizar UI además del toast
+    this.sub = this.notif.onAlert().subscribe((alert) => {
+      if (alert) {
+        console.log(' Mesa abierta más de 5 min:', alert.table);
+        // ejemplo: refrescar lista de mesas si es necesario
+        // this.loadTables();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+    this.notif.disconnect();
   }
 
   openTable(table: any) {

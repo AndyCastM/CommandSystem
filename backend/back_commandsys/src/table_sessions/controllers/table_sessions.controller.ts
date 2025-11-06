@@ -16,7 +16,9 @@ export class TableSessionsController {
     @Body() dto: OpenTableSessionDto,
     @CurrentUser() user: any,
   ) {
-    return this.tableSessionsService.openTableSession(+id_table, user.id_user, dto.guests);
+    //console.log("Usuario del momento: ", user);
+    // En lugar de usar id_user se usa sub para el id
+    return this.tableSessionsService.openTableSession(+id_table, user.sub, dto.guests);
   }
 
   @Patch('close/:id_table')
@@ -25,7 +27,16 @@ export class TableSessionsController {
     @Param('id_table') id_table: string,
     @CurrentUser() user: any,
   ) {
-    return this.tableSessionsService.closeTableSession(+id_table, user.id_user);
+    return this.tableSessionsService.closeTableSession(+id_table, user.sub);
+  }
+
+  // PENSAR SI ESTO ES MEJOR EN AUTOMATICO AL CREAR LA PRIMERA ORDEN
+  @Patch('occupy/:id_table')
+  @Roles(Role.Mesero, Role.Gerente)
+  async occupy(
+    @Param('id_table') id_table : string
+  ){
+    return this.tableSessionsService.markOccupiedByTable(+id_table);
   }
 }
 

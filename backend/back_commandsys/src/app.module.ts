@@ -19,6 +19,7 @@ import { CompanyProductsModule } from './company_products/company_products.modul
 import { CombosModule } from './combos/combos.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AiModule } from './ai/ai.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -26,7 +27,11 @@ import { AiModule } from './ai/ai.module';
       envFilePath: `.${process.env.NODE_ENV}.env` ,
       isGlobal: true
     }),
-    PrismaModule, CompanyProductsModule, UsersModule, AuthModule, CommandsModule, BranchesModule, TablesModule, CompaniesModule, BranchSchedulesModule, TableLocationsModule, TableSessionsModule, ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, AiModule],
+    PrismaModule, CompanyProductsModule, UsersModule, AuthModule, 
+    CommandsModule, BranchesModule, TablesModule, CompaniesModule, 
+    BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
+    ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
+    AiModule, ScheduleModule.forRoot()],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

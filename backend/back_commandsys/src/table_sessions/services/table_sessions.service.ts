@@ -1,10 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { formatResponse } from 'src/common/helpers/response.helper';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 
 @Injectable()
 export class TableSessionsService {
-  constructor(private prisma: PrismaService) {}
+  private logger = new Logger(TableSessionsService.name);
+  constructor(
+    private prisma: PrismaService,
+    private notif: NotificationsGateway
+  ) {}
 
   async openTableSession(id_table: number, id_user: number, guests: number) {
     // Verificar que la mesa exista
@@ -58,6 +64,19 @@ export class TableSessionsService {
     
   }
 
+  // Cambiar a occupied cuando se toma la orden
+  async markOccupiedByTable(id_table: number) {
+    const session = await this.prisma.table_sessions.findFirst({ where: { id_table, status: 'open' }, include: { tables: true } });
+    if (!session) throw new BadRequestException('No hay sesión abierta para esta mesa');
+    const updated = await this.prisma.table_sessions.update({
+      where: { id_session: session.id_session },
+      data: { status: 'occupied' },
+      include: { tables: true },
+    });
+
+    return formatResponse(`Mesa ${updated.tables.number} ahora está ocupada.`, updated );
+  }
+
   async closeTableSession(id_table: number, id_user: number) {
     //  Verificar si la mesa existe
     const table = await this.prisma.tables.findUnique({
@@ -70,7 +89,7 @@ export class TableSessionsService {
 
     //  Buscar sesión abierta
     const session = await this.prisma.table_sessions.findFirst({
-      where: { id_table, status: 'open' },
+      where: { id_table,  status: { in: ['open', 'occupied']}},
     });
 
     if (!session) {
@@ -95,5 +114,33 @@ export class TableSessionsService {
       closed,
     );
   }
+
+  // Cron,,, cada min detecta las mesas open por +5 min y emite notif a una sucursal especifica
+  @Cron(CronExpression.EVERY_MINUTE)
+  async checkOpenSessions() {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const sessions = await this.prisma.table_sessions.findMany({
+      where: {
+        status: 'open',
+        opened_at: { lt: fiveMinutesAgo },
+      },
+      include: {
+        tables: { include: { branches: true } },
+        users: true,
+      },
+    });
+
+    for (const s of sessions) {
+      this.notif.emitToBranch(s.tables.id_branch, 'alert:table-open', {
+        table: s.tables.number,
+        branch: s.tables.branches.name,
+        guests: s.guests,
+        waiter: `${s.users.name} ${s.users.last_name}`,
+        message: `La mesa ${s.tables.number} lleva más de 5 minutos abierta sin orden.`,
+      });
+    }
+  }
+
 
 }

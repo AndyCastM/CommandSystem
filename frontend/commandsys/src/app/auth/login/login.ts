@@ -63,7 +63,7 @@ export class Login {
     } else if (role === 'Superadmin'){
       this.router.navigate(['/superadmin/dashboard']); // Panel Superadmin
     } else if (role === 'Mesero'){
-      this.router.navigate(['/mesero/comandas']);  // Panel mesero
+      this.router.navigate(['/mesero/mesas']);  // Panel mesero
     }
   }
 }
