@@ -165,15 +165,14 @@ export class ProductsAdminComponent implements OnInit{
       // ahora sí: el componente controla el subscribe
       this.productSrv.create(res.dto, res.file ?? undefined).subscribe({
         next: (created) => {
-          console.log('Producto creado:', created);
+          this.toast.success('Producto creado exitosamente');
         },
         error: (err) => {
-          console.error('Error en creación o subida:', err);
+          this.toast.error('Error en creación o subida');
         },
       });
     });
   }
-
 
   openEdit(p: CompanyProduct) {
     this.dialog.open(ProductDialogComponent, {
@@ -215,7 +214,7 @@ export class ProductsAdminComponent implements OnInit{
       this.toast.success('Categoría creada correctamente');
     } catch (e) {
       console.error('Error al crear categoría:', e);
-      this.toast.error('No se pudo crear la caategoría');
+      this.toast.error('No se pudo crear la categoría');
     }
   }
 

@@ -19,7 +19,7 @@ export class CombosService {
         base_price,
         combo_items: {
           create: items.map((item) => ({
-            id_company_product: item.id_company_product,
+            id_company_product: +item.id_company_product,
             quantity: item.quantity,
           })),
       },
@@ -99,7 +99,7 @@ export class CombosService {
         description: product.description,
         image_url: product.image_url,
 
-        // 🔹 Incluir todas las opciones configurables del producto
+        // Incluir todas las opciones configurables del producto
         options: product.product_options.map((opt) => ({
           id_option: opt.id_option,
           name: opt.name,
