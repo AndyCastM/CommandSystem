@@ -60,41 +60,57 @@
 
       <div class="space-y-3">
         <div *ngFor="let d of days()"
-  class="border border-slate-200 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white shadow-sm">
+    class="border border-slate-200 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white shadow-sm">
 
-  <!-- IZQUIERDA: Toggle + Día -->
-  <div class="flex items-center gap-2 min-w-[120px] sm:min-w-[150px]">
-    <!-- Toggle -->
-    <label class="relative inline-flex items-center cursor-pointer select-none">
-      <input type="checkbox" class="sr-only peer" [checked]="d.enabled" (change)="d.enabled = !d.enabled" />
-      <span
-        class="relative w-8 h-5 rounded-full bg-slate-400 peer-checked:bg-green-500 transition-colors duration-300">
+    <!-- IZQUIERDA: Toggle + Día -->
+    <div class="flex items-center gap-2 min-w-[120px] sm:min-w-[150px]">
+      <!-- Toggle -->
+      <label class="relative inline-flex items-center cursor-pointer select-none">
+        <input type="checkbox" class="sr-only peer" [checked]="d.enabled" [(ngModel)]="d.enabled" (change)="toggleDay(d)" />
         <span
-          class="absolute top-[2px] left-[2px] h-4 w-4 rounded-full bg-white shadow transition-transform duration-300"
-          [class.translate-x-3]="d.enabled"></span>
+          class="relative w-8 h-5 rounded-full bg-slate-400 peer-checked:bg-green-500 transition-colors duration-300">
+          <span
+            class="absolute top-[2px] left-[2px] h-4 w-4 rounded-full bg-white shadow transition-transform duration-300"
+            [class.translate-x-3]="d.enabled"></span>
+        </span>
+      </label>
+
+      <!-- Día -->
+      <span class="text-base font-medium"
+        [ngClass]="d.enabled ? 'text-slate-800' : 'text-slate-400'">
+        {{ d.name }}
       </span>
-    </label>
+      <span *ngIf="d.changed" class="text-xs text-amber-500 font-medium ml-1">
+          • sin guardar
+      </span>
+    </div>
 
-    <!-- Día -->
-    <span class="text-sm font-medium"
-      [ngClass]="d.enabled ? 'text-slate-800' : 'text-slate-400'">
-      {{ d.name }}
-    </span>
+    <!-- DERECHA: Horarios -->
+    <div *ngIf="d.enabled"
+      class="flex items-center justify-start sm:justify-end flex-wrap gap-3 w-full">
+
+      <!-- Hora de apertura -->
+      <div class="relative">
+        <input type="time" [(ngModel)]="d.open" (change)="markDayChanged(d, 'open', d.open)"
+          class="peer border border-slate-300 rounded-xl px-4 py-2.5 text-base font-medium text-slate-700 
+                bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-300 focus:border-sky-400
+                hover:border-sky-300 transition-all duration-200 w-[9rem] text-center shadow-sm" />
+      </div>
+
+      <span class="text-slate-500 font-medium">–</span>
+
+      <!-- Hora de cierre -->
+      <div class="relative">
+        <input type="time" [(ngModel)]="d.close" (change)="markDayChanged(d, 'close', d.close)"
+          class="peer border border-slate-300 rounded-xl px-4 py-2.5 text-base font-medium text-slate-700 
+                bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-300 focus:border-sky-400
+                hover:border-sky-300 transition-all duration-200 w-[9rem] text-center shadow-sm" />
+      </div>
+    </div>
+
+  </div>
   </div>
 
-  <!-- DERECHA: Horarios -->
-  <div *ngIf="d.enabled"
-    class="flex items-center justify-start sm:justify-end flex-wrap gap-2 w-full">
-    <input type="time" [(ngModel)]="d.open"
-      class="border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-700 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-[6.5rem] text-center" />
-    <span class="text-slate-500 text-sm">–</span>
-    <input type="time" [(ngModel)]="d.close"
-      class="border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-700 focus:ring-2 focus:ring-sky-200 focus:border-sky-300 w-[6.5rem] text-center" />
-  </div>
-</div>
-
-
-</div>
   <div class="pt-4 text-right">
         <button (click)="saveSchedule()"
           class="bg-gradient-to-r from-indigo-500 to-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition">
@@ -103,4 +119,5 @@
       </div>
     </div>
   </div>
+
 </div>

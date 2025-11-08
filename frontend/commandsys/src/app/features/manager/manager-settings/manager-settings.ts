@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { BranchSchedulesApi } from '../../../core/services/branches/branches-schedules.api';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { BranchesApi } from '../../../core/services/branches/branches.api';
+
 @Component({
   selector: 'app-manager-settings',
   imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatSlideToggleModule, FormsModule],
@@ -29,17 +30,11 @@ export class ManagerSettings {
   });
 
   days = signal<
-    { day_of_week: number; name: string; enabled: boolean; open: string; close: string }[]
+    { day_of_week: number; name: string; enabled: boolean; open: string; close: string; changed?: boolean }[]
   >([]);
 
   async ngOnInit() {
-    this.form = this.fb.group({
-      name: [{ value: '', disabled: true }],
-      address: [{ value: '', disabled: true }],
-      phone: [{ value: '', disabled: true }],
-      email: [{ value: '', disabled: true }],
-    });
-
+    this.form.disable();
     this.loadBranchInfo();
 
     try {
@@ -52,41 +47,31 @@ export class ManagerSettings {
           enabled: d.is_open,
           open: this.formatTime(d.open_time),
           close: this.formatTime(d.close_time),
+          changed: false,
         }))
       );
     } catch (err) {
       this.toast.error('No se pudieron cargar los horarios');
+    } finally {
+      this.loading.set(false);
     }
   }
 
   async loadBranchInfo() {
     try {
       const data = await this.branchesApi.getById();
-
-      // Concatenar la dirección completa 
-      const addressParts = [
-        data.street,
-        data.num_ext ? `#${data.num_ext}` : '',
-        data.colony,
-        data.city,
-        data.state,
-      ];
-
+      const addressParts = [data.street, data.num_ext ? `#${data.num_ext}` : '', data.colony, data.city, data.state];
       const fullAddress = addressParts.filter(Boolean).join(', ');
 
-      // Rellenar el formulario
       this.form.patchValue({
         name: data.name || '',
         address: fullAddress || '',
         phone: data.phone || '',
         email: data.email || '',
       });
-
     } catch (err) {
       console.error(err);
       this.toast.error('Error al cargar los datos del restaurante');
-    } finally {
-      this.loading.set(false);
     }
   }
 
@@ -97,10 +82,10 @@ export class ManagerSettings {
 
   formatTime(isoTime: string) {
     const date = new Date(isoTime);
-    return date.toISOString().substring(11, 16); // HH:mm
-    // Ejemplo: "1970-01-01T09:00:00Z" = "09:00"
+    return date.toISOString().substring(11, 16); // "HH:mm"
   }
 
+  // Toggle día abierto/cerrado
   async toggleDay(day: any) {
     try {
       await this.api.toggleDay(day.day_of_week, day.enabled);
@@ -110,6 +95,13 @@ export class ManagerSettings {
     }
   }
 
+  // Detectar cambios de hora
+  markDayChanged(day: any, field: 'open' | 'close', value: string) {
+    day[field] = value;
+    day.changed = true;
+  }
+
+  // Actualizar solo un día
   async updateDay(day: any) {
     try {
       await this.api.updateDay({
@@ -117,20 +109,37 @@ export class ManagerSettings {
         open_time: day.open,
         close_time: day.close,
       });
+      day.changed = false;
       this.toast.success(`Horario de ${day.name} actualizado`);
     } catch (err) {
       this.toast.error('Error al actualizar el horario');
     }
   }
 
-  saveInfo() {
-    console.log('Guardando información:', this.form.value);
+  // Guardar solo días modificados
+  async saveSchedule() {
+    const changedDays = this.days().filter((d) => d.changed);
+
+    if (changedDays.length === 0) {
+      this.toast.info('No hay cambios que guardar');
+      return;
+    }
+
+    const updatedList = [...this.days()];
+
+    for (const day of changedDays) {
+      try {
+        await this.updateDay(day);
+        const index = updatedList.findIndex(d => d.day_of_week === day.day_of_week);
+        if (index !== -1) updatedList[index].changed = false; // marcar como guardado
+        console.log(` Día actualizado: ${day.name}`);
+      } catch (err) {
+        console.error(`Error actualizando ${day.name}:`, err);
+      }
+    }
+
+    // Refrescar el signal completo
+    this.days.set(updatedList);
   }
 
-  async saveSchedule() {
-    console.log('Guardando horarios:', this.days());
-    for (const day of this.days()) {
-      await this.updateDay(day);
-    }
-  }
- }
+}

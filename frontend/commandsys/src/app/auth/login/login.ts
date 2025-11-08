@@ -5,11 +5,12 @@ import { Router } from '@angular/router';
 import { LoginResponse } from '../services/auth.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../../shared/UI/toast.service';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './login.html',
 })
 export class Login {
@@ -23,6 +24,8 @@ export class Login {
 
   loading = signal(false);
   errorMsg = signal<string | null>(null);
+
+  showPassword = false;
 
   form = this.fb.group({
     usuario: ['', [Validators.required]],
@@ -49,6 +52,10 @@ export class Login {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   private redirectByRole(res: LoginResponse) {
