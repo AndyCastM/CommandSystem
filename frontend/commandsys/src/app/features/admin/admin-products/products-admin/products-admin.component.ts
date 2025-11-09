@@ -181,6 +181,7 @@ export class ProductsAdminComponent implements OnInit{
     }).afterClosed().subscribe((res: { dto: Partial<CreateCompanyProductDto>; file: File | null } | null) => {
       if (!res) return;
       this.productSrv.update(p.id_company_product, res.dto, res.file ?? undefined);
+      console.log(res.dto);
       // invalida miniatura y la volverá a precargar
       this.thumbMap.delete(p);
       this.productSrv.getThumbUrl$(p.id_company_product).pipe(take(1)).subscribe(url => {

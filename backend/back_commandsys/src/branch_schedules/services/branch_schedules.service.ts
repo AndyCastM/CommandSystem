@@ -49,6 +49,7 @@ export class BranchSchedulesService {
     const day = await this.validateDay(id_branch, dto.day_of_week);
     const data : any = {}
 
+    console.log(dto);
     if (!day.is_open) {
       throw new Error(
         `El día ${dto.day_of_week} está desactivado. No se puede actualizar.`,

@@ -78,7 +78,7 @@ export class AuthService {
         // Se resta 1 porque lo tenemos de 0-6 y aqui se regresa de 1-7
         const currentDay = now.getDay(); // 0 (Domingo) a 6 (Sábado)
         const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-        //console.log(currentDay);
+        console.log(currentDay);
         const schedule = branch.branch_schedules.find(s => s.day_of_week === currentDay && s.is_open);
         if (!schedule) {
             throw new ForbiddenException('Sucursal cerrada hoy');

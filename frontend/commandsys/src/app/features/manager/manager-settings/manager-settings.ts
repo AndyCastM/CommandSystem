@@ -8,6 +8,16 @@ import { BranchSchedulesApi } from '../../../core/services/branches/branches-sch
 import { ToastService } from '../../../shared/UI/toast.service';
 import { BranchesApi } from '../../../core/services/branches/branches.api';
 
+const DAY_MAP = [
+  { id: 1, name: 'Lunes' },
+  { id: 2, name: 'Martes' },
+  { id: 3, name: 'Miércoles' },
+  { id: 4, name: 'Jueves' },
+  { id: 5, name: 'Viernes' },
+  { id: 6, name: 'Sábado' },
+  { id: 0, name: 'Domingo' }
+];
+
 @Component({
   selector: 'app-manager-settings',
   imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatSlideToggleModule, FormsModule],
@@ -76,8 +86,7 @@ export class ManagerSettings {
   }
 
   getDayName(i: number) {
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[i];
+    return DAY_MAP.find((d) => d.id === i)?.name ?? 'Desconocido';
   }
 
   formatTime(isoTime: string) {
@@ -104,6 +113,7 @@ export class ManagerSettings {
   // Actualizar solo un día
   async updateDay(day: any) {
     try {
+      console.log(day);
       await this.api.updateDay({
         day_of_week: day.day_of_week,
         open_time: day.open,
@@ -132,7 +142,6 @@ export class ManagerSettings {
         await this.updateDay(day);
         const index = updatedList.findIndex(d => d.day_of_week === day.day_of_week);
         if (index !== -1) updatedList[index].changed = false; // marcar como guardado
-        console.log(` Día actualizado: ${day.name}`);
       } catch (err) {
         console.error(`Error actualizando ${day.name}:`, err);
       }
