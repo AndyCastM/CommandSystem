@@ -4,18 +4,32 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CombosService {
+  private baseUrl = 'http://localhost:3000/api/combos';
+
   constructor(private http: HttpClient) {}
-  private baseUrl = 'http://localhost:3000/api';
 
+  //  Obtener todos los combos
   getAll() {
-    return firstValueFrom(this.http.get<any>(`${this.baseUrl}/combos`));
+    return firstValueFrom(this.http.get<any>(this.baseUrl));
   }
 
+  //  Obtener detalle de un combo
+  getById(id_combo: number) {
+    return firstValueFrom(this.http.get<any>(`${this.baseUrl}/${id_combo}`));
+  }
+
+  //  Crear combo (fijos + grupos)
   create(data: any) {
-    return firstValueFrom(this.http.post<any>(`${this.baseUrl}/combos`, data));
+    return firstValueFrom(this.http.post<any>(this.baseUrl, data));
   }
 
-  getById(id: number) {
-    return firstValueFrom(this.http.get<any>(`${this.baseUrl}/combos/${id}`));
+  //Actualizar combo vamos viendo
+  update(id_combo: number, data: any) {
+    return firstValueFrom(this.http.patch<any>(`${this.baseUrl}/${id_combo}`, data));
+  }
+
+  // Activar / desactivar combo
+  toggleActive(id_combo: number) {
+    return firstValueFrom(this.http.patch<any>(`${this.baseUrl}/${id_combo}/toggle`, {}));
   }
 }

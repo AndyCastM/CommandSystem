@@ -1,111 +1,146 @@
-<div class="max-w-6xl mx-auto">
+<div class="max-w-6xl mx-auto px-4 md:px-0">
   <!-- Encabezado -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-3">
     <div>
       <div class="text-sm text-slate-500">
-        Mesero / <span class="text-slate-700">Mesas</span>
+        Mesero / <span class="text-slate-700 font-medium">Mesas</span>
       </div>
-      <h1 class="text-3xl font-bold text-slate-800 mt-1">
+      <h1 class="text-3xl font-bold text-slate-800 mt-1 tracking-tight">
         Gestión de Mesas
       </h1>
-      <p class="text-sm text-slate-500">
-        Selecciona una mesa para abrir, tomar comanda o ver el estado actual
+      <p class="text-sm text-slate-500 mt-1">
+        Administra mesas, toma comandas y monitorea su estado en tiempo real
       </p>
     </div>
   </div>
 
-    <!-- Filtros -->
-    <div class="flex gap-3 mb-6">
-      <select class="border rounded-md px-3 py-2 text-sm">
-        <option>Estado</option>
-      </select>
-      <select class="border rounded-md px-3 py-2 text-sm">
-        <option>Ubicación</option>
-      </select>
+  <!-- Filtros -->
+  <div
+    class="flex flex-wrap gap-3 mb-8 bg-white border border-slate-200 rounded-xl p-4 shadow-sm items-center"
+  >
+    <div class="flex items-center gap-2">
+      <mat-icon fontIcon="filter_alt" class="text-slate-400"></mat-icon>
+      <span class="text-slate-600 font-medium text-sm">Filtros</span>
     </div>
 
-    <!-- Grid de mesas -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <div
-        *ngFor="let table of tables()"
-        class="rounded-xl shadow-md border p-4 relative"
-        [ngClass]="{
-          'border-green-200 bg-green-50': table.status === 'Disponible',
-          'border-yellow-200 bg-yellow-50': table.status === 'Abierta',
-          'border-red-200 bg-red-50': table.status === 'Ocupada'
-        }"
+    <div class="flex flex-wrap gap-3 flex-1">
+      <select
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+        (change)="filterByStatus($event)"
       >
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-semibold text-slate-800">Mesa {{ table.name }}</h3>
-          <span
-            class="text-xs font-medium px-2 py-1 rounded-full"
-            [ngClass]="{
-              'bg-green-100 text-green-700': table.status === 'Disponible',
-              'bg-yellow-100 text-yellow-700': table.status === 'Abierta',
-              'bg-red-100 text-red-700': table.status === 'Ocupada'
-            }"
-          >
-            {{ table.status }}
-          </span>
-        </div>
+        <option selected disabled>Estado</option>
+        <option value="">Todos</option>
+        <option value="Disponible">Disponible</option>
+        <option value="Abierta">Abierta</option>
+        <option value="Ocupada">Ocupada</option>
+      </select>
 
-        <div class="flex items-center gap-2 text-sm text-slate-600 mb-1">
-          <mat-icon class="text-slate-400" fontIcon="group"></mat-icon>
-          {{ table.seats }} asientos
-        </div>
-        <div class="flex items-center gap-2 text-sm text-slate-600 mb-3">
-          <mat-icon class="text-slate-400" fontIcon="place"></mat-icon>
-          {{ table.location }}
-        </div>
+      <select
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+        (change)="filterByLocation($event)"
+      >
+        <option selected disabled>Ubicación</option>
+        <option value=""> Todas </option>
+        <option *ngFor="let l of locations()" [value]="l.name">
+            {{ l.name }}
+        </option>
+      </select>
+    </div>
+  </div>
 
-        <div *ngIf="table.time" class="text-xs text-yellow-700 mb-2 flex items-center gap-1">
-          <mat-icon fontIcon="timer" class="text-yellow-600 text-sm"></mat-icon>
-          {{ table.time }}
-        </div>
+  <!-- Grid de mesas -->
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+  >
+    <div
+      *ngFor="let table of filteredTables()"
+      class="rounded-2xl shadow-md border p-5 bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+      [ngClass]="{
+        'border-green-200 bg-green-50/60': table.status === 'Disponible',
+        'border-yellow-200 bg-yellow-50/60': table.status === 'Abierta',
+        'border-red-200 bg-red-50/60': table.status === 'Ocupada'
+      }"
+    >
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold text-slate-800 text-lg">
+          Mesa {{ table.name }}
+        </h3>
+        <span
+          class="text-xs font-medium px-2.5 py-1 rounded-full"
+          [ngClass]="{
+            'bg-green-100 text-green-700': table.status === 'Disponible',
+            'bg-yellow-100 text-yellow-700': table.status === 'Abierta',
+            'bg-red-100 text-red-700': table.status === 'Ocupada'
+          }"
+        >
+          {{ table.status }}
+        </span>
+      </div>
 
-        <div class="flex flex-wrap gap-2">
-          <!-- Botones dinámicos -->
+      <div class="flex items-center gap-2 text-sm text-slate-600 mb-1">
+        <mat-icon class="text-slate-400" fontIcon="group"></mat-icon>
+        {{ table.seats }} asientos
+      </div>
+      <div class="flex items-center gap-2 text-sm text-slate-600 mb-3">
+        <mat-icon class="text-slate-400" fontIcon="place"></mat-icon>
+        {{ table.location }}
+      </div>
+
+      <div
+        *ngIf="table.time"
+        class="text-xs text-yellow-700 mb-2 flex items-center gap-1"
+      >
+        <mat-icon fontIcon="timer" class="text-yellow-600 text-sm"></mat-icon>
+        {{ table.time }}
+      </div>
+
+      <!-- Botones -->
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngIf="table.status === 'Disponible'"
+          (click)="openTable(table)"
+          class="flex-1 bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg py-1.5 text-sm font-medium hover:bg-emerald-200 transition"
+        >
+          + Abrir Mesa
+        </button>
+
+        <button
+          *ngIf="table.status === 'Abierta'"
+          (click)="takeOrder(table)"
+          class="flex-1 bg-yellow-400 text-yellow-900 rounded-lg py-1.5 text-sm font-medium hover:bg-yellow-500 transition"
+        >
+          + Tomar Comanda
+        </button>
+
+        <div
+          *ngIf="table.status === 'Ocupada'"
+          class="flex flex-col w-full gap-2"
+        >
           <button
-            *ngIf="table.status === 'Disponible'"
-            (click)="openTable(table)"
-            class="flex-1 bg-green-100 text-green-700 border border-green-300 rounded-md py-1 text-sm font-medium hover:bg-green-200"
+            (click)="viewOrder(table)"
+            class="w-full bg-white border border-slate-300 text-slate-800 rounded-lg py-1.5 text-sm font-medium hover:bg-slate-100 transition"
           >
-            + Abrir Mesa
+            Ver Comanda
           </button>
-
-          <button
-            *ngIf="table.status === 'Abierta'"
-            (click)="takeOrder(table)"
-            class="flex-1 bg-yellow-400 text-yellow-900 rounded-md py-1 text-sm font-medium hover:bg-yellow-500"
-          >
-            + Tomar Comanda
-          </button>
-
-          <div *ngIf="table.status === 'Ocupada'" class="flex flex-col w-full gap-2">
+          <div class="flex gap-2">
             <button
-              (click)="viewOrder(table)"
-              class="w-full bg-white border border-slate-300 text-slate-800 rounded-md py-1 text-sm font-medium hover:bg-slate-100"
+              (click)="takeOrder(table)"
+              class="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-red-600 transition"
             >
-              Ver Comanda
+              + Agregar
             </button>
-            <div class="flex gap-2">
-              <button
-                (click)="takeOrder(table)"
-                class="flex-1 bg-red-500 text-white rounded-md py-1 text-sm font-medium hover:bg-red-600"
-              >
-                + Agregar
-              </button>
-              <button
-                (click)="releaseTable(table)"
-                class="flex-1 bg-red-700 text-white rounded-md py-1 text-sm font-medium hover:bg-red-800"
-              >
-                Liberar
-              </button>
-            </div>
+            <button
+              (click)="releaseTable(table)"
+              class="flex-1 bg-red-700 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-red-800 transition"
+            >
+              Liberar
+            </button>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
 </div>
 
 <div *ngIf="lastAlert" class="bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-md p-3 mb-4">

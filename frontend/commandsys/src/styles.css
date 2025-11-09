@@ -16,7 +16,7 @@
   max-height: 320px !important;
   overflow: auto !important;
   /* Opcional: mismo ancho que el trigger */
-  min-width: var(--mat-select-trigger-width, 16rem);
+  min-width: var(--mat-select-trigger-width, 12rem);
   position: relative;                          /* para la flechita */
 }
 
@@ -47,3 +47,19 @@
 
 /* Backdrop transparente para bloquear clics detrás sin oscurecer */
 .filter-backdrop { background: transparent; }
+
+::ng-deep .filter-panel.mat-mdc-select-panel {
+  margin-top: 6px !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.18);
+  min-width: var(--mat-select-trigger-width) !important;
+  width: var(--mat-select-trigger-width) !important;
+  overflow: hidden !important;
+  transform-origin: top center !important;
+}
+
+::ng-deep .mat-mdc-select-trigger {
+  padding: 6px 12px !important;
+  border-radius: 0.75rem !important;
+}
+

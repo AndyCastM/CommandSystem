@@ -35,4 +35,13 @@ export class CombosController {
   ) {
     return this.combosService.findOne(+id, +user.id_company);
   }
+
+  @Patch(':id_combo/toggle')
+  @Roles(Role.Admin)
+  async toggleCombo(
+    @Param('id_combo') id_combo: string,
+    @CurrentUser() user: any
+  ){
+    return this.combosService.toggleActive(+id_combo, +user.id_company);
+  }
 }

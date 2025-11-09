@@ -141,6 +141,5 @@ export class TableSessionsService {
       });
     }
   }
-
-
+  
 }

@@ -1,38 +1,65 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators, FormArray, FormGroup } from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  FormArray,
+  FormGroup,
+} from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../../../shared/UI/toast.service';
 import { CombosService } from '../../data-access/combos.service';
-import { ProductService } from '../../../../../core/services/products/products.service'; // Para listar productos disponibles
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ProductService } from '../../../../../core/services/products/products.service';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
+import { ConfirmDialogComponent } from '../../../../../shared/modals/confirm-dialog.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-admin-combos',
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatDialogModule, MatButtonModule, MatSelectModule],
   templateUrl: './admin-combos.html',
 })
-export class AdminCombos implements OnInit{
-
+export class AdminCombos implements OnInit {
   private fb = inject(FormBuilder);
   private api = inject(CombosService);
   private productsService = inject(ProductService);
   private toast = inject(ToastService);
+  private dialog = inject(MatDialog);
 
   combos = signal<any[]>([]);
+  estado = signal<'all' | 'active' | 'inactive'>('all');
   products = signal<any[]>([]);
   loading = signal(true);
 
   form: FormGroup = this.fb.group({
     name: ['', Validators.required],
     description: [''],
-    base_price: [0, Validators.required],
+    base_price: [0, [Validators.required, Validators.min(0)]],
     items: this.fb.array([]),
+    groups: this.fb.array([]),
   });
 
-  get items() {
+  filteredCombos = computed(() => {
+    const estado = this.estado();
+    const combos = this.combos();
+
+    if (estado === 'active') {
+      return combos.filter(c => c.is_active === 1 || c.is_active === true);
+    } else if (estado === 'inactive') {
+      return combos.filter(c => !c.is_active);
+    }
+    return combos; // 'all'
+  });
+  
+  get items(): FormArray {
     return this.form.get('items') as FormArray;
+  }
+
+  get groups(): FormArray {
+    return this.form.get('groups') as FormArray;
   }
 
   async ngOnInit() {
@@ -62,6 +89,9 @@ export class AdminCombos implements OnInit{
     }
   }
 
+  // -------------------
+  // PRODUCTOS FIJOS
+  // -------------------
   addItem() {
     this.items.push(
       this.fb.group({
@@ -75,6 +105,41 @@ export class AdminCombos implements OnInit{
     this.items.removeAt(index);
   }
 
+  // -------------------
+  // GRUPOS CONFIGURABLES
+  // -------------------
+  addGroup() {
+    const group = this.fb.group({
+      label: ['', Validators.required],
+      max_selection: [1, [Validators.required, Validators.min(1)]],
+      is_required: [true],
+      options: this.fb.array([]),
+    });
+    this.groups.push(group);
+  }
+
+  removeGroup(index: number) {
+    this.groups.removeAt(index);
+  }
+
+  addGroupOption(groupIndex: number) {
+    const options = this.groups.at(groupIndex).get('options') as FormArray;
+    options.push(
+      this.fb.group({
+        id_company_product: ['', Validators.required],
+        extra_price: [0],
+      })
+    );
+  }
+
+  removeGroupOption(groupIndex: number, optionIndex: number) {
+    const options = this.groups.at(groupIndex).get('options') as FormArray;
+    options.removeAt(optionIndex);
+  }
+
+  // -------------------
+  // CREAR COMBO
+  // -------------------
   async createCombo() {
     if (this.form.invalid) {
       this.toast.error('Completa todos los campos requeridos');
@@ -82,10 +147,13 @@ export class AdminCombos implements OnInit{
     }
 
     try {
-      const res = await this.api.create(this.form.value);
-      this.toast.success(res.message || 'Combo creado');
+      const payload = this.form.value;
+      const res = await this.api.create(payload);
+      this.toast.success(res.message || 'Combo creado correctamente');
+
       this.form.reset();
       this.items.clear();
+      this.groups.clear();
       await this.loadCombos();
     } catch (err) {
       console.error(err);
@@ -93,18 +161,31 @@ export class AdminCombos implements OnInit{
     }
   }
 
+  // -------------------
+  // ACCIONES
+  // -------------------
   async deactivateCombo(combo: any) {
     try {
-      const confirmMsg = combo.is_active
-        ? `¿Deseas desactivar el combo "${combo.name}"?`
-        : `¿Deseas eliminar el combo "${combo.name}" permanentemente?`;
+      const confirmDialog = this.dialog.open(ConfirmDialogComponent, {
+        width: '360px',
+        data: {
+          title: combo.is_active ? 'Desactivar combo' : 'Activar combo',
+          message: combo.is_active
+            ? `¿Deseas desactivar el combo "${combo.name}"?`
+            : `¿Deseas activar el combo "${combo.name}"?`,
+        },
+      });
 
-      if (!confirm(confirmMsg)) return;
+      const confirmed = await firstValueFrom(confirmDialog.afterClosed());
+      if (!confirmed) return;
 
-      //await this.api.delete(combo.id_combo); 
+      await this.api.toggleActive(combo.id_combo);
       this.toast.success(
-        combo.is_active ? 'Combo desactivado correctamente' : 'Combo eliminado'
+        combo.is_active
+          ? 'Combo desactivado correctamente'
+          : 'Combo activado correctamente'
       );
+
       await this.loadCombos();
     } catch (err) {
       console.error(err);
@@ -112,10 +193,12 @@ export class AdminCombos implements OnInit{
     }
   }
 
+  getOptions(groupIndex: number): FormArray {
+    return this.groups.at(groupIndex).get('options') as FormArray;
+  }
+
   editCombo(combo: any) {
-    // abrir un modal o navegar a una pantalla de edición
     console.log('Editar combo:', combo);
     this.toast.info(`Modo edición para "${combo.name}" (en construcción)`);
   }
-
- }
+}

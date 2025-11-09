@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, Patch } from '@nestjs/common';
+import { Controller, Post, Param, Body, Patch, Get } from '@nestjs/common';
 import { TableSessionsService } from '../services/table_sessions.service';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';

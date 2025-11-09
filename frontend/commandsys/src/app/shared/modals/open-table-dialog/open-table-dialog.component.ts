@@ -52,7 +52,6 @@ import { MatIcon, MatIconModule } from '@angular/material/icon';
               min="1"
               [max]="data.table.seats"
               formControlName="guests"
-              placeholder="Ej: 4"
               class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:border-sky-300 outline-none transition-all"
             />
             <div
