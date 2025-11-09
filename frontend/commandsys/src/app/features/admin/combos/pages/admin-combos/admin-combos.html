@@ -75,7 +75,7 @@
 
               <li *ngFor="let g of c.combo_groups">
                 <strong>{{ g.label }}</strong>
-                <span class="text-slate-400 text-xs">(máx: {{ g.max_selection }})</span>
+                <span class="text-slate-400 text-xs"> (máx: {{ g.max_selection }})</span>
               </li>
             </ul>
           </div>
@@ -192,7 +192,7 @@
                 </div>
 
                 <div formArrayName="options" class="space-y-2">
-                  <div *ngFor="let opt of getOptions(g).controls; let o = index" [formGroupName]="o">
+                  <div *ngFor="let opt of getOptions(g).controls; let o = index" [formGroupName]="o"
                     [formGroupName]="o"
                     class="flex gap-2 items-center bg-white rounded-lg border border-slate-200 p-2">
                     <select formControlName="id_company_product"
@@ -218,7 +218,7 @@
         </div>
 
         <button type="submit"
-          class="w-full bg-gradient-to-r from-indigo-500 to-sky-600 text-white py-2.5 rounded-xl font-semibold hover:opacity-90 transition">
+          class="w-full bg-gradient-to-r from-[#16a3bd] to-[#283996] text-white py-2.5 rounded-xl font-semibold hover:opacity-90 transition">
           Crear Combo
         </button>
       </form>

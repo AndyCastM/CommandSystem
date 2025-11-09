@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '../../../../../shared/modals/confirm-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
+import { ComboEditDialogComponent } from '../../UI/combo-edit-dialog/combo-edit-dialog';
 
 @Component({
   selector: 'app-admin-combos',
@@ -198,7 +199,18 @@ export class AdminCombos implements OnInit {
   }
 
   editCombo(combo: any) {
-    console.log('Editar combo:', combo);
-    this.toast.info(`Modo edición para "${combo.name}" (en construcción)`);
+    const dialogRef = this.dialog.open(ComboEditDialogComponent, {
+      width: '900px',         
+      maxHeight: '90vh',       
+      data: combo,
+      panelClass: 'rounded-modal',
+    });
+
+    dialogRef.afterClosed().subscribe(async (updated) => {
+      if (updated) {
+        await this.loadCombos();
+      }
+    });
   }
+
 }

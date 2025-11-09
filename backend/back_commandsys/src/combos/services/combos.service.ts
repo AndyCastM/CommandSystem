@@ -12,6 +12,7 @@ export class CombosService {
   async create(id_company: number, dto: CreateComboDto) {
     const { name, description, base_price, items, groups } = dto;
 
+    console.log("Combo recibidio: ", dto);
     if (!items?.length && !groups?.length) {
       throw new BadRequestException('El combo debe tener al menos un producto o grupo.');
     }
@@ -36,7 +37,7 @@ export class CombosService {
                 label: group.label,
                 max_selection: group.max_selection || 1,
                 is_required: group.is_required ?? true,
-                options: {
+                combo_group_options: {
                   create: group.options.map((opt) => ({
                     id_company_product: +opt.id_company_product,
                     extra_price: opt.extra_price || 0,

@@ -21,7 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
         </button>
 
         <button (click)="dialogRef.close(true)"
-          class="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-sky-600 text-white hover:opacity-90 transition">
+          class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#16a3bd] to-[#283996] text-white hover:opacity-90 transition">
           Confirmar
         </button>
       </div>
