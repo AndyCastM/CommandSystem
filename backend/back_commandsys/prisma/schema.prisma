@@ -76,6 +76,7 @@ model orders {
   id_branch      Int
   id_session     Int
   id_user        Int?
+  notes          String?        @db.VarChar(85)
   status         orders_status? @default(pending)
   created_at     DateTime?      @default(now()) @db.Timestamp(0)
   order_items    order_items[]

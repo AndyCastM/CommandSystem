@@ -1,6 +1,6 @@
-<div class="max-w-6xl mx-auto p-4">
+<div class="max-w-7xl mx-auto p-6">
   <!-- ENCABEZADO -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
     <div>
       <div class="text-sm text-slate-500">
         Mesero / <span class="text-slate-700 font-medium">Menú</span>
@@ -11,63 +11,79 @@
     <button
       type="button"
       (click)="goBack()"
-      class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-300 flex items-center gap-1"
+      class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300 flex items-center gap-2"
     >
       <mat-icon class="!text-base">arrow_back</mat-icon>
       Volver
     </button>
   </div>
 
-  <!-- CONTENIDO -->
+  <!-- Cargando menú -->
   <div *ngIf="loading()" class="text-slate-500 text-center mt-8">Cargando menú...</div>
 
-  <div *ngIf="!loading() && menu().length > 0" class="space-y-6">
-    <div *ngFor="let section of menu()" class="">
-      <h2 class="text-base font-semibold text-sky-700 border-b border-slate-200 pb-1 mb-3">
-        {{ section.category }}
-      </h2>
+  <!-- Áreas del menú (tarjetas grandes) -->
+  <div *ngIf="!loading() && menu() && menu().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+    <div
+      *ngFor="let section of menu()"
+      class="bg-white rounded-lg shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+      (click)="selectArea(section)"
+    >
+      <div class="flex justify-center items-center py-6 bg-gradient-to-r from-sky-500 to-sky-600 rounded-t-lg text-white">
+        <h3 class="text-lg font-semibold">{{ section.area }}</h3>
+      </div>
+      <div class="px-4 py-3">
+        <p class="text-center text-slate-600">{{ section.categories?.length || 0 }} categorías</p>
+      </div>
+    </div>
+  </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+  <!-- Productos de la sección seleccionada -->
+  <div *ngIf="selectedArea && selectedArea.categories" class="mt-8">
+    <h2 class="text-xl font-semibold text-sky-700 mb-6">Productos en {{ selectedArea.area }}</h2>
+    <div *ngFor="let category of selectedArea.categories" class="space-y-4">
+      <h4 class="text-lg font-semibold text-slate-800">{{ category.category }}</h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         <div
-          *ngFor="let product of section.products"
-          class="bg-white rounded-xl shadow-sm p-3 hover:shadow-md transition-all border border-slate-100 flex flex-col"
-          (click)="openProductDetail(product.id)"
+          *ngFor="let product of category.products"
+          class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-4"
+          (click)="openProductDetail(product.id, this.isAdding)"
         >
-          <!-- Imagen -->
-          <div class="relative w-full h-28 bg-slate-100 rounded-lg overflow-hidden mb-2">
+          <div class="relative w-full h-40 bg-slate-100 rounded-lg overflow-hidden mb-3">
             <img
-              [src]="product.image || 'https://placehold.co/300x200?text=Sin+Imagen'"
+              [src]="product.image || 'https://placehold.co/400x300?text=Sin+Imagen'"
               alt="{{ product.name }}"
               class="w-full h-full object-cover object-center"
               (error)="onImageError($event)"
             />
           </div>
-
-          <!-- Información -->
-          <div class="flex-1">
-            <h3 class="text-slate-800 font-semibold text-sm truncate">
-              {{ product.name }}
-            </h3>
-            <p class="text-slate-500 text-xs line-clamp-2 mb-1">
-              {{ product.description || 'Sin descripción' }}
-            </p>
-          </div>
-
-          <!-- Precio y botón -->
-          <div class="flex items-center justify-between mt-1">
-            <span class="text-sky-700 font-semibold text-sm">
-              {{ formatPrice(product.price) }}
-            </span>
-
-            <button
-              class="bg-sky-500 text-white rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1 hover:bg-sky-600"
-            >
-              <span class="material-symbols-outlined text-[14px]">add</span>
-              Agregar
-            </button>
+          <h3 class="text-slate-800 font-semibold text-sm truncate">{{ product.name }}</h3>
+          <p class="text-slate-500 text-xs mb-2">{{ product.description || 'Sin descripción' }}</p>
+          <div class="flex justify-between items-center mt-2">
+            <span class="text-sky-700 font-semibold">{{ formatPrice(product.price) }}</span>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Previsualización de la Comanda -->
+  <div *ngIf="cart().size > 0" class="fixed bottom-0 left-0 right-0 bg-white shadow-xl p-6">
+    <h3 class="font-semibold text-lg text-slate-800">Comanda</h3>
+    <div *ngFor="let product of cart() | keyvalue" class="flex justify-between items-center mt-4">
+      <div>
+        <p class="text-slate-800">{{ product.value.name }} ({{ product.value.quantity }})</p>
+        <p class="text-slate-500 text-sm">{{ formatPrice(product.value.price * product.value.quantity) }}</p>
+      </div>
+      <button (click)="removeFromCart(product.key)" class="text-red-500 hover:text-red-700 text-xs">Eliminar</button>
+    </div>
+    <div class="mt-6 flex justify-between items-center">
+      <span class="text-slate-800 font-semibold">Total: {{ formatPrice(100) }}</span>
+      <button
+        (click)="confirmOrder()"
+        class="bg-sky-500 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-sky-600"
+      >
+        Confirmar Comanda
+      </button>
     </div>
   </div>
 

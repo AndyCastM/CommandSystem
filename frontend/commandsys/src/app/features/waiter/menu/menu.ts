@@ -24,9 +24,22 @@ export class Menu implements OnInit {
   menu = signal<any[]>([]);
   loading = signal(false);
   idTable?: number;
-  idBranch?: number;
+  isAdding: boolean = false;  // Para saber si estamos en modo de agregar o solo ver
+
+  // Carrito de productos
+  cart = signal<Map<number, any>>(new Map()); // Mapa de productos agregados
+
+  selectedArea: any = {};  // Área seleccionada para mostrar sus productos
+
+  selectArea(area: any) {
+    this.selectedArea = area;  // Seteamos el área seleccionada
+  }
 
   ngOnInit() {
+    // Leer el parámetro isAdding desde la ruta (pasado en las rutas)
+    this.isAdding = this.route.snapshot.data['isAdding'];
+
+    // Leer el id de la mesa si lo tiene
     this.idTable = Number(this.route.snapshot.paramMap.get('id_table'));
     this.loadMenu();
   }
@@ -35,10 +48,10 @@ export class Menu implements OnInit {
     this.loading.set(true);
     try {
       const res = await this.menuApi.getBranchMenu();
-      console.log(' Menú cargado:', res.data);
-      this.menu.set([...res.data]); // fuerza render con nueva referencia
+      console.log('Menú cargado:', res.data);
+      this.menu.set(res.data);  // Fuerza render con nueva referencia
     } catch (err) {
-      console.error(' Error al cargar menú:', err);
+      console.error('Error al cargar menú:', err);
       this.toast.error('Error al cargar el menú');
     } finally {
       this.loading.set(false);
@@ -58,11 +71,11 @@ export class Menu implements OnInit {
       'https://placehold.co/400x300?text=Imagen+no+disponible';
   }
 
-  openProductDetail(id_company_product: number) {
-    console.log('Producto seleccionado: ', id_company_product);
+  openProductDetail(id_company_product: number, isAdding: boolean) {
+    //console.log('Producto seleccionado: ', id_company_product, 'isAdding:', isAdding);
     const dialogRef = this.dialog.open(ProductDetailDialogComponent, {
       width: '400px',
-      data: { id_company_product },
+      data: { id_company_product, isAdding },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -73,4 +86,59 @@ export class Menu implements OnInit {
     });
   }
 
+  // Agregar producto al carrito
+  addToCart(product: any) {
+    const { product: selectedProduct, options, quantity } = product;
+
+    // Verificar si el producto ya existe en el carrito
+    const currentProduct = this.cart().get(selectedProduct.id_company_product);
+
+    if (currentProduct) {
+      currentProduct.quantity += quantity;  // Si existe, aumentar la cantidad
+    } else {
+      // Si no existe, agregarlo al carrito
+      this.cart().set(selectedProduct.id_company_product, {
+        ...selectedProduct,
+        options,
+        quantity,
+      });
+    }
+
+    // Actualizar el carrito
+    this.cart.set(new Map(this.cart()));
+  }
+
+  // Eliminar producto del carrito
+  removeFromCart(productId: number) {
+    this.cart().delete(productId);
+    this.cart.set(new Map(this.cart())); // Actualizamos el carrito
+  }
+
+  // Método para agregar el producto al carrito o al pedido
+  addToOrder(product: any) {
+    if (!this.isAdding) {
+      this.toast.error('No puedes agregar productos, solo estás viendo el menú.');
+      return;
+    }
+
+    // Validar que la comanda esté asociada a una mesa activa o a domicilio
+    if (!this.idTable) {
+      this.toast.error('Este pedido no está asociado a ninguna mesa activa o domicilio.');
+      return;
+    }
+
+    console.log('Producto agregado:', product);
+    // Lógica para agregar el producto al carrito o al pedido actual
+  }
+
+  // Confirmar productos y crear la comanda
+  confirmOrder() {
+    if (this.cart().size === 0) {
+      this.toast.error('No has seleccionado productos para la comanda.');
+      return;
+    }
+
+    console.log('Comanda confirmada con los siguientes productos:', Array.from(this.cart().values()));
+    // Aquí llamamos al servicio que manejaría la creación de la comanda en el backend
+  }
 }

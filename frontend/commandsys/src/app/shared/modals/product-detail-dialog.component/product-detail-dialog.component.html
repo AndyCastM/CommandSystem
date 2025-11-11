@@ -51,11 +51,23 @@
       </button>
     </div>
 
+    <!-- Botón Agregar (habilitado solo si isAdding es true) -->
     <button
+      *ngIf="isAdding"
+      [disabled]="!isAdding"
       class="bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-medium px-5 py-2 rounded-xl hover:opacity-90 transition-all"
       (click)="addToOrder()"
     >
       Agregar
+    </button>
+
+    <!-- Mensaje si estamos en modo consulta -->
+    <button
+      *ngIf="!isAdding"
+      class="bg-slate-300 text-slate-700 px-5 py-2 rounded-xl"
+      disabled
+    >
+      Solo consulta
     </button>
   </div>
 </div>

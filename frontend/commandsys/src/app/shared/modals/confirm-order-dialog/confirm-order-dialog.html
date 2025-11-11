@@ -1,0 +1,17 @@
+<h2 class="text-xl font-semibold text-slate-800">Confirmar Comanda</h2>
+
+<div class="mt-4">
+  <div *ngFor="let product of data.cart" class="flex justify-between">
+    <span>{{ product.name }} ({{ product.quantity }})</span>
+    <span>{{ product.price | currency }}</span>
+  </div>
+  <div class="mt-4 flex justify-between">
+    <span class="font-bold">Total:</span>
+    <span class="font-bold">{{ data.total | currency }}</span>
+  </div>
+</div>
+
+<div class="mt-6 flex justify-between">
+  <button (click)="close()" class="bg-slate-300 text-slate-700 px-4 py-2 rounded-lg">Cancelar</button>
+  <button (click)="confirm()" class="bg-sky-500 text-white px-4 py-2 rounded-lg">Enviar Comanda</button>
+</div>

@@ -6,6 +6,6 @@ export const WAITER_ROUTES: Routes = [
 
     { path: 'mesas', component: Tables },
     { path: 'comandas', component: Orders },
-    { path: 'menu/:id_table', component: Menu },
-    { path:'menu', component: Menu },
+    { path: 'menu/:id_table', component: Menu, data: {isAdding: true} },
+    { path:'menu', component: Menu, data: {isAdding: false} },
 ];

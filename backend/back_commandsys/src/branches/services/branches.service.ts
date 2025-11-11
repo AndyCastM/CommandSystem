@@ -136,7 +136,7 @@ export class BranchesService {
   }
 
   async getBranchMenu(id_company: number, id_branch: number) {
-    //  Obtener productos activos de la sucursal, junto con sus relaciones e imágenes
+    // Obtener productos activos de la sucursal, junto con sus relaciones e imágenes
     const products = await this.prisma.branch_products.findMany({
       where: {
         id_branch,
@@ -148,8 +148,9 @@ export class BranchesService {
       include: {
         company_products: {
           include: {
-            product_categories: true,
-            company_product_images: true, // Traer imágenes Cloudinary
+            product_categories: true, // Traer categorías de productos
+            print_areas: true, // Traer áreas de impresión
+            company_product_images: true,
             product_options: {
               include: {
                 product_option_values: true,
@@ -163,22 +164,27 @@ export class BranchesService {
 
     console.log('Productos cargados:', products.length);
 
-    //  Agrupar productos por categoría
+    // Agrupar productos por área y dentro de cada área por categoría
     const grouped = products.reduce((acc, p) => {
       const prod = p.company_products;
-      const category = prod.product_categories.name;
+      const area = prod.print_areas?.name || 'Sin Área'; // Área de impresión
 
       // Obtener primera imagen (o null)
       const firstImage = prod.company_product_images?.[0]?.image_url || null;
 
-      if (!acc[category]) acc[category] = [];
+      if (!acc[area]) acc[area] = {};
 
-      acc[category].push({
+      // Agrupar por categoría dentro del área
+      const category = prod.product_categories?.name || 'Sin Categoría'; // Obtener categoría
+
+      if (!acc[area][category]) acc[area][category] = [];
+
+      acc[area][category].push({
         id: prod.id_company_product,
         name: prod.name,
         price: prod.base_price,
         description: prod.description,
-        image: firstImage, // cada producto trae su URL directa
+        image: firstImage,
         options: prod.product_options.map((opt) => ({
           id_option: opt.id_option,
           name: opt.name,
@@ -200,20 +206,22 @@ export class BranchesService {
       });
 
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<string, Record<string, any[]>>);
 
-    //  Convertir a formato de menú
-    const menu = Object.entries(grouped).map(([category, products]) => ({
-      category,
-      products,
+    // Convertir a formato de menú
+    const menu = Object.entries(grouped).map(([area, categories]) => ({
+      area,
+      categories: Object.entries(categories).map(([category, products]) => ({
+        category,
+        products,
+      })),
     }));
 
-    //  Respuesta final uniforme
+    // Respuesta final
     return {
       message: `Menú de la sucursal ${id_branch}`,
       data: menu,
     };
   }
-
 
 }

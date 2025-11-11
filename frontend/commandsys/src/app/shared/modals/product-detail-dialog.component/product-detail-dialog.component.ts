@@ -18,15 +18,22 @@ export class ProductDetailDialogComponent implements OnInit {
   loading = signal(true);
   selectedOptions = new Map<number, any>(); // id_option -> selected value(s)
   quantity = signal(1);
+  isAdding: boolean = false;  // Determina si estamos en modo agregar o solo ver
 
   constructor(
     private productsApi: ProductService,
     private toast: ToastService,
     private dialogRef: MatDialogRef<ProductDetailDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { id_company_product: number }
+    @Inject(MAT_DIALOG_DATA) public data: { 
+      id_company_product: number, 
+      isAdding: boolean // Recibimos el parámetro isAdding desde el componente padre
+    }
   ) {}
 
   async ngOnInit() {
+    // Establecemos el modo de agregar desde el contexto recibido
+    this.isAdding = this.data.isAdding;
+    console.log('Modo isAdding en diálogo:', this.isAdding);
     try {
       const res = await this.productsApi.getDetail(this.data.id_company_product);
       this.product.set(res.data);
@@ -65,7 +72,13 @@ export class ProductDetailDialogComponent implements OnInit {
     if (this.quantity() > 1) this.quantity.set(this.quantity() - 1);
   }
 
+  // Agregar producto solo si estamos en modo agregar
   addToOrder() {
+    if (!this.isAdding) {
+      this.toast.error('No puedes agregar productos, solo estás visualizando el producto.');
+      return;
+    }
+
     const selected = Array.from(this.selectedOptions.entries()).map(([id_option, values]) => ({
       id_option,
       values: values.map((v: any) => ({
