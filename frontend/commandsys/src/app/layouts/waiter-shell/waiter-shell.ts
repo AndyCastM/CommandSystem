@@ -16,6 +16,7 @@ export class WaiterShellComponent {
   nav = [
     { icon: 'table_restaurant', label: 'Mesas', path:'/mesero/mesas'},
     { icon: 'receipt_long', label: 'Comandas', path: '/mesero/comandas' },
+    { icon: 'menu_book_2', label: 'Menú', path: '/mesero/menu'},
   ];
 
 

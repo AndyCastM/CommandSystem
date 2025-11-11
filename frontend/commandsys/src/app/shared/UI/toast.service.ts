@@ -17,7 +17,7 @@ export class ToastService {
   info(message: string, title = 'Información', duration = 3000) {
     this.show({ title, message, variant: 'info', duration });
   }
-  warning(message: string, title = 'Aviso', duration = 3500) {
+  warning(message: string, title = 'Aviso', duration = 5000) {
     this.show({ title, message, variant: 'warning', duration });
   }
 

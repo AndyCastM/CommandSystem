@@ -82,12 +82,12 @@ export class Tables implements OnInit, OnDestroy{
 
   filterByStatus(event: any) {
     const value = event.value;
-    this.selectedStatus.set(value || null); // 👈 CORRECTO
+    this.selectedStatus.set(value || null); // CORRECTO
   }
 
   filterByLocation(event: any) {
     const value = event.value;
-    this.selectedLocation.set(value || null); // 👈 CORRECTO
+    this.selectedLocation.set(value || null); // CORRECTO
   }
 
   async openTable(table: any) {

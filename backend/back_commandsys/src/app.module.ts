@@ -3,7 +3,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { CommandsModule } from './commands/commands.module';
 import { BranchesModule } from './branches/branches.module';
 import { TablesModule } from './tables/tables.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -20,6 +19,7 @@ import { CombosModule } from './combos/combos.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AiModule } from './ai/ai.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -28,10 +28,10 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true
     }),
     PrismaModule, CompanyProductsModule, UsersModule, AuthModule, 
-    CommandsModule, BranchesModule, TablesModule, CompaniesModule, 
+    BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot()],
+    AiModule, ScheduleModule.forRoot(), OrdersModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

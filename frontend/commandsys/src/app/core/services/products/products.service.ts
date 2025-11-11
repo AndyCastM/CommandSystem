@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { forkJoin, of, switchMap, tap, map, shareReplay, take, mergeMap, toArray, catchError, throwError } from 'rxjs';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { ProductAreasService } from './products-area.service';
 import { ProductCategoriesService } from './products-category.service';
 
@@ -15,6 +15,8 @@ import {
   UploadResponse,
   ProductImage,
   ProductImagesResponse,
+  BranchProduct,
+  ProductDetail
 } from './products.models';
 
 @Injectable({ providedIn: 'root' })
@@ -184,6 +186,11 @@ export class ProductService {
         return throwError(() => err);
       })
     );
+  }
+
+  async getDetail(id_company_product: number): Promise<{ data: ProductDetail }> {
+    const url = `${this.base}/api/company-products/${id_company_product}`;
+    return await firstValueFrom(this.http.get<{ data: ProductDetail }>(url));
   }
 
   // === OBTENER IMÁGENES DE UN PRODUCTO ===

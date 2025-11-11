@@ -105,3 +105,27 @@ export interface ProductImagesResponse {
   count?: number;
   images?: ProductImage[];
 }
+
+// Obtener detalle de un producto 
+export interface ProductDetail {
+  id_company_product: number;
+  name: string;
+  description?: string;
+  base_price: number;
+  image_url?: string;
+  category_name?: string;
+  area_name?: string;
+  options: {
+    id_option: number;
+    name: string;
+    is_required: boolean;
+    multi_select: boolean;
+    max_selection: number;
+    values: {
+      id_value: number;
+      name: string;
+      extra_price: number;
+      is_active: boolean;
+    }[];
+  }[];
+}

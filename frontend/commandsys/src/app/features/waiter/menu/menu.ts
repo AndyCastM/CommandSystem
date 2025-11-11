@@ -4,6 +4,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { MenuService } from '../../../core/services/menu/menu.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
 
 @Component({
   selector: 'app-menu-page',
@@ -17,6 +19,7 @@ export class Menu implements OnInit {
   private router = inject(Router);
   private toast = inject(ToastService);
   private menuApi = inject(MenuService);
+  private dialog = inject(MatDialog);
 
   menu = signal<any[]>([]);
   loading = signal(false);
@@ -54,4 +57,20 @@ export class Menu implements OnInit {
     (event.target as HTMLImageElement).src =
       'https://placehold.co/400x300?text=Imagen+no+disponible';
   }
+
+  openProductDetail(id_company_product: number) {
+    console.log('Producto seleccionado: ', id_company_product);
+    const dialogRef = this.dialog.open(ProductDetailDialogComponent, {
+      width: '400px',
+      data: { id_company_product },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        console.log('Producto agregado:', result);
+        // Aquí puedes enviar el producto al carrito o al pedido actual
+      }
+    });
+  }
+
 }

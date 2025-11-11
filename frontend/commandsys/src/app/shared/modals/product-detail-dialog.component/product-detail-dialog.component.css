@@ -1,0 +1,12 @@
+:host {
+  display: block;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+img {
+  transition: transform 0.2s ease-in-out;
+}
+img:hover {
+  transform: scale(1.03);
+}
