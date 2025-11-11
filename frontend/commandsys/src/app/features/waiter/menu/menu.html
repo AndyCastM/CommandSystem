@@ -21,18 +21,22 @@
   <!-- Cargando menú -->
   <div *ngIf="loading()" class="text-slate-500 text-center mt-8">Cargando menú...</div>
 
-  <!-- Áreas del menú (tarjetas grandes) -->
+  <!-- Áreas del menú (tarjetas cuadradas sin porcentaje) -->
   <div *ngIf="!loading() && menu() && menu().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
     <div
       *ngFor="let section of menu()"
-      class="bg-white rounded-lg shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+      class="bg-white text-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all p-6 flex flex-col justify-between items-center cursor-pointer"
       (click)="selectArea(section)"
     >
-      <div class="flex justify-center items-center py-6 bg-gradient-to-r from-sky-500 to-sky-600 rounded-t-lg text-white">
-        <h3 class="text-lg font-semibold">{{ section.area }}</h3>
+      <!-- Ícono de área -->
+      <div class="w-14 h-14 bg-sky-500 text-white rounded-full flex items-center justify-center mb-4">
+        <mat-icon class="!text-xl">{{ section.icon || 'local_dining' }}</mat-icon> <!-- Icono dinámico -->
       </div>
-      <div class="px-4 py-3">
-        <p class="text-center text-slate-600">{{ section.categories?.length || 0 }} categorías</p>
+
+      <!-- Nombre del área y cantidad de productos -->
+      <div class="text-center">
+        <h3 class="font-semibold text-xl">{{ section.area }}</h3>
+        <p class="text-lg mt-2">{{ section.categories?.length || 0 }} productos</p>
       </div>
     </div>
   </div>
