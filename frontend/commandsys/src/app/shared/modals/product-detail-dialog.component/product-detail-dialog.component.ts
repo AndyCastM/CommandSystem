@@ -19,6 +19,7 @@ export class ProductDetailDialogComponent implements OnInit {
   selectedOptions = new Map<number, any>(); // id_option -> selected value(s)
   quantity = signal(1);
   isAdding: boolean = false;  // Determina si estamos en modo agregar o solo ver
+  orderNotes: string = '';    // Para almacenar las notas del usuario
 
   constructor(
     private productsApi: ProductService,
@@ -31,7 +32,6 @@ export class ProductDetailDialogComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    // Establecemos el modo de agregar desde el contexto recibido
     this.isAdding = this.data.isAdding;
     console.log('Modo isAdding en diálogo:', this.isAdding);
     try {
@@ -88,10 +88,12 @@ export class ProductDetailDialogComponent implements OnInit {
       })),
     }));
 
+    // Devolver los datos al padre (producto, cantidad, opciones y notas)
     this.dialogRef.close({
       product: this.product(),
       quantity: this.quantity(),
       options: selected,
+      notes: this.orderNotes,  // Añadir las notas
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,11 +6,12 @@ import { ToastService } from '../../../shared/UI/toast.service';
 import { MenuService } from '../../../core/services/menu/menu.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
+import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
 
 @Component({
   selector: 'app-menu-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, OrderPreviewComponent],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
@@ -30,6 +31,8 @@ export class Menu implements OnInit {
   cart = signal<Map<number, any>>(new Map()); // Mapa de productos agregados
 
   selectedArea: any = {};  // Área seleccionada para mostrar sus productos
+
+  drawerOpen = false; // false = cerrado, true = abierto
 
   selectArea(area: any) {
     this.selectedArea = area;  // Seteamos el área seleccionada
@@ -58,6 +61,11 @@ export class Menu implements OnInit {
     }
   }
 
+  // toggle para abrir/cerrar el drawer en móvil
+  toggleDrawer() {
+    this.drawerOpen = !this.drawerOpen;
+  }
+
   formatPrice(value: number): string {
     return '$' + Number(value).toFixed(2);
   }
@@ -78,67 +86,85 @@ export class Menu implements OnInit {
       data: { id_company_product, isAdding },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        console.log('Producto agregado:', result);
-        // Aquí puedes enviar el producto al carrito o al pedido actual
+        this.addProductToCart(result);
+        console.log('Producto agregado al carrito:', result);
       }
     });
   }
 
-  // Agregar producto al carrito
-  addToCart(product: any) {
-    const { product: selectedProduct, options, quantity } = product;
+  addProductToCart(productData: any) {
+    const existing = this.cart().get(productData.product.id_branch_product);
 
-    // Verificar si el producto ya existe en el carrito
-    const currentProduct = this.cart().get(selectedProduct.id_company_product);
-
-    if (currentProduct) {
-      currentProduct.quantity += quantity;  // Si existe, aumentar la cantidad
+    if (existing) {
+      existing.quantity += productData.quantity;
     } else {
-      // Si no existe, agregarlo al carrito
-      this.cart().set(selectedProduct.id_company_product, {
-        ...selectedProduct,
-        options,
-        quantity,
+      this.cart().set(productData.product.id_branch_product, {
+        product: productData.product,  
+        quantity: productData.quantity,
+        options: productData.options,
+        notes: productData.notes,
       });
     }
 
-    // Actualizar el carrito
+    this.cart.set(new Map(this.cart())); // refresca el signal
+  }
+
+
+  removeFromCart(id_branch_product: number) {
+    this.cart().delete(id_branch_product);
     this.cart.set(new Map(this.cart()));
   }
 
-  // Eliminar producto del carrito
-  removeFromCart(productId: number) {
-    this.cart().delete(productId);
-    this.cart.set(new Map(this.cart())); // Actualizamos el carrito
+  updateQuantity(id_branch_product: number, delta: number) {
+    const item = this.cart().get(id_branch_product);
+    if (!item) return;
+
+    item.quantity = Math.max(1, item.quantity + delta);
+    this.cart.set(new Map(this.cart()));
   }
 
-  // Método para agregar el producto al carrito o al pedido
-  addToOrder(product: any) {
-    if (!this.isAdding) {
-      this.toast.error('No puedes agregar productos, solo estás viendo el menú.');
-      return;
+  totalAmount(): number {
+    let total = 0;
+
+    for (const item of this.cart().values()) {
+      const base = item.product.base_price;
+      let extras = 0;
+
+      // Sumar los precios extra de las opciones seleccionadas
+      for (const opt of item.options || []) {
+        const optTotal = opt.values?.reduce(
+          (acc: number, v: any) => acc + (v.extra_price || 0),
+          0
+        );
+        extras += optTotal || 0;
+
+        // Buscar si esta opción tiene tiers y aplica un precio adicional
+        const optionDetail = item.product.options.find(
+          (pOpt: any) => pOpt.id_option === opt.id_option
+        );
+
+        if (optionDetail?.tiers?.length > 0) {
+          const selectedCount = opt.values?.length || 0;
+          // Buscar el tier aplicable
+          const tier = optionDetail.tiers.find(
+            (t: any) => selectedCount === t.selection_count
+          );
+          if (tier) extras += tier.extra_price;
+        }
+      }
+
+      const subtotal = (base + extras) * item.quantity;
+      total += subtotal;
     }
 
-    // Validar que la comanda esté asociada a una mesa activa o a domicilio
-    if (!this.idTable) {
-      this.toast.error('Este pedido no está asociado a ninguna mesa activa o domicilio.');
-      return;
-    }
-
-    console.log('Producto agregado:', product);
-    // Lógica para agregar el producto al carrito o al pedido actual
+    return total;
   }
 
-  // Confirmar productos y crear la comanda
   confirmOrder() {
-    if (this.cart().size === 0) {
-      this.toast.error('No has seleccionado productos para la comanda.');
-      return;
-    }
-
-    console.log('Comanda confirmada con los siguientes productos:', Array.from(this.cart().values()));
-    // Aquí llamamos al servicio que manejaría la creación de la comanda en el backend
+    if (this.cart().size === 0) return;
+    console.log('Confirmando comanda:', Array.from(this.cart().values()));
+    // aquí puedes llamar al backend
   }
 }

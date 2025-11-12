@@ -180,6 +180,7 @@ export class BranchesService {
       if (!acc[area][category]) acc[area][category] = [];
 
       acc[area][category].push({
+        id_branch_product: p.id_branch_product,  // incluir el id_branch_product
         id: prod.id_company_product,
         name: prod.name,
         price: prod.base_price,

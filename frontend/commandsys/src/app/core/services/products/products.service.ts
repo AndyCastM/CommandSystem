@@ -188,8 +188,8 @@ export class ProductService {
     );
   }
 
-  async getDetail(id_company_product: number): Promise<{ data: ProductDetail }> {
-    const url = `${this.base}/api/company-products/${id_company_product}`;
+  async getDetail(id_branch_product: number): Promise<{ data: ProductDetail }> {
+    const url = `${this.base}/api/company-products/${id_branch_product}`;
     return await firstValueFrom(this.http.get<{ data: ProductDetail }>(url));
   }
 

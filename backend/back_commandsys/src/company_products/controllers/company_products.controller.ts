@@ -33,8 +33,8 @@ export class CompanyProductsController {
 
   @Get(':id')
   @Roles(Role.Admin, Role.Gerente, Role.Mesero)
-  async getProductDetail(@Param('id') id_company_product: string) {
-    return this.companyProductsService.getProductDetail(+id_company_product);
+  async getProductDetail(@Param('id') id_branch_product: string) {
+    return this.companyProductsService.getProductDetail(+id_branch_product);
   }
 
   @Post()

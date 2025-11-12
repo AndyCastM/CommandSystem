@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 export interface MenuProduct {
+  id_branch_product: number;
   id: number;
   name: string;
   price: number;

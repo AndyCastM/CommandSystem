@@ -277,38 +277,45 @@ async syncProductsToBranch(id_company: number, id_branch: number) {
   );
 }
 
-async getProductDetail(id_company_product: number) {
-  const product = await this.prisma.company_products.findUnique({
-    where: { id_company_product },
+async getProductDetail(id_branch_product: number) {
+  const branchProduct = await this.prisma.branch_products.findUnique({
+    where: { id_branch_product },
     include: {
-      product_categories: true,
-      product_options: {
+      company_products: {
         include: {
-          product_option_values: true,
-          product_option_tiers: true,
+          product_categories: true,
+          print_areas: true,
+          company_product_images: true,
+          product_options: {
+            include: {
+              product_option_values: true,
+              product_option_tiers: true,
+            },
+          },
         },
       },
-      print_areas: true,
     },
   });
 
-  if (!product) {
+  if (!branchProduct) {
     throw new NotFoundException('Producto no encontrado.');
   }
 
-  // Formateo del producto para el panel admin
+  const prod = branchProduct.company_products;
+
   const formatted = {
-    id_company_product: product.id_company_product,
-    id_category: product.id_category,
-    id_area: product.id_area,
-    name: product.name,
-    description: product.description,
-    base_price: Number(product.base_price),
-    image_url: product.image_url,
-    is_active: product.is_active,
-    category_name: product.product_categories?.name,
-    area_name: product.print_areas?.name,
-    options: product.product_options.map(o => ({
+    id_branch_product: branchProduct.id_branch_product,
+    id_company_product: prod.id_company_product,
+    id_category: prod.id_category,
+    id_area: prod.id_area,
+    name: prod.name,
+    description: prod.description,
+    base_price: Number(prod.base_price),
+    image_url: prod.company_product_images?.[0]?.image_url || null,
+    is_active: branchProduct.is_active,
+    category_name: prod.product_categories?.name,
+    area_name: prod.print_areas?.name,
+    options: prod.product_options.map(o => ({
       id_option: o.id_option,
       name: o.name,
       is_required: o.is_required === 1,
@@ -328,8 +335,9 @@ async getProductDetail(id_company_product: number) {
     })),
   };
 
-  return formatResponse(`Detalle del producto ${product.name}`, formatted);
+  return formatResponse(`Detalle del producto ${prod.name}`, formatted);
 }
+
 
 async getCompanyProducts(
   id_company: number,

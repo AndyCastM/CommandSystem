@@ -131,6 +131,15 @@ export class Tables implements OnInit, OnDestroy{
     }
   }
 
+  async retakeOrder(table: any) {
+    try {
+        this.router.navigate([`/mesero/menu/${table.id}`]);
+    } catch (err: any) {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Error al retomar la mesa');
+    }
+  }
+
   viewOrder(table: any) {
     this.toast.info(`Viendo comanda de ${table.name}`);
   }
