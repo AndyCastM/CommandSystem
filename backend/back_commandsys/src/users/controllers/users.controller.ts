@@ -40,6 +40,14 @@ export class UsersController {
         return this.usersService.getUsers(user);
     } 
 
+    @Get('/users-metrics')
+    @Roles(Role.Superadmin)
+    async getUsersMetrics(
+        @CurrentUser() user: any
+    ){
+        return this.usersService.getGlobalUserMetrics();
+    }
+
     @Get('/roles')
     @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
     getRoles(

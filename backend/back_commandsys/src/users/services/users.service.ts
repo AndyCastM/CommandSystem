@@ -97,6 +97,28 @@ export class UsersService {
         return formatResponse("Lista de usuarios obtenida correctamente.", formattedUsers);
     }
 
+    async getGlobalUserMetrics() {
+        // Solo el superadmin puede ver esto
+        const users = await this.prisma.users.findMany({
+            include: { roles: true },
+        });
+
+        const total = users.length;
+        const active = users.filter(u => Boolean(u.is_active)).length;
+        const inactive = total - active;
+
+        const data= {
+            total_users: total,
+            active_users: active,
+            inactive_users: inactive,
+        };
+
+        return formatResponse (
+            "Métricas globales del sistema",
+            data 
+        );
+    }
+
     async findOneByUsername(username: string) {
         const user = await this.prisma.users.findUnique({
             where: { username },

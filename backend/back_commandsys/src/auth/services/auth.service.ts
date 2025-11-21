@@ -25,6 +25,7 @@ export class AuthService {
             
         } else {
             await this.validateTimeOff(user.id_branch);
+            await this.validatecompanyIsActive(user);
         }
         
         // Verificar contraseña con bcrypt
@@ -111,5 +112,16 @@ export class AuthService {
             throw new ForbiddenException('Sucursal cerrada en este momento');
         }
 
+    }
+
+    async validatecompanyIsActive(user: any) {
+        const company = await this.prisma.companies.findUnique({
+            where: { id_company: user.id_company },
+            select: { is_active: true, name: true },
+        });
+
+        if (!company || company.is_active === 0) {
+            throw new ForbiddenException('La empresa está desactivada. Contacte al administrador.');
+        }
     }
 }

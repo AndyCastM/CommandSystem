@@ -18,7 +18,8 @@ import { EditCompanyModalComponent } from '../UI/edit-company-modal/edit-company
 })
 export class Dashboard {
   companies = signal<any[]>([]);
-  metrics = signal({ companies: 0, users: 0, active: 0, inactive: 0 });
+  companiesCount = signal(0);
+  metrics = signal({ users: 0, active: 0, inactive: 0 });
   showModal = signal(false);
   
   selectedCompany = signal<any | null>(null);
@@ -43,16 +44,37 @@ export class Dashboard {
     });
 
     this.loadData();
+    this.loadMetrics();
   }
 
   async loadData() {
     try {
       const res = await this.srv.getDashboard();
-      this.companies.set(res.companies);
-      this.metrics.set(res.metrics);
+      this.companies.set(res);
+      this.companiesCount.set(res.length);
     } catch (err) {
       console.error(err);
     }
+  }
+
+  async loadMetrics() {
+    this.srv.getGlobalMetrics().subscribe({
+      next: res => {
+        const m = res.data; // { total_users, active_users, inactive_users, ... }
+
+        this.metrics.set({
+          users: m.total_users ?? 0,
+          active: m.active_users ?? 0,
+          inactive: m.inactive_users ?? 0,
+        });
+
+        //console.log(' Métricas dashboard:', this.metrics());
+      },
+
+      error: err => {
+        console.error('Error cargando métricas:', err);
+      }
+    });
   }
 
   openCreateCompanyModal() {
@@ -98,5 +120,6 @@ export class Dashboard {
   closeEditCompanyModal() {
     this.selectedCompany.set(null);
     this.showEditModal.set(false);
+    this.loadData();
   }
  }

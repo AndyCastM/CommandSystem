@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 // Tipos para tipado fuerte
 export interface CreateCompanyDto {
@@ -42,32 +43,26 @@ export interface CompanyResponseDto {
 @Injectable({ providedIn: 'root' })
 export class Superadmin {
   private API_URL = 'http://localhost:3000/api/companies'; 
+  private API_URL2 = 'http://localhost:3000/api/users'; 
 
   constructor(private http: HttpClient) {}
 
   // Obtener todas las empresas
-  async getDashboard(): Promise<{
-    companies: CompanyResponseDto[];
-    metrics: { companies: number; users: number; active: number; inactive: number };
-  }> {
+  async getDashboard(): Promise<CompanyResponseDto[]> {
     try {
       const companies =
         (await this.http.get<CompanyResponseDto[]>(this.API_URL).toPromise()) || [];
 
-      // Construimos las métricas con seguridad
-      const metrics = {
-        companies: companies.length,
-        users: companies.length * 1,
-        active: companies.length,
-        inactive: 0,
-      };
+      return companies;
 
-      return { companies, metrics };
     } catch (error) {
       console.error('Error al obtener empresas:', error);
-      // Devuelve un valor por defecto si hay error
-      return { companies: [], metrics: { companies: 0, users: 0, active: 0, inactive: 0 } };
+      return []; // respuesta consistente
     }
+  }
+
+  getGlobalMetrics() {
+    return this.http.get<any>(`${this.API_URL2}/users-metrics`);
   }
 
   // Crear una nueva empresa
@@ -76,4 +71,12 @@ export class Superadmin {
       if (!res) throw new Error('No se recibió respuesta del servidor');
       return res;
   }
+
+  // Actualizar empresa
+  async updateCompany(id_company: number, data: any) {
+    return firstValueFrom(
+      this.http.patch(`${this.API_URL}/${id_company}`, data)
+    );
+  }
+
 }

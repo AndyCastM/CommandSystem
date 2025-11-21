@@ -144,7 +144,7 @@ export class CompaniesService {
       data,
     });
     return {
-      message: 'Actualización exitosa',  
+      message: 'Actualización exitosa', company
     };
   }
 }

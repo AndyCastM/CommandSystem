@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Superadmin } from '../../data-access/superadmin';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { ToastService } from '../../../../shared/UI/toast.service';
 
 @Component({
@@ -22,7 +21,8 @@ export class EditCompanyModalComponent {
 
   constructor(
     private fb: FormBuilder,
-    private toast: ToastService
+    private toast: ToastService,
+    private srv: Superadmin,
   ) {
     this.form = this.fb.group({
     name: ['', Validators.required],
@@ -43,12 +43,30 @@ export class EditCompanyModalComponent {
     if (this.form.invalid) return;
     this.saving.set(true);
     try {
-      //await this.srv.updateCompany(this.company.id_company, this.form.value);
+      const raw = this.form.value;
+
+      const payload = {
+        ...raw,
+        is_active: raw.is_active ? 1 : 0  // conversión a tinyint(1) que espera mysql
+      };
+
+      await this.srv.updateCompany(this.company.id_company, payload);
       this.toast.success('Empresa actualizada con éxito');
       this.close();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      this.toast.error('Error al actualizar empresa');
+
+      let message = 'Error al actualizar empresa';
+
+      if (err.error?.message) {
+        if (Array.isArray(err.error.message)) {
+          message = err.error.message[0]; //por si viene como array
+        } else {
+          message = err.error.message; //por si viene como string
+        }
+      }
+
+  this.toast.error(message);
     } finally {
       this.saving.set(false);
     }
