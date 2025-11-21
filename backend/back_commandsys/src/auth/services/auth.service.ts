@@ -124,4 +124,15 @@ export class AuthService {
             throw new ForbiddenException('La empresa está desactivada. Contacte al administrador.');
         }
     }
+
+    async validateBranchIsActive(user: any) {
+        const branch = await this.prisma.branches.findUnique({
+            where: { id_branch: user.id_branch },
+            select: { is_active: true, name: true },
+        });
+
+        if (!branch || branch.is_active === 0) {
+            throw new ForbiddenException('La sucursal está desactivada. Contacte al administrador.');
+        }
+    }
 }
