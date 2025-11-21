@@ -67,7 +67,7 @@ export class Tables implements OnInit, OnDestroy{
     this.notif.disconnect();
   }
 
-  // Aquí está la magia: se recalcula solo cada vez que cambian tables, status o location
+  //se recalcula solo cada vez que cambian tables, status o location
   filteredTables = computed(() => {
     const allTables = this.tables();
     const status = this.selectedStatus();
@@ -82,12 +82,12 @@ export class Tables implements OnInit, OnDestroy{
 
   filterByStatus(event: any) {
     const value = event.value;
-    this.selectedStatus.set(value || null); // CORRECTO
+    this.selectedStatus.set(value || null); 
   }
 
   filterByLocation(event: any) {
     const value = event.value;
-    this.selectedLocation.set(value || null); // CORRECTO
+    this.selectedLocation.set(value || null); 
   }
 
   async openTable(table: any) {
@@ -102,7 +102,19 @@ export class Tables implements OnInit, OnDestroy{
       try {
         const res = await this.tablesService.openTable(table.id, guests);
         this.toast.success(res.message);
+
+        const session = res.data;
+        //console.log('Sesión abierta:', session);
         await this.reloadTables(); // refresca mesas
+
+        //Vamos al menu con id_session y tipo dine_in
+        this.router.navigate(['/mesero/menu'], {
+          state: {
+            id_session: session.id_session,
+            type: 'dine_in',
+          },
+        });
+        //console.log('Mesa abierta, sesión:', session.id_session);
       } catch (err: any) {
         console.error(err);
         this.toast.error(err.error?.message || 'Error al abrir la mesa');
@@ -122,8 +134,16 @@ export class Tables implements OnInit, OnDestroy{
   async takeOrder(table: any) {
     try {
         const res = await this.tablesService.occupyTable(table.id);
+        const session = res.data;
         this.toast.success(res.message);
-        this.router.navigate([`/mesero/menu/${table.id}`]);
+        
+        this.router.navigate(['/mesero/menu'], {
+          state: {
+            id_session: session.id_session,
+            type: 'dine_in',
+          },
+        });
+        console.log('Sesión tomada:', session.id_session);
         await this.reloadTables(); // refresca mesas
     } catch (err: any) {
         console.error(err);
@@ -133,10 +153,19 @@ export class Tables implements OnInit, OnDestroy{
 
   async retakeOrder(table: any) {
     try {
-        this.router.navigate([`/mesero/menu/${table.id}`]);
+      const res = await this.tablesService.openTable(table.id, table.guests ?? 1);
+      const session = res.data;
+
+      this.router.navigate(['/mesero/menu'], {
+        state: {
+          id_session: session.id_session,
+          type: 'dine_in',
+        },
+      });
+
     } catch (err: any) {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Error al retomar la mesa');
+      console.error(err);
+      this.toast.error(err.error?.message || 'Error al retomar la mesa');
     }
   }
 

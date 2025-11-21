@@ -1,22 +1,23 @@
-import { Component, OnInit, inject, signal, Signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { MenuService } from '../../../core/services/menu/menu.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
 import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
+import { MatOption, MatSelect } from '@angular/material/select';
 
 @Component({
   selector: 'app-menu-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule, OrderPreviewComponent],
+  imports: [CommonModule, MatIconModule, OrderPreviewComponent, MatSelect, MatOption],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
 export class Menu implements OnInit {
-  private route = inject(ActivatedRoute);
+
   private router = inject(Router);
   private toast = inject(ToastService);
   private menuApi = inject(MenuService);
@@ -24,26 +25,30 @@ export class Menu implements OnInit {
 
   menu = signal<any[]>([]);
   loading = signal(false);
-  idTable?: number;
-  isAdding: boolean = false;  // Para saber si estamos en modo de agregar o solo ver
 
-  // Carrito de productos
-  cart = signal<Map<number, any>>(new Map()); // Mapa de productos agregados
+  id_session: number | null = null;
+  orderType!: 'dine_in' | 'takeout';
 
-  selectedArea: any = {};  // Área seleccionada para mostrar sus productos
+  // para siempre agregar productos:
+  isAdding: boolean = true;
 
-  drawerOpen = false; // false = cerrado, true = abierto
-
-  selectArea(area: any) {
-    this.selectedArea = area;  // Seteamos el área seleccionada
-  }
+  cart = signal<Map<number, any>>(new Map());
+  selectedArea: any = {};
+  drawerOpen = false;
 
   ngOnInit() {
-    // Leer el parámetro isAdding desde la ruta (pasado en las rutas)
-    this.isAdding = this.route.snapshot.data['isAdding'];
+    const state = history.state;
 
-    // Leer el id de la mesa si lo tiene
-    this.idTable = Number(this.route.snapshot.paramMap.get('id_table'));
+    if (state) {
+      this.id_session = state.id_session ?? null;
+      this.orderType = state.type ?? 'takeout';
+    }
+
+    console.log('Menu loaded with:', {
+      idSession: this.id_session,
+      orderType: this.orderType,
+    });
+
     this.loadMenu();
   }
 
@@ -51,17 +56,19 @@ export class Menu implements OnInit {
     this.loading.set(true);
     try {
       const res = await this.menuApi.getBranchMenu();
-      console.log('Menú cargado:', res.data);
-      this.menu.set(res.data);  // Fuerza render con nueva referencia
+      this.menu.set(res.data);
     } catch (err) {
-      console.error('Error al cargar menú:', err);
+      console.error(err);
       this.toast.error('Error al cargar el menú');
     } finally {
       this.loading.set(false);
     }
   }
 
-  // toggle para abrir/cerrar el drawer en móvil
+  selectArea(area: any) {
+    this.selectedArea = area;
+  }
+
   toggleDrawer() {
     this.drawerOpen = !this.drawerOpen;
   }
@@ -74,23 +81,19 @@ export class Menu implements OnInit {
     this.router.navigate(['/mesero/mesas']);
   }
 
-  onImageError(event: Event) {
-    (event.target as HTMLImageElement).src =
+  onImageError(e: Event) {
+    (e.target as HTMLImageElement).src =
       'https://placehold.co/400x300?text=Imagen+no+disponible';
   }
 
-  openProductDetail(id_company_product: number, isAdding: boolean) {
-    //console.log('Producto seleccionado: ', id_company_product, 'isAdding:', isAdding);
+  openProductDetail(id_company_product: number) {
     const dialogRef = this.dialog.open(ProductDetailDialogComponent, {
       width: '400px',
-      data: { id_company_product, isAdding },
+      data: { id_company_product, isAdding: this.isAdding },
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.addProductToCart(result);
-        console.log('Producto agregado al carrito:', result);
-      }
+      if (result) this.addProductToCart(result);
     });
   }
 
@@ -101,16 +104,15 @@ export class Menu implements OnInit {
       existing.quantity += productData.quantity;
     } else {
       this.cart().set(productData.product.id_branch_product, {
-        product: productData.product,  
+        product: productData.product,
         quantity: productData.quantity,
         options: productData.options,
         notes: productData.notes,
       });
     }
 
-    this.cart.set(new Map(this.cart())); // refresca el signal
+    this.cart.set(new Map(this.cart()));
   }
-
 
   removeFromCart(id_branch_product: number) {
     this.cart().delete(id_branch_product);
@@ -132,7 +134,6 @@ export class Menu implements OnInit {
       const base = item.product.base_price;
       let extras = 0;
 
-      // Sumar los precios extra de las opciones seleccionadas
       for (const opt of item.options || []) {
         const optTotal = opt.values?.reduce(
           (acc: number, v: any) => acc + (v.extra_price || 0),
@@ -140,14 +141,12 @@ export class Menu implements OnInit {
         );
         extras += optTotal || 0;
 
-        // Buscar si esta opción tiene tiers y aplica un precio adicional
         const optionDetail = item.product.options.find(
           (pOpt: any) => pOpt.id_option === opt.id_option
         );
 
         if (optionDetail?.tiers?.length > 0) {
           const selectedCount = opt.values?.length || 0;
-          // Buscar el tier aplicable
           const tier = optionDetail.tiers.find(
             (t: any) => selectedCount === t.selection_count
           );
@@ -164,7 +163,13 @@ export class Menu implements OnInit {
 
   confirmOrder() {
     if (this.cart().size === 0) return;
-    console.log('Confirmando comanda:', Array.from(this.cart().values()));
-    // aquí puedes llamar al backend
+
+    console.log('Enviando orden con: ', {
+      id_session: this.id_session,
+      order_type: this.orderType,
+      items: Array.from(this.cart().values()),
+    });
+
+    // Llamada al backend aquí
   }
 }

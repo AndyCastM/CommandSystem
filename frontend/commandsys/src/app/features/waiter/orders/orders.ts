@@ -26,7 +26,7 @@ export class Orders implements OnInit{
 
   async loadOrders() {
     this.loading.set(true);
-    // 🔹 Aquí luego harás la llamada real al backend (por mesero)
+    //  Aquí luego harás la llamada real al backend (por mesero)
     setTimeout(() => {
       const mockOrders = [
         {

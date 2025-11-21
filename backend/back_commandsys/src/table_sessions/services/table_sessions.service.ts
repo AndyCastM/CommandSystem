@@ -33,13 +33,24 @@ export class TableSessionsService {
       );
     }
 
-    // Verificar si ya está abierta
+     // Verificar si ya está abierta u ocupada
     const existing = await this.prisma.table_sessions.findFirst({
-      where: { id_table, status: 'open' },
+      where: { 
+        id_table, 
+        status: { in: ['open', 'occupied'] } 
+      },
+      include: {
+        tables: true,
+        users: { select: { name: true, last_name: true } },
+      },
     });
 
+    // Si ya existe una sesión abierta u ocupada, retornarla
     if (existing) {
-      throw new BadRequestException('La mesa ya se encuentra abierta');
+      return formatResponse(
+        `Mesa ${table.number} ya estaba abierta.`,
+        existing
+      );
     }
 
     // Crear nueva sesión

@@ -7,6 +7,28 @@
   >
     <!-- IZQUIERDA: MENÚ -->
     <div>
+      
+      <!-- SELECTOR TIPO DE ORDEN -->
+      <div class="flex items-center gap-3 mb-4">
+        <label class="text-base font-medium text-slate-700">Tipo de orden:</label>
+
+        <mat-select
+          [value]="orderType"
+          (change)="orderType = $any($event.target).value"
+          [panelClass]="'filter-panel'"
+          [disabled]="orderType === 'dine_in'" 
+          class="!w-44 border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+        >
+          <!-- Si es dine_in, muestra solo esa opción -->
+          <option *ngIf="orderType === 'dine_in'" value="dine_in">🍽️ Mesa</option>
+
+          <!-- Si no es dine_in, muestra todas -->
+          <ng-container *ngIf="orderType !== 'dine_in'">
+            <mat-option value="takeout">🛍️ Para llevar</mat-option>
+          </ng-container>
+        </mat-select>
+      </div>
+
       <!-- encabezado -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
@@ -56,13 +78,14 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div
               *ngFor="let product of category.products"
-              (click)="openProductDetail(product.id_branch_product, isAdding)"
+              (click)="openProductDetail(product.id_branch_product)"
               class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm hover:shadow-md cursor-pointer transition"
             >
               <img
                 [src]="product.image || 'https://placehold.co/400x300?text=Sin+Imagen'"
                 class="w-full h-28 object-cover rounded-lg mb-2"
                 alt="{{ product.name }}"
+                (error)="onImageError($event)"
               />
               <h4 class="font-medium text-slate-800 text-sm truncate">{{ product.name }}</h4>
               <p class="text-xs text-slate-500 truncate">
@@ -80,9 +103,9 @@
       </div>
     </div>
 
-    <!-- DERECHA: COMANDA (solo si isAdding === true) -->
+    <!-- DERECHA: COMANDA -->
     <div *ngIf="isAdding" class="hidden md:block">
-        <app-order-preview
+      <app-order-preview
         [cart]="cart"
         [totalAmount]="totalAmount"
         [updateQuantity]="updateQuantity"
@@ -91,6 +114,7 @@
         [isAdding]="isAdding"
       ></app-order-preview>
     </div>
+
   </div>
 
   <!-- DRAWER MÓVIL -->
@@ -108,14 +132,15 @@
     >
       <div class="p-4">
         <h2 class="text-lg font-semibold text-slate-800 mb-3">🧾 Comanda</h2>
+
         <app-order-preview
-        [cart]="cart"
-        [totalAmount]="totalAmount"
-        [updateQuantity]="updateQuantity"
-        [removeFromCart]="removeFromCart"
-        [confirmOrder]="confirmOrder"
-        [isAdding]="isAdding"
-      ></app-order-preview>
+          [cart]="cart"
+          [totalAmount]="totalAmount"
+          [updateQuantity]="updateQuantity"
+          [removeFromCart]="removeFromCart"
+          [confirmOrder]="confirmOrder"
+          [isAdding]="isAdding"
+        ></app-order-preview>
       </div>
     </div>
   </div>

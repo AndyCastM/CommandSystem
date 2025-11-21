@@ -72,22 +72,23 @@ model order_items {
 }
 
 model orders {
-  id_order       Int            @id @default(autoincrement())
+  id_order       Int                 @id @default(autoincrement())
   id_branch      Int
-  id_session     Int
+  id_session     Int?
   id_user        Int?
-  notes          String?        @db.VarChar(85)
-  status         orders_status? @default(pending)
-  created_at     DateTime?      @default(now()) @db.Timestamp(0)
+  notes          String?             @db.VarChar(85)
+  orders_type    orders_orders_type? @default(dine_in)
+  status         orders_status?      @default(pending)
+  created_at     DateTime?           @default(now()) @db.Timestamp(0)
   order_items    order_items[]
-  branches       branches       @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_1")
-  table_sessions table_sessions @relation(fields: [id_session], references: [id_session], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_2")
-  users          users?         @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_3")
+  branches       branches            @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_1")
+  table_sessions table_sessions?     @relation(fields: [id_session], references: [id_session], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_2")
+  users          users?              @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_3")
   payments       payments[]
 
   @@index([id_branch], map: "id_branch")
-  @@index([id_session], map: "id_session")
   @@index([id_user], map: "id_user")
+  @@index([id_session], map: "orders_ibfk_2")
 }
 
 model payments {
@@ -443,4 +444,10 @@ enum table_sessions_status {
   pending_payment
   occupied
   available
+}
+
+enum orders_orders_type {
+  dine_in
+  takeout
+  delivery
 }

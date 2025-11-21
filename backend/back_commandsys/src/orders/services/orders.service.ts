@@ -8,11 +8,23 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
    async createOrder(dto: CreateOrderDto, id_branch, id_user) {
+    // Validaciones lógicas
+    if (dto.order_type === 'dine_in' && !dto.id_session) {
+      throw new BadRequestException('Una orden dine_in requiere id_session.');
+    }
+
+    if (dto.order_type !== 'dine_in' && dto.id_session) {
+      throw new BadRequestException('Los pedidos takeout/delivery no deben tener id_session.');
+    }
+
+    // Sesión (null si no aplica)
+    const sessionId = dto.id_session ?? null;
+
     //  Crear la orden principal
     const order = await this.prisma.orders.create({
       data: {
         id_branch: id_branch,
-        id_session: dto.id_session,
+        id_session: sessionId,
         id_user: id_user,
         status: 'pending',
       },

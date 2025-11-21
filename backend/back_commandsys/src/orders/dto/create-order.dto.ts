@@ -3,8 +3,15 @@ import {
   IsInt,
   IsOptional,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+enum OrderType {
+  dine_in = 'dine_in',
+  takeout = 'takeout',
+  delivery = 'delivery',
+}
 
 class OrderItemOptionDto {
   @IsInt()
@@ -59,8 +66,13 @@ class OrderItemDto {
 }
 
 export class CreateOrderDto {
+  @IsOptional()
   @IsInt()
   id_session: number;
+
+  
+  @IsEnum(OrderType)
+  order_type: OrderType;
 
   @IsArray()
   @ValidateNested({ each: true })
