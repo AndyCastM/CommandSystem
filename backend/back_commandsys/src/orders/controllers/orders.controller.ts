@@ -12,7 +12,7 @@ export class OrdersController {
   @Post()
   async createOrder(@Body() dto: CreateOrderDto, @CurrentUser() user:any) {
     try {
-      const data = await this.ordersService.createOrder(dto, +user.id_branch, +user.id_user);
+      const data = await this.ordersService.createOrder(dto, +user.id_branch, +user.sub);
       return formatResponse('Comanda creada correctamente', data.order);
     } catch (error) {
       console.error('Error creando la comanda:', error);

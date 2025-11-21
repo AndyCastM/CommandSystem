@@ -8,6 +8,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
 import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm.modal';
+import { OrderService, CreateOrderPayload } from '../../../core/services/orders/orders.service';
 
 @Component({
   selector: 'app-menu-page',
@@ -21,13 +23,15 @@ export class Menu implements OnInit {
   private router = inject(Router);
   private toast = inject(ToastService);
   private menuApi = inject(MenuService);
+  private orderApi = inject(OrderService);
   private dialog = inject(MatDialog);
 
   menu = signal<any[]>([]);
   loading = signal(false);
 
   id_session: number | null = null;
-  orderType!: 'dine_in' | 'takeout';
+  orderType: 'dine_in' | 'takeout' | null = null;
+  isDineInLocked = false;
 
   // para siempre agregar productos:
   isAdding: boolean = true;
@@ -39,18 +43,48 @@ export class Menu implements OnInit {
   ngOnInit() {
     const state = history.state;
 
-    if (state) {
-      this.id_session = state.id_session ?? null;
-      this.orderType = state.type ?? 'takeout';
+    // 1) CONSULTA — si no viene nada en el state
+    if (!state?.id_session && !state?.type && !state?.mode) {
+      this.isAdding = false;
+      this.id_session = null;
+      this.orderType = null; // irrelevante
+      this.isDineInLocked = false;
     }
 
-    console.log('Menu loaded with:', {
+    // 2) CONSULTA explícita
+    else if (state?.mode === 'view') {
+      this.isAdding = false;
+      this.id_session = null;
+      this.orderType = null; // irrelevante
+      this.isDineInLocked = false;
+    }
+
+    // 3) DINE-IN
+    else if (state?.id_session) {
+      this.isAdding = true;
+      this.id_session = state.id_session;
+      this.orderType = 'dine_in';
+      this.isDineInLocked = true; //Para bloquear el cambio de tipo de orden
+    }
+
+    // 4) TAKEOUT 
+    else if (state?.type) {
+      this.isAdding = true;
+      this.id_session = null;
+      this.orderType = state.type;
+      this.isDineInLocked = false;
+    }
+
+    console.log(' Menu loaded with:', {
+      isAdding: this.isAdding,
       idSession: this.id_session,
       orderType: this.orderType,
+      isDineInLocked: this.isDineInLocked
     });
 
     this.loadMenu();
   }
+
 
   async loadMenu() {
     this.loading.set(true);
@@ -63,6 +97,29 @@ export class Menu implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  onOrderTypeChange(type: 'dine_in' | 'takeout' ) {
+    console.log("Cambio detectado:", type);
+    console.log("isDineInLocked:", this.isDineInLocked);
+
+    if (this.isDineInLocked) {
+      return; //  no permitir cambiar tipo en dine_in
+    }
+
+    this.orderType = type;
+
+    // takeout/delivery activan modo agregar
+    if (type === 'takeout') {
+      this.isAdding = true;
+      this.id_session = null;
+    }
+
+    // volver a dine_in sin sesión = consulta
+    if (type === 'dine_in' && !this.id_session) {
+      this.isAdding = false;
+    }
+    console.log("Tipo cambiado:", this.orderType, "Modo agregar:", this.isAdding);
   }
 
   selectArea(area: any) {
@@ -161,15 +218,70 @@ export class Menu implements OnInit {
     return total;
   }
 
-  confirmOrder() {
-    if (this.cart().size === 0) return;
+  async confirmOrder() {
+    if (this.cart().size === 0) {
+      this.toast.info('No hay productos en la comanda');
+      return;
+    }
 
-    console.log('Enviando orden con: ', {
-      id_session: this.id_session,
-      order_type: this.orderType,
-      items: Array.from(this.cart().values()),
+    // require order type before proceeding
+    if (!this.orderType) {
+      this.toast.error('Seleccione el tipo de orden');
+      return;
+    }
+
+    // Abrimos modal de confirmación (pide nombre si es takeout)
+    const dialogRef = this.dialog.open(OrderConfirmModal, {
+      width: '420px',
+      disableClose: true,
+      data: {
+        orderType: this.orderType,
+      },
     });
 
-    // Llamada al backend aquí
+    dialogRef.afterClosed().subscribe(async (result: OrderConfirmResult | null) => {
+    if (!result) {
+      return; // Cancelado
+    }
+
+    try {
+      // Mapeamos el carrito al DTO que espera el backend
+      const items = Array.from(this.cart().values()).map((item: any) => {
+        // Flatten de opciones a id_option_value[]
+        const optionValues =
+          (item.options || [])
+            .flatMap((opt: any) => opt.values || [])
+            .map((v: any) => ({
+              id_option_value: v.id_option_value,
+            })) || [];
+
+        return {
+          id_branch_product: item.product.id_branch_product,
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+          options: optionValues,
+        };
+      });
+
+      const payload: CreateOrderPayload = {
+        order_type: this.orderType!,
+        id_session: this.orderType === 'dine_in' ? this.id_session : null,
+        customer_name: this.orderType === 'takeout' ? result.customer_name : null,
+        items,
+      };
+
+      const res = await this.orderApi.createOrder(payload);
+
+      this.toast.success(res?.message || 'Comanda creada correctamente');
+
+      // Limpia carrito y regresa a mesas
+      this.cart.set(new Map());
+      this.router.navigate(['/mesero/mesas']);
+    } catch (err: any) {
+      console.error(err);
+      this.toast.error(err?.message || err?.error?.message || 'Error al crear la comanda');
+    }
+  });
   }
+
 }

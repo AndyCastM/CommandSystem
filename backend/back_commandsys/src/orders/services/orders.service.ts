@@ -8,6 +8,8 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
    async createOrder(dto: CreateOrderDto, id_branch, id_user) {
+    console.log('Usuario creando la comanda:',id_user);
+
     // Validaciones lógicas
     if (dto.order_type === 'dine_in' && !dto.id_session) {
       throw new BadRequestException('Una orden dine_in requiere id_session.');
@@ -15,6 +17,10 @@ export class OrdersService {
 
     if (dto.order_type !== 'dine_in' && dto.id_session) {
       throw new BadRequestException('Los pedidos takeout/delivery no deben tener id_session.');
+    }
+
+    if (dto.order_type === 'takeout' && !dto.customer_name) {
+      throw new BadRequestException('Los pedidos para llevar requieren nombre del cliente.');
     }
 
     // Sesión (null si no aplica)
@@ -27,6 +33,8 @@ export class OrdersService {
         id_session: sessionId,
         id_user: id_user,
         status: 'pending',
+        customer_name: dto.order_type === 'takeout' ? dto.customer_name : null,
+        notes: dto.notes ?? null,
       },
     });
 

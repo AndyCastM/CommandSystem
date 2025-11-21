@@ -4,13 +4,13 @@ import {
   IsOptional,
   ValidateNested,
   IsEnum,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 enum OrderType {
   dine_in = 'dine_in',
   takeout = 'takeout',
-  delivery = 'delivery',
 }
 
 class OrderItemOptionDto {
@@ -54,15 +54,17 @@ class OrderItemDto {
   @IsOptional()
   notes?: string;
 
+  @IsOptional() 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemOptionDto)
-  options: OrderItemOptionDto[];
+  options?: OrderItemOptionDto[];
 
+  @IsOptional() 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ComboGroupDto)
-  combo_groups: ComboGroupDto[];
+  combo_groups?: ComboGroupDto[];
 }
 
 export class CreateOrderDto {
@@ -70,9 +72,16 @@ export class CreateOrderDto {
   @IsInt()
   id_session: number;
 
+  @IsString()
+  @IsOptional()
+  notes?: string;
   
   @IsEnum(OrderType)
   order_type: OrderType;
+
+  @IsString()
+  @IsOptional()
+  customer_name?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

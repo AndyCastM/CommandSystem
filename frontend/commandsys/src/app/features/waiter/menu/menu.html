@@ -14,19 +14,25 @@
 
         <mat-select
           [value]="orderType"
-          (change)="orderType = $any($event.target).value"
+          placeholder="Selecciona tipo"
+          (selectionChange)="onOrderTypeChange($event.value)"
           [panelClass]="'filter-panel'"
-          [disabled]="orderType === 'dine_in'" 
-          class="!w-44 border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+          class="!w-44 border border-slate-300 rounded-lg px-3 py-2 text-sm"
         >
-          <!-- Si es dine_in, muestra solo esa opción -->
-          <option *ngIf="orderType === 'dine_in'" value="dine_in">🍽️ Mesa</option>
 
-          <!-- Si no es dine_in, muestra todas -->
-          <ng-container *ngIf="orderType !== 'dine_in'">
+          <!-- SOLO dine_in cuando está bloqueado -->
+          <mat-option *ngIf="isDineInLocked" value="dine_in">
+            🍽️ Mesa
+          </mat-option>
+
+          <!-- Todas las opciones cuando NO está bloqueado -->
+          <ng-container *ngIf="!isDineInLocked">
+            <mat-option value="dine_in">🍽️ Mesa</mat-option>
             <mat-option value="takeout">🛍️ Para llevar</mat-option>
           </ng-container>
+
         </mat-select>
+
       </div>
 
       <!-- encabezado -->
@@ -110,7 +116,7 @@
         [totalAmount]="totalAmount"
         [updateQuantity]="updateQuantity"
         [removeFromCart]="removeFromCart"
-        [confirmOrder]="confirmOrder"
+        [confirmOrder]="confirmOrder.bind(this)"
         [isAdding]="isAdding"
       ></app-order-preview>
     </div>
@@ -138,7 +144,7 @@
           [totalAmount]="totalAmount"
           [updateQuantity]="updateQuantity"
           [removeFromCart]="removeFromCart"
-          [confirmOrder]="confirmOrder"
+          [confirmOrder]="confirmOrder.bind(this)"
           [isAdding]="isAdding"
         ></app-order-preview>
       </div>
