@@ -5,5 +5,6 @@ import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 @Module({
   controllers: [TableSessionsController],
   providers: [TableSessionsService, NotificationsGateway],
+  exports: [TableSessionsService],
 })
 export class TableSessionsModule {}

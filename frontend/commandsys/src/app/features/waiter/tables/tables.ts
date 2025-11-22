@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
@@ -13,20 +20,29 @@ import { Router } from '@angular/router';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/select';
 import { TableLocationsService } from '../../../core/services/tables/table-locations.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-tables',
-  imports: [CommonModule, MatIconModule, MatDialogModule, ReactiveFormsModule, MatSelect, MatOption],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatDialogModule,
+    ReactiveFormsModule,
+    MatSelect,
+    MatOption,
+  ],
   templateUrl: './tables.html',
   styleUrl: './tables.css',
 })
-export class Tables implements OnInit, OnDestroy{ 
+export class Tables implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private notif = inject(NotificationsService);
   private sub?: Subscription;
   private tablesService = inject(TablesService);
   private locationsService = inject(TableLocationsService);
   private dialog = inject(MatDialog);
+  private auth = inject(AuthService);
 
   private router = inject(Router);
 
@@ -39,6 +55,27 @@ export class Tables implements OnInit, OnDestroy{
 
   lastAlert?: TableAlert;
 
+  // ===========================
+  //  FUNCION CLAVE
+  // ===========================
+  isMyTable(table: any): boolean {
+    // auth.currentUser can be a function (that returns a signal or user), a signal (callable), or a user object.
+    // Handle all cases safely.
+    const maybe = (typeof (this.auth.currentUser as any) === 'function')
+      ? (this.auth.currentUser as any)()
+      : (this.auth.currentUser ?? null);
+
+    const user = typeof maybe === 'function' ? (maybe as any)() : maybe;
+
+    if (!user) return false;
+    console.log(table);
+    console.log('Comparando mesa usuario:', table.id_user, 'con usuario actual:', user.id_user);
+    return table.id_user === user.id_user;
+  }
+
+  // ===========================
+  // INIT
+  // ===========================
   async ngOnInit() {
     this.loading.set(true);
     this.locationsService.loadAll().subscribe();
@@ -53,10 +90,9 @@ export class Tables implements OnInit, OnDestroy{
       this.loading.set(false);
     }
 
-    //  Conecta al socket
+    // Socket
     this.notif.connect();
 
-    //  Reacciona a alertas 
     this.sub = this.notif.onAlert().subscribe((alert) => {
       if (alert) this.lastAlert = alert;
     });
@@ -67,7 +103,9 @@ export class Tables implements OnInit, OnDestroy{
     this.notif.disconnect();
   }
 
-  //se recalcula solo cada vez que cambian tables, status o location
+  // ===========================
+  // FILTROS
+  // ===========================
   filteredTables = computed(() => {
     const allTables = this.tables();
     const status = this.selectedStatus();
@@ -82,44 +120,12 @@ export class Tables implements OnInit, OnDestroy{
 
   filterByStatus(event: any) {
     const value = event.value;
-    this.selectedStatus.set(value || null); 
+    this.selectedStatus.set(value || null);
   }
 
   filterByLocation(event: any) {
     const value = event.value;
-    this.selectedLocation.set(value || null); 
-  }
-
-  async openTable(table: any) {
-    const dialog = this.dialog.open(OpenTableDialogComponent, {
-      width: '420px',
-      data: { table },
-    });
-
-    dialog.afterClosed().subscribe(async (guests) => {
-      if (!guests) return; // cancelado
-
-      try {
-        const res = await this.tablesService.openTable(table.id, guests);
-        this.toast.success(res.message);
-
-        const session = res.data;
-        //console.log('Sesión abierta:', session);
-        await this.reloadTables(); // refresca mesas
-
-        //Vamos al menu con id_session y tipo dine_in
-        // this.router.navigate(['/mesero/menu'], {
-        //   state: {
-        //     id_session: session.id_session,
-        //     type: 'dine_in',
-        //   },
-        // });
-        //console.log('Mesa abierta, sesión:', session.id_session);
-      } catch (err: any) {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Error al abrir la mesa');
-      }
-    });
+    this.selectedLocation.set(value || null);
   }
 
   async reloadTables() {
@@ -131,30 +137,40 @@ export class Tables implements OnInit, OnDestroy{
     }
   }
 
-  async takeOrder(table: any) {
-    try {
-        const res = await this.tablesService.occupyTable(table.id);
-        const session = res.data;
+  // ===========================
+  // ACCIONES DE MESAS
+  // ===========================
+
+  async openTable(table: any) {
+    const dialog = this.dialog.open(OpenTableDialogComponent, {
+      width: '420px',
+      data: { table },
+    });
+
+    dialog.afterClosed().subscribe(async (guests) => {
+      if (!guests) return;
+
+      try {
+        const res = await this.tablesService.openTable(table.id, guests);
         this.toast.success(res.message);
-        
-        this.router.navigate(['/mesero/menu'], {
-          state: {
-            id_session: session.id_session,
-            type: 'dine_in',
-          },
-        });
-        console.log('Sesión tomada:', session.id_session);
-        await this.reloadTables(); // refresca mesas
-    } catch (err: any) {
+
+        await this.reloadTables();
+      } catch (err: any) {
         console.error(err);
-        this.toast.error(err.error?.message || 'Error al ocupar la mesa');
-    }
+        this.toast.error(err.error?.message || 'Error al abrir la mesa');
+      }
+    });
   }
 
-  async retakeOrder(table: any) {
+  async takeOrder(table: any) {
+    if (!this.isMyTable(table)) {
+      return this.toast.error('No puedes tomar la comanda de otra mesa');
+    }
+
     try {
-      const res = await this.tablesService.openTable(table.id, table.guests ?? 1);
+      const res = await this.tablesService.occupyTable(table.id);
       const session = res.data;
+      this.toast.success(res.message);
 
       this.router.navigate(['/mesero/menu'], {
         state: {
@@ -163,6 +179,31 @@ export class Tables implements OnInit, OnDestroy{
         },
       });
 
+      await this.reloadTables();
+    } catch (err: any) {
+      console.error(err);
+      this.toast.error(err.error?.message || 'Error al ocupar la mesa');
+    }
+  }
+
+  async retakeOrder(table: any) {
+    if (!this.isMyTable(table)) {
+      return this.toast.error('No puedes agregar a una mesa que no es tuya');
+    }
+
+    try {
+      const res = await this.tablesService.openTable(
+        table.id,
+        table.guests ?? 1
+      );
+      const session = res.data;
+
+      this.router.navigate(['/mesero/menu'], {
+        state: {
+          id_session: session.id_session,
+          type: 'dine_in',
+        },
+      });
     } catch (err: any) {
       console.error(err);
       this.toast.error(err.error?.message || 'Error al retomar la mesa');
@@ -174,14 +215,17 @@ export class Tables implements OnInit, OnDestroy{
   }
 
   async releaseTable(table: any) {
+    if (!this.isMyTable(table)) {
+      return this.toast.error('Solo el mesero asignado puede liberar la mesa');
+    }
+
     try {
-        const res = await this.tablesService.closeTable(table.id);
-        this.toast.success(res.message);
-        await this.reloadTables(); // refresca mesas
+      const res = await this.tablesService.closeTable(table.id);
+      this.toast.success(res.message);
+      await this.reloadTables();
     } catch (err: any) {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Error al liberar la mesa');
+      console.error(err);
+      this.toast.error(err.error?.message || 'Error al liberar la mesa');
     }
   }
-
 }

@@ -76,7 +76,10 @@ export class TableSessionsService {
   }
 
   // Cambiar a occupied cuando se toma la orden
-  async markOccupiedByTable(id_table: number) {
+  async markOccupiedByTable(id_table: number, id_user: number) {
+    
+    await this.validateTableOwnership(id_table, id_user);
+
     const session = await this.prisma.table_sessions.findFirst({ where: { id_table, status: 'open' }, include: { tables: true } });
     if (!session) throw new BadRequestException('No hay sesión abierta para esta mesa');
     const updated = await this.prisma.table_sessions.update({
@@ -89,6 +92,10 @@ export class TableSessionsService {
   }
 
   async closeTableSession(id_table: number, id_user: number) {
+    
+    // Validar dueño de la mesa
+    await this.validateTableOwnership(id_table, id_user);
+
     //  Verificar si la mesa existe
     const table = await this.prisma.tables.findUnique({
       where: { id_table },
@@ -124,6 +131,25 @@ export class TableSessionsService {
       `Mesa ${table.number} cerrada exitosamente.`,
       closed,
     );
+  }
+
+  public async validateTableOwnership(id_table: number, id_user: number) {
+    const session = await this.prisma.table_sessions.findFirst({
+      where: { 
+        id_table, 
+        status: { in: ['open', 'occupied'] }
+      }
+    });
+
+    if (!session) {
+      throw new BadRequestException('La mesa no tiene una sesión abierta');
+    }
+
+    if (session.id_user !== id_user) {
+      throw new BadRequestException('Esta mesa pertenece a otro mesero.');
+    }
+
+    return session;
   }
 
   // Cron,,, cada min detecta las mesas open por +5 min y emite notif a una sucursal especifica

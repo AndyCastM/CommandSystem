@@ -161,23 +161,43 @@ export class TablesService {
         table_locations: true,
         table_sessions: {
           where: { status: { in: ['open', 'occupied'] } },
+          select: {
+            id_session: true,
+            id_user: true,
+            guests: true,
+            status: true,
+            opened_at: true,
+          },
         },
       },
     });
 
-    return tables.map((t) => ({
-      id: t.id_table,
-      name: t.number,
-      seats: t.capacity,
-      location: t.table_locations.name,
-      status:
-        t.table_sessions.length === 0
-          ? 'Disponible'
-          : t.table_sessions[0].status === 'open'
-          ? 'Abierta'
-          : 'Ocupada',
-      opened_at: t.table_sessions[0]?.opened_at ?? null,
-    }));
+    return tables.map((t) => {
+      const session = t.table_sessions[0] ?? null;
+
+      return {
+        id: t.id_table,
+        name: t.number,
+        seats: t.capacity,
+        location: t.table_locations.name,
+
+        //  status real
+        status: session
+          ? session.status === 'open'
+            ? 'Abierta'
+            : 'Ocupada'
+          : 'Disponible',
+
+        // dueño de la mesa
+        id_user: session?.id_user ?? null,
+
+        // sesión activa
+        id_session: session?.id_session ?? null,
+
+        // apertura de sesión
+        opened_at: session?.opened_at ?? null,
+      };
+    });
   }
 
 

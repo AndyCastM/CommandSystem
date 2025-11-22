@@ -34,9 +34,10 @@ export class TableSessionsController {
   @Patch('occupy/:id_table')
   @Roles(Role.Mesero, Role.Gerente)
   async occupy(
-    @Param('id_table') id_table : string
+    @Param('id_table') id_table : string,
+    @CurrentUser() user: any,
   ){
-    return this.tableSessionsService.markOccupiedByTable(+id_table);
+    return this.tableSessionsService.markOccupiedByTable(+id_table, +user.sub);
   }
 }
 

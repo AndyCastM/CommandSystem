@@ -3,10 +3,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { orders_status, order_items_status } from 'generated/prisma';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { NotificationsGateway } from 'src/notifications/notifications.gateway';
+import { TableSessionsService } from 'src/table_sessions/services/table_sessions.service';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService, private notif: NotificationsGateway) {}
+  constructor(private prisma: PrismaService, private notif: NotificationsGateway, private tables: TableSessionsService) {}
 
    async createOrder(dto: CreateOrderDto, id_branch, id_user) {
     console.log('Usuario creando la comanda:',id_user);
@@ -24,8 +25,26 @@ export class OrdersService {
       throw new BadRequestException('Los pedidos para llevar requieren nombre del cliente.');
     }
 
-    // Sesión (null si no aplica)
+    // Obtener id_session (puede ser null si takeout)
     const sessionId = dto.id_session ?? null;
+    let id_table: number | null = null;
+
+    // Si es pedido dentro del restaurante
+    if (dto.order_type === 'dine_in') {
+      // Obtener la sesión
+      const session = await this.prisma.table_sessions.findUnique({
+        where: { id_session: sessionId },
+      });
+
+      if (!session) {
+        throw new BadRequestException('La sesión de la mesa no existe.');
+      }
+
+      id_table = session.id_table;
+
+      //  Validar que el mesero sea el dueño real de la mesa
+      await this.tables.validateTableOwnership(id_table, id_user);
+    }
 
     //  Crear la orden principal
     const order = await this.prisma.orders.create({
