@@ -79,6 +79,11 @@ export class ProductDetailDialogComponent implements OnInit {
       return;
     }
 
+    if (!this.isValidSelection()) {
+      this.toast.error('Selecciona todas las opciones obligatorias');
+      return;
+    }
+    
     const selected = Array.from(this.selectedOptions.entries()).map(([id_option, values]) => ({
       id_option,
       values: values.map((v: any) => ({
@@ -95,6 +100,21 @@ export class ProductDetailDialogComponent implements OnInit {
       options: selected,
       notes: this.orderNotes,  // Añadir las notas
     });
+  }
+
+  // Regresa true si TODAS las opciones obligatorias están seleccionadas
+  isValidSelection(): boolean {
+    const product = this.product();
+    if (!product) return false;
+
+    for (const opt of product.options) {
+      if (opt.is_required) {
+        const selected = (this.selectedOptions.get(opt.id_option) ?? []) as any[];
+        if (!selected.length) return false;
+      }
+    }
+
+    return true;
   }
 
   close() {

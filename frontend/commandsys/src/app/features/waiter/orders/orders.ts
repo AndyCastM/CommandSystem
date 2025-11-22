@@ -32,6 +32,13 @@ export class Orders implements OnInit{
         this.loadOrders();
       }
     });
+
+    this.notif.events$.subscribe((e: { type: string; }) => {
+      if (e.type === 'order-delivered') {
+        this.loadOrders();
+      }
+    });
+
   }
 
   /** CARGA DESDE BACKEND */
@@ -68,7 +75,10 @@ export class Orders implements OnInit{
       }))
     }));
 
-    this.orders.set(parsed);
+    this.orders.set(
+      parsed.filter(order => order.products.some((p: any) => p.status !== 'entregado'))
+    );
+
     this.splitByStatus();
 
   } catch (err) {

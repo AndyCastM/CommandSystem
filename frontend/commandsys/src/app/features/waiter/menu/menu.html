@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto p-6 relative">
+<div class="max-w-6xl mx-auto relative">
   <div
     [ngClass]="{
       'grid grid-cols-[2fr_1fr] gap-6': isAdding,
@@ -7,8 +7,27 @@
   >
     <!-- IZQUIERDA: MENÚ -->
     <div>
-      
-      <!-- SELECTOR TIPO DE ORDEN -->
+
+      <!-- encabezado -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <div>
+          <div class="text-sm text-slate-500">
+            Mesero / <span class="text-slate-700 font-medium">Menú</span>
+          </div>
+          <h1 class="text-3xl font-bold text-slate-800 mt-1">Menú del Restaurante</h1>
+        </div>
+
+        <button
+          type="button"
+          (click)="goBack()"
+          class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300 flex items-center gap-2"
+        >
+          <mat-icon class="!text-base">arrow_back</mat-icon>
+          Volver
+        </button>
+      </div>
+
+            <!-- SELECTOR TIPO DE ORDEN -->
       <div class="flex items-center gap-3 mb-4">
         <label class="text-base font-medium text-slate-700">Tipo de orden:</label>
 
@@ -34,26 +53,7 @@
         </mat-select>
 
       </div>
-
-      <!-- encabezado -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <div>
-          <div class="text-sm text-slate-500">
-            Mesero / <span class="text-slate-700 font-medium">Menú</span>
-          </div>
-          <h1 class="text-3xl font-bold text-slate-800 mt-1">Menú del Restaurante</h1>
-        </div>
-
-        <button
-          type="button"
-          (click)="goBack()"
-          class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300 flex items-center gap-2"
-        >
-          <mat-icon class="!text-base">arrow_back</mat-icon>
-          Volver
-        </button>
-      </div>
-
+      
       <!-- ÁREAS -->
       <div
         *ngIf="!loading() && menu() && menu().length > 0"

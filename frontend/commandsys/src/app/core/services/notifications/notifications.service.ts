@@ -26,6 +26,7 @@ export class NotificationsService {
   private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
 
   private apiUrl = 'http://localhost:3000';
+  events$: any;
 
   constructor(private zone: NgZone, private toast: ToastService) {}
 
@@ -70,8 +71,18 @@ export class NotificationsService {
         this.itemReady$.next(data);
       });
     });
-  }
 
+    /** ===== COMANDA ENTREGADA ===== */
+    this.socket.on('order:delivered', (data) => {
+      this.zone.run(() => {
+        // Emitir a un observable o simplemente refrescar
+        this.toast.info(`Comanda #${data.id_order} completada`);
+        this.events$.next({ type: 'order-delivered', id: data.id_order });
+      });
+    });
+
+  }
+  
   /** Observable para alertas de mesa */
   onAlert() {
     return this.alerts$.asObservable();

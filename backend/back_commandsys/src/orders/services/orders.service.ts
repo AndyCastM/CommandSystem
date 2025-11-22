@@ -352,8 +352,6 @@ export class OrdersService {
     return enriched;
   }
 
-
-
   async updateOrderStatus(id_order: number, status: orders_status) {
     const validStatuses = ['pending', 'in_progress', 'ready', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
@@ -380,7 +378,8 @@ export class OrdersService {
           include: {
             table_sessions: {
               include: { tables: true }
-            }
+            },
+            order_items: true
           }
         },
         branch_products: {
@@ -405,6 +404,24 @@ export class OrdersService {
       );
     }
 
+    // Si TODOS los items están entregados → cerrar comanda
+    const allDelivered = item.orders.order_items.every(
+      (i) => i.status === 'delivered'
+    );
+
+    if (allDelivered) {
+      await this.prisma.orders.update({
+        where: { id_order: item.id_order },
+        data: { status: 'delivered' },
+      });
+
+      // Notificar a los meseros (para refrescar lista)
+      this.notif.emitToBranch(
+        item.orders.id_branch,
+        'order:delivered',
+        { id_order: item.id_order }
+      );
+    }
     return item;
   }
 

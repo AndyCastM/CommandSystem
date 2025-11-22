@@ -54,7 +54,7 @@
     <!-- Botón Agregar (habilitado solo si isAdding es true) -->
     <button
       *ngIf="isAdding"
-      [disabled]="!isAdding"
+      [disabled]="!isAdding || !isValidSelection()"
       class="bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-medium px-5 py-2 rounded-xl hover:opacity-90 transition-all"
       (click)="addToOrder()"
     >
