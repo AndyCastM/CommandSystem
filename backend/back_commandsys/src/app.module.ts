@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
@@ -20,6 +20,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AiModule } from './ai/ai.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OrdersModule } from './orders/orders.module';
+import { AlexaModule } from './alexa/alexa.module';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { OrdersModule } from './orders/orders.module';
     BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot(), OrdersModule],
+    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

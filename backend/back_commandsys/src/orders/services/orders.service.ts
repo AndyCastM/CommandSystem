@@ -411,7 +411,7 @@ export class OrdersService {
 
     if (allDelivered) {
       await this.prisma.orders.update({
-        where: { id_order: item.id_order },
+        where: { id_order: item.orders.id_order },
         data: { status: 'delivered' },
       });
 

@@ -4,6 +4,7 @@ import { UpdateOrderStatusDto } from '../dto/update-order-status.dto';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { formatResponse } from 'src/common/helpers/response.helper';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { order_items_status } from 'generated/prisma';
 
 @Controller('orders')
 export class OrdersController {
@@ -38,6 +39,14 @@ export class OrdersController {
   @Patch('items/:id/delivered')
   async markDelivered(@Param('id') id: string) {
     return this.ordersService.updateItemStatus(Number(id), 'delivered');
+  }
+
+  @Patch('items/:id/status')
+  async updateItemStatus(
+    @Param('id') id_order_item: number,
+    @Body('status') status: order_items_status,
+  ) {
+    return this.ordersService.updateItemStatus(+id_order_item, status);
   }
 
 }
