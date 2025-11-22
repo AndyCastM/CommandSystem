@@ -10,20 +10,31 @@ export interface TableAlert {
   message: string;
 }
 
+export interface ItemReadyAlert {
+  order: number;
+  table: number | null;
+  product: string;
+  qty: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
   private socket!: Socket;
   private connected = false;
+
   private alerts$ = new BehaviorSubject<TableAlert | null>(null);
+  private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
+
   private apiUrl = 'http://localhost:3000';
+
   constructor(private zone: NgZone, private toast: ToastService) {}
 
-  /** Inicia la conexión con el backend de sockets */
+  /** Inicia la conexión con el servidor WebSocket */
   connect() {
     if (this.connected) return;
 
     this.socket = io(`${this.apiUrl}`, {
-      withCredentials: true, // necesario para enviar la cookie JWT
+      withCredentials: true,
       transports: ['websocket'],
     });
 
@@ -37,19 +48,38 @@ export class NotificationsService {
       console.warn('Socket desconectado:', reason);
     });
 
-    // Escuchar alertas de mesas abiertas +5 min
+    /** ===== ALERTA: mesa abierta +5 min ===== */
     this.socket.on('alert:table-open', (data: TableAlert) => {
       this.zone.run(() => {
         console.warn('ALERTA DE MESA:', data);
-        this.toast.warning(data.message); // muestra toast visual
+        this.toast.warning(data.message);
         this.alerts$.next(data);
+      });
+    });
+
+    /** ===== PRODUCTO LISTO ===== */
+    this.socket.on('order:item-ready', (data: ItemReadyAlert) => {
+      this.zone.run(() => {
+        console.log('PRODUCTO LISTO:', data);
+
+        const msg = `${data.product} x${data.qty} ${
+          data.table ? '• ' + data.table : ''
+        } está listo`;
+
+        this.toast.success(msg);
+        this.itemReady$.next(data);
       });
     });
   }
 
-  /** Observable para componentes que quieran reaccionar a alertas */
+  /** Observable para alertas de mesa */
   onAlert() {
     return this.alerts$.asObservable();
+  }
+
+  /** Observable para productos listos */
+  onItemReady() {
+    return this.itemReady$.asObservable();
   }
 
   disconnect() {

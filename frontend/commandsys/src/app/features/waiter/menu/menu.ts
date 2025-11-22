@@ -8,7 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
 import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm.modal';
+import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm/order-confirm.modal';
 import { OrderService, CreateOrderPayload } from '../../../core/services/orders/orders.service';
 
 @Component({
@@ -224,64 +224,97 @@ export class Menu implements OnInit {
       return;
     }
 
-    // require order type before proceeding
     if (!this.orderType) {
       this.toast.error('Seleccione el tipo de orden');
       return;
     }
 
-    // Abrimos modal de confirmación (pide nombre si es takeout)
+    // Abre el modal usando tu función ya creada
+    this.openConfirmModal().subscribe(async (result: OrderConfirmResult | null) => {
+      if (!result) return; // Cancelado
+
+      try {
+        // --- MAPEO COMPLETO DE ITEMS ---
+        const items = Array.from(this.cart().values()).map((item: any) => {
+          
+          // opciones normales
+          const optionValues =
+            (item.options || [])
+              .flatMap((opt: any) => opt.values || [])
+              .map((v: any) => ({
+                id_option_value: v.id_option_value,
+              })) || [];
+
+          // combos si existen
+          const comboGroups =
+            item.combo_groups?.map((cg: any) => ({
+              id_combo_group: cg.id_combo_group,
+              selected_options: cg.selected_options.map((sel: any) => ({
+                id_company_product: sel.id_company_product,
+                name: sel.name,
+                extra_price: sel.extra_price,
+              })),
+            })) ?? [];
+
+          return {
+            id_branch_product: item.product.id_branch_product ?? null,
+            id_combo: item.product.id_combo ?? null,
+            quantity: item.quantity,
+            notes: item.notes ?? null,
+            options: optionValues,
+            combo_groups: comboGroups,
+          };
+        });
+
+        // --- PAYLOAD FINAL ---
+        const payload: CreateOrderPayload = {
+          order_type: this.orderType!,
+          id_session: this.orderType === 'dine_in' ? this.id_session : null,
+          customer_name: this.orderType === 'takeout' ? result.customer_name : null,
+          items,
+        };
+
+        console.log('PAYLOAD FINAL --- ', payload);
+
+        const res = await this.orderApi.createOrder(payload);
+
+        this.toast.success(res?.message || 'Comanda creada correctamente');
+
+        // limpiar todo
+        this.cart.set(new Map());
+        this.router.navigate(['/mesero/mesas']);
+
+      } catch (err: any) {
+        console.error(err);
+
+        const msg =
+          err?.error?.message ||
+          err?.message ||
+          'Error al crear la comanda';
+
+        this.toast.error(msg);
+      }
+    });
+  }
+
+  openConfirmModal() {
     const dialogRef = this.dialog.open(OrderConfirmModal, {
       width: '420px',
       disableClose: true,
       data: {
         orderType: this.orderType,
+        kitchenPreview: Array.from(this.cart().values()).map((item: any) => ({
+          name: item.product.name,
+          qty: item.quantity,
+          notes: item.notes,
+          options: (item.options || []).map((o: any) =>
+            (o.values || []).map((v: any) => v.name).join(', ')
+          ),
+        })),
       },
     });
 
-    dialogRef.afterClosed().subscribe(async (result: OrderConfirmResult | null) => {
-    if (!result) {
-      return; // Cancelado
-    }
-
-    try {
-      // Mapeamos el carrito al DTO que espera el backend
-      const items = Array.from(this.cart().values()).map((item: any) => {
-        // Flatten de opciones a id_option_value[]
-        const optionValues =
-          (item.options || [])
-            .flatMap((opt: any) => opt.values || [])
-            .map((v: any) => ({
-              id_option_value: v.id_option_value,
-            })) || [];
-
-        return {
-          id_branch_product: item.product.id_branch_product,
-          quantity: item.quantity,
-          notes: item.notes ?? null,
-          options: optionValues,
-        };
-      });
-
-      const payload: CreateOrderPayload = {
-        order_type: this.orderType!,
-        id_session: this.orderType === 'dine_in' ? this.id_session : null,
-        customer_name: this.orderType === 'takeout' ? result.customer_name : null,
-        items,
-      };
-
-      const res = await this.orderApi.createOrder(payload);
-
-      this.toast.success(res?.message || 'Comanda creada correctamente');
-
-      // Limpia carrito y regresa a mesas
-      this.cart.set(new Map());
-      this.router.navigate(['/mesero/mesas']);
-    } catch (err: any) {
-      console.error(err);
-      this.toast.error(err?.message || err?.error?.message || 'Error al crear la comanda');
-    }
-  });
+    return dialogRef.afterClosed();
   }
 
 }

@@ -108,12 +108,12 @@ export class Tables implements OnInit, OnDestroy{
         await this.reloadTables(); // refresca mesas
 
         //Vamos al menu con id_session y tipo dine_in
-        this.router.navigate(['/mesero/menu'], {
-          state: {
-            id_session: session.id_session,
-            type: 'dine_in',
-          },
-        });
+        // this.router.navigate(['/mesero/menu'], {
+        //   state: {
+        //     id_session: session.id_session,
+        //     type: 'dine_in',
+        //   },
+        // });
         //console.log('Mesa abierta, sesión:', session.id_session);
       } catch (err: any) {
         console.error(err);

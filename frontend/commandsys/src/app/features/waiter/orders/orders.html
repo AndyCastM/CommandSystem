@@ -23,10 +23,10 @@
             'bg-sky-100 text-sky-700 font-medium': viewMode() === 'mesa',
             'text-slate-500 hover:text-slate-700': viewMode() !== 'mesa'
           }"
-          class="px-3 py-1 rounded-md text-sm"
+          class="px-3 py-2 rounded-md text-sm flex items-center gap-1.5"
         >
-          <mat-icon fontIcon="table_restaurant" class="mr-1 text-sm"></mat-icon>
-          Por Mesa ({{ orders().length }})
+          <mat-icon fontIcon="table_restaurant" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+          <span>Por Mesa ({{ orders().length }})</span>
         </button>
 
         <button
@@ -35,10 +35,16 @@
             'bg-sky-100 text-sky-700 font-medium': viewMode() === 'producto',
             'text-slate-500 hover:text-slate-700': viewMode() !== 'producto'
           }"
-          class="px-3 py-1 rounded-md text-sm"
+          class="px-3 py-2 rounded-md text-sm flex items-center gap-1.5 relative"
         >
-          <mat-icon fontIcon="inventory_2" class="mr-1 text-sm"></mat-icon>
-          Por Producto
+          <mat-icon fontIcon="inventory_2" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+          <span>Por Producto</span>
+          <span
+            *ngIf="readyProducts().length > 0"
+            class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow"
+          >
+            {{ readyProducts().length }}
+          </span>
         </button>
       </div>
 
@@ -73,15 +79,27 @@
             {{ order.products.length }} productos
           </p>
 
-          <ul class="text-sm text-slate-700 space-y-1 mb-3">
-            <li *ngFor="let p of order.products" class="flex justify-between">
-              <span>{{ p.name }} <small>x{{ p.qty }}</small></span>
-              <span class="text-slate-500 text-xs">
-                {{ p.qty * p.price | currency }}
-              </span>
+          <ul class="text-sm text-slate-700 space-y-2 mb-3">
+            <li *ngFor="let p of order.products">
+              <div class="flex justify-between items-start gap-2">
+                <span class="flex-1">
+                  {{ p.name }} <small class="text-slate-500">x{{ p.qty }}</small>
+                </span>
+                <span class="text-slate-600 text-xs font-medium whitespace-nowrap">
+                  {{ p.subtotal | currency }}
+                </span>
+              </div>
+              
+              <div *ngIf="p.options?.length" class="ml-4 mt-1 space-y-0.5">
+                <div *ngFor="let opt of p.options" class="text-[11px] text-slate-500 flex items-center gap-1">
+                  <span class="w-1 h-1 rounded-full bg-slate-400"></span>
+                  <span>{{ opt.name }}</span>
+                  <span *ngIf="opt.extra > 0" class="text-slate-600">(+{{ opt.extra | currency }})</span>
+                </div>
+              </div>
             </li>
           </ul>
-
+                    
           <div class="flex flex-wrap gap-2">
             <span
               *ngFor="let p of order.products"
@@ -97,9 +115,9 @@
             </span>
           </div>
 
-          <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
-            <mat-icon fontIcon="access_time" class="text-xs"></mat-icon>
-            Creada: {{ order.created }}
+          <p class="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
+            <mat-icon fontIcon="access_time" class="!text-[14px] !w-[14px] !h-[14px]"></mat-icon>
+            <span>Creada: {{ order.created }}</span>
           </p>
         </div>
       </div>
@@ -125,7 +143,7 @@
             <span>{{ p.name }}</span>
             <span class="text-green-700 text-xs">listo</span>
           </div>
-          <p class="text-xs text-slate-500 mb-2">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+          <p class="text-xs text-slate-500 mb-2">{{ p.table }} • Cant: {{ p.qty }}</p>
           <button
             (click)="markDelivered(p)"
             class="w-full bg-green-500 text-white rounded-md text-xs py-1 hover:bg-green-600"
@@ -148,7 +166,7 @@
             <span>{{ p.name }}</span>
             <span class="text-blue-700 text-xs">preparando</span>
           </div>
-          <p class="text-xs text-slate-500">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+          <p class="text-xs text-slate-500">{{ p.table }} • Cant: {{ p.qty }}</p>
         </div>
       </div>
 
@@ -165,7 +183,7 @@
             <span>{{ p.name }}</span>
             <span class="text-red-700 text-xs">pendiente</span>
           </div>
-          <p class="text-xs text-slate-500">Mesa {{ p.table }} • Cant: {{ p.qty }}</p>
+          <p class="text-xs text-slate-500">{{ p.table }} • Cant: {{ p.qty }}</p>
         </div>
       </div>
     </div>

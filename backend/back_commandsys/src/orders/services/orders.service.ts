@@ -1,11 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { orders_status } from 'generated/prisma';
+import { orders_status, order_items_status } from 'generated/prisma';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notif: NotificationsGateway) {}
 
    async createOrder(dto: CreateOrderDto, id_branch, id_user) {
     console.log('Usuario creando la comanda:',id_user);
@@ -145,35 +146,213 @@ export class OrdersService {
     return this.prisma.orders.findUnique({
       where: { id_order: id },
       include: {
+        // ======================
+        // ITEMS DE LA ORDEN
+        // ======================
         order_items: {
           include: {
+            // Producto normal
             branch_products: {
               include: {
                 company_products: {
-                  select: { name: true, image_url: true },
+                  include: {
+                    print_areas: true,
+                    product_options: {
+                      include: {
+                        product_option_values: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+
+            // Combo configurable
+            combos: {
+              include: {
+                combo_groups: {
+                  include: {
+                    combo_group_options: {
+                      include: {
+                        company_products: {
+                          include: {
+                            print_areas: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+
+            // Opciones seleccionadas del item
+            order_item_options: {
+              include: {
+                product_option_values: {
+                  include: {
+                    product_options: true,
+                  },
                 },
               },
             },
           },
         },
+
+        // ======================
+        // PAGOS
+        // ======================
         payments: true,
-        table_sessions: { include: { tables: true } },
+
+        // ======================
+        // SESIÓN DE MESA (si es dine_in)
+        // ======================
+        table_sessions: {
+          include: {
+            tables: true,
+            users: {
+              select: {
+                name: true,
+                last_name: true,
+              },
+            },
+          },
+        },
+
+        // ======================
+        // INFO DEL USUARIO QUE CREÓ LA COMANDA
+        // ======================
+        users: {
+          select: {
+            id_user: true,
+            name: true,
+            last_name: true,
+            roles: true,
+          },
+        },
       },
     });
   }
 
-  async getActiveOrdersByBranch(id_branch: number) {
-    return this.prisma.orders.findMany({
+
+ async getActiveOrdersByBranch(id_branch: number) {
+    const orders = await this.prisma.orders.findMany({
       where: {
         id_branch,
         NOT: [{ status: 'delivered' }, { status: 'cancelled' }],
       },
-      include: {
-        order_items: { select: { id_order_item: true, status: true } },
-      },
       orderBy: { created_at: 'desc' },
+
+      include: {
+        // sesión dine_in
+        table_sessions: {
+          include: {
+            tables: true,
+          },
+        },
+
+        order_items: {
+          include: {
+            branch_products: {
+              include: {
+                company_products: {
+                  include: {
+                    product_options: {
+                      include: {
+                        product_option_values: true,
+                        product_option_tiers: true, 
+                      },
+                    },
+                  },
+                },
+              },
+            },
+
+            order_item_options: {
+              include: {
+                product_option_values: true,
+              },
+            },
+
+            combos: {
+              include: {
+                combo_groups: {
+                  include: {
+                    combo_group_options: {
+                      include: {
+                        company_products: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }
+      },
     });
+
+    // === CALCULAR SUBTOTALES DE CADA ITEM ===
+    const enriched = orders.map(order => {
+      let orderTotal = 0;
+
+      const items = order.order_items.map(oi => {
+        const base = oi.branch_products?.company_products?.base_price ?? 0;
+
+        // --- Precio por opciones ---
+        const optionsExtra = oi.order_item_options.reduce((acc, opt) => {
+          // extra_price can be a number or a Decimal; normalize to number to avoid type errors
+          const extra = opt.product_option_values?.extra_price ?? 0;
+          return acc + Number(extra);
+        }, 0);
+
+        // --- Precio por tiers ---
+        let tierExtra = 0;
+        if (oi.branch_products?.company_products?.product_options?.length) {
+          for (const po of oi.branch_products.company_products.product_options) {
+            if (!po.product_option_tiers?.length) continue;
+
+            const selectedValues = oi.order_item_options.filter(
+              oio => oio.product_option_values.id_option === po.id_option
+            );
+
+            const count = selectedValues.length;
+
+            const tier = po.product_option_tiers.find(t => t.selection_count === count);
+            if (tier) tierExtra += Number(tier.extra_price);
+          }
+        }
+
+        // --- Precio por combos ---
+        let comboExtra = 0;
+        if (oi.combos) {
+          for (const group of oi.combos.combo_groups) {
+            for (const sel of group.combo_group_options) {
+              comboExtra += Number(sel.company_products?.base_price) ?? 0;
+            }
+          }
+        }
+
+        const subtotal = (Number(base) + Number(optionsExtra) + Number(tierExtra) + Number(comboExtra)) * oi.quantity;
+        orderTotal += subtotal;
+
+        return {
+          ...oi,
+          subtotal,
+        };
+      });
+
+      return {
+        ...order,
+        order_items: items,
+        total: orderTotal,
+      };
+    });
+
+    return enriched;
   }
+
+
 
   async updateOrderStatus(id_order: number, status: orders_status) {
     const validStatuses = ['pending', 'in_progress', 'ready', 'delivered', 'cancelled'];
@@ -186,4 +365,47 @@ export class OrdersService {
       data: { status },
     });
   }
+
+  async updateItemStatus(id_order_item: number, status: order_items_status) {
+    const validStatuses = ['pending', 'in_preparation', 'ready', 'delivered'];
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException('Estado inválido');
+    }
+
+    const item = await this.prisma.order_items.update({
+      where: { id_order_item },
+      data: { status },
+      include: {
+        orders: {
+          include: {
+            table_sessions: {
+              include: { tables: true }
+            }
+          }
+        },
+        branch_products: {
+          include: {
+            company_products: true
+          }
+        }
+      }
+    });
+
+    // Si está listo -> mandar notificación
+    if (status === 'ready') {
+      this.notif.emitToBranch(
+        item.orders.id_branch,
+        'order:item-ready',
+        {
+          order: item.orders.id_order,
+          table: item.orders.table_sessions?.tables?.number ?? null,
+          product: item.branch_products!.company_products.name,
+          qty: item.quantity,
+        }
+      );
+    }
+
+    return item;
+  }
+
 }

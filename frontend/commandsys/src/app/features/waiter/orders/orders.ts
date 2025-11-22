@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
+import { OrderService } from '../../../core/services/orders/orders.service';
+import { NotificationsService } from '../../../core/services/notifications/notifications.service';
 
 @Component({
   selector: 'app-orders',
@@ -11,6 +13,8 @@ import { ToastService } from '../../../shared/UI/toast.service';
 })
 export class Orders implements OnInit{ 
   private toast = inject(ToastService);
+  private ordersApi = inject(OrderService);
+  private notif = inject(NotificationsService);
 
   loading = signal(false);
   viewMode = signal<'mesa' | 'producto'>('mesa');
@@ -20,66 +24,99 @@ export class Orders implements OnInit{
   preparingProducts = signal<any[]>([]);
   pendingProducts = signal<any[]>([]);
 
-  ngOnInit() {
-    this.loadOrders();
+  async ngOnInit() {
+    await this.loadOrders();
+    this.notif.onItemReady().subscribe((alert) => {
+      if (alert) {
+        // vuelve a cargar las comandas para actualizar estados
+        this.loadOrders();
+      }
+    });
   }
 
-  async loadOrders() {
+  /** CARGA DESDE BACKEND */
+ async loadOrders() {
+  try {
     this.loading.set(true);
-    //  Aquí luego harás la llamada real al backend (por mesero)
-    setTimeout(() => {
-      const mockOrders = [
-        {
-          id: 1,
-          table: 'Mesa 8',
-          total: 360,
-          time: '15m',
-          created: '7:54 p.m.',
-          products: [
-            { name: 'Taco de Asada - Harina', qty: 2, price: 60, status: 'preparando' },
-            { name: 'Papa Asada', qty: 1, price: 120, status: 'listo' },
-            { name: 'Coca-Cola Zero', qty: 4, price: 30, status: 'listo' },
-          ],
-        },
-        {
-          id: 2,
-          table: 'Mesa 5',
-          total: 360,
-          time: '10m',
-          created: '7:54 p.m.',
-          products: [
-            { name: 'Taco de Asada - Harina', qty: 2, price: 60, status: 'preparando' },
-            { name: 'Papa Asada', qty: 1, price: 120, status: 'pendiente' },
-            { name: 'Coca-Cola Zero', qty: 4, price: 30, status: 'listo' },
-          ],
-        },
-        {
-          id: 3,
-          table: 'Mesa 3',
-          total: 420,
-          time: '15m',
-          created: '7:54 p.m.',
-          products: [
-            { name: 'Papa Asada', qty: 1, price: 120, status: 'entregado' },
-            { name: 'Coca-Cola Zero', qty: 4, price: 30, status: 'entregado' },
-          ],
-        },
-      ];
 
-      this.orders.set(mockOrders);
-      this.splitByStatus();
-      this.loading.set(false);
-    }, 400);
+    const data = await this.ordersApi.getActiveOrdersByBranch();
+    console.log('ORDENES RECIBIDAS --- ', data);
+
+    const parsed = data.map(order => ({
+      id: order.id_order,
+      table:
+        order.table_sessions?.tables?.number
+          ? `Mesa ${order.table_sessions.tables.number}`
+          : order.customer_name
+          ? `Para llevar (${order.customer_name})`
+          : 'Sin mesa',
+      created: new Date(order.created_at).toLocaleTimeString(),
+      time: this.timeSince(order.created_at),
+      total: order.total,
+      products: order.order_items.map((oi: { id_order_item: any; branch_products: { company_products: { name: any; base_price: any; }; }; quantity: any; subtotal: any; notes: any; status: string; order_item_options: any[]; }) => ({
+        id_order_item: oi.id_order_item,
+        name: oi.branch_products.company_products.name,
+        qty: oi.quantity,
+        base_price: Number(oi.branch_products.company_products.base_price),
+        subtotal: oi.subtotal,
+        notes: oi.notes,
+        status: this.mapStatus(oi.status),
+        options: oi.order_item_options.map(o => ({
+          name: o.product_option_values.name,
+          extra: Number(o.product_option_values.extra_price),
+        }))
+      }))
+    }));
+
+    this.orders.set(parsed);
+    this.splitByStatus();
+
+  } catch (err) {
+    console.error(err);
+    this.toast.error('Error cargando comandas');
+  } finally {
+    this.loading.set(false);
+  }
+}
+
+
+  /**  Mapea el status del backend a lo que usa la UI */
+  mapStatus(s: string) {
+    return {
+      pending: 'pendiente',
+      in_preparation: 'preparando',
+      ready: 'listo',
+      delivered: 'entregado'
+    }[s] || 'pendiente';
   }
 
+  /**  Calcula total */
+  calculateTotal(order: any): number {
+    let total = 0;
+    for (const item of order.order_items) {
+      const price = item.branch_products?.company_products?.base_price ?? 0;
+      total += price * item.quantity;
+    }
+    return total;
+  }
+
+  /**  Minutos desde creación */
+  timeSince(date: string) {
+    const created = new Date(date);
+    const diff = Math.floor((Date.now() - created.getTime()) / 60000);
+    return diff + 'm';
+  }
+
+  /**  AGRUPA POR STATUS PARA TAB "Por Producto" */
   splitByStatus() {
     const ready: any[] = [];
     const preparing: any[] = [];
     const pending: any[] = [];
 
-    this.orders().forEach((order) => {
+    this.orders().forEach(order => {
       order.products.forEach((p: any) => {
         const entry = { ...p, table: order.table };
+
         if (p.status === 'listo') ready.push(entry);
         else if (p.status === 'preparando') preparing.push(entry);
         else if (p.status === 'pendiente') pending.push(entry);
@@ -91,11 +128,26 @@ export class Orders implements OnInit{
     this.pendingProducts.set(pending);
   }
 
-  markDelivered(p: any) {
-    this.toast.success(`Producto ${p.name} entregado`);
-  }
-
   formatTotal(order: any) {
     return `$${order.total.toFixed(2)}`;
   }
+
+  async markDelivered(p: any) {
+    try {
+      console.log('Marcando como entregado:', p);
+      // marcar como entregado
+      await this.ordersApi.markDelivered(p.id_order_item);
+
+      //  Mensaje al mesero
+      this.toast.success(`Producto ${p.name} marcado como entregado`);
+
+      // Recargar órdenes para refrescar estados
+      await this.loadOrders();
+
+    } catch (err: any) {
+      console.error(err);
+      this.toast.error('Error al marcar como entregado');
+    }
+  }
+
 }

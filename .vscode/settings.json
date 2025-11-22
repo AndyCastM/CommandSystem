@@ -4,5 +4,6 @@
             "externalTemplate": true
         }
     },
-    "vsicons.presets.nestjs": true
+    "vsicons.presets.nestjs": true,
+    "prisma.pinToPrisma6": true
 }

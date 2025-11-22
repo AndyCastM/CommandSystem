@@ -50,4 +50,23 @@ export class OrderService {
       throw err?.error || err;
     }
   }
+
+    // Obtener todas las comandas activas de la sucursal
+  async getActiveOrdersByBranch() {
+    try {
+      return await firstValueFrom(
+        this.http.get<any[]>(`${this.API_URL}/branch/active`)
+      );
+    } catch (error) {
+      console.error('Error obteniendo órdenes activas:', error);
+      throw error;
+    }
+  }
+
+  markDelivered(id_order_item: number) {
+    return firstValueFrom(
+        this.http.patch(`${this.API_URL}/items/${id_order_item}/delivered`, {})
+    );
+  }
+
 }

@@ -1,0 +1,59 @@
+<div class="p-5 w-full">
+
+  <h2 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+    <mat-icon class="text-sky-500">receipt_long</mat-icon>
+    Confirmar comanda
+  </h2>
+
+  <p class="text-slate-600 text-sm mb-4">
+    Revisa los detalles antes de enviar a cocina.
+  </p>
+
+  <!-- PREVIEW PARA COCINA -->
+  <div class="max-h-64 overflow-y-auto border rounded-lg p-3 bg-slate-50 mb-4">
+    <div *ngFor="let item of data.kitchenPreview" class="mb-3 pb-3 border-b border-slate-200">
+      
+      <div class="flex justify-between">
+        <span class="font-medium text-slate-800">{{ item.name }}</span>
+        <span class="text-sm font-semibold text-sky-600">x{{ item.qty }}</span>
+      </div>
+
+      <ul class="ml-2 text-xs text-slate-500 italic mt-1">
+        <li *ngFor="let opt of item.options">{{ opt }}</li>
+      </ul>
+
+      <p *ngIf="item.notes" class="text-xs mt-1 text-slate-500">
+        Nota: {{ item.notes }}
+      </p>
+    </div>
+  </div>
+
+  <!-- SOLO PARA TAKEOUT -->
+  <div *ngIf="data.orderType === 'takeout'" class="mb-4">
+    <label class="text-sm font-medium text-slate-700 block mb-1">Nombre del cliente *</label>
+    <input
+      type="text"
+      [(ngModel)]="customer_name"
+      class="w-full border rounded-lg px-3 py-2 text-sm"
+      placeholder="Ej: Juan Pérez"
+    />
+  </div>
+
+  <!-- BOTONES -->
+  <div class="flex justify-end gap-3 pt-3">
+    <button
+      class="px-4 py-2 rounded-lg text-sm bg-slate-200 text-slate-700 hover:bg-slate-300"
+      (click)="close()"
+    >
+      Cancelar
+    </button>
+
+    <button
+      class="px-4 py-2 rounded-lg text-sm text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:opacity-90"
+      (click)="confirm()"
+    >
+      Confirmar
+    </button>
+  </div>
+
+</div>

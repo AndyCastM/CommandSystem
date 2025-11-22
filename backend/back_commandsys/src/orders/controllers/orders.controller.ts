@@ -34,4 +34,10 @@ export class OrdersController {
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
     return this.ordersService.updateOrderStatus(+id, dto.status);
   }
+
+  @Patch('items/:id/delivered')
+  async markDelivered(@Param('id') id: string) {
+    return this.ordersService.updateItemStatus(Number(id), 'delivered');
+  }
+
 }
