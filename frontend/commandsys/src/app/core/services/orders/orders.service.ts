@@ -69,9 +69,17 @@ export class OrderService {
     );
   }
 
-  cancelItem(id_order_item: number, reason: string) {
+  cancelItem(id_order_item: number, reason: string, qty: number) {
     return firstValueFrom(
         this.http.patch(`${this.API_URL}/items/${id_order_item}/cancel`, { reason })
+    );
+  }
+
+  splitItem(id_order_item: number, qty: number) {
+    return this.http.post(
+      `${this.API_URL}/item/${id_order_item}/split`,
+      { qty },
+      { withCredentials: true }
     );
   }
 

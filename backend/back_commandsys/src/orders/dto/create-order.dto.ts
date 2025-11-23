@@ -41,7 +41,7 @@ class ComboGroupDto {
   selected_options: ComboGroupSelectionDto[];
 }
 
-class OrderItemDto {
+export class OrderItemDto {
   @IsOptional()
   id_branch_product?: number;
 

@@ -19,16 +19,19 @@
 
   <!-- LISTA DE ITEMS -->
   <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-2">
+
     <div
       *ngFor="let item of data.order.products"
       class="border rounded-lg p-3"
       [ngClass]="{
-        'border-slate-200': item.status !== 'cancelado',
+        'border-slate-200 bg-white': item.status !== 'cancelado',
         'border-red-400 bg-red-50': item.status === 'cancelado'
       }"
     >
+
+      <!-- NOMBRE + QTY + SUBTOTAL -->
       <div class="flex justify-between mb-1">
-        <h3 class="font-semibold text-slate-800">
+        <h3 class="font-semibold text-slate-800 flex items-center gap-1">
           {{ item.name }}
           <span class="text-sm text-slate-500">x{{ item.qty }}</span>
         </h3>
@@ -52,7 +55,7 @@
         </div>
       </div>
 
-      <!-- NOTA DE PRODUCTO -->
+      <!-- NOTA -->
       <div *ngIf="item.notes" class="text-xs text-slate-500 ml-2 mt-1 italic">
         Nota: {{ item.notes }}
       </div>
@@ -75,7 +78,7 @@
 
       <!-- BOTÓN CANCELAR ITEM -->
       <button
-        *ngIf="item.status !== 'cancelado' && item.status !== 'entregado'"
+        *ngIf="item.status !== 'cancelado' && item.status !== 'entregado' && cancelTarget !== item"
         class="mt-3 w-full bg-red-100 text-red-700 hover:bg-red-200 py-1.5 rounded-md text-sm"
         (click)="startCancelItem(item)"
       >
@@ -84,6 +87,24 @@
 
       <!-- FORMULARIO CANCELACIÓN ITEM -->
       <div *ngIf="cancelTarget === item" class="mt-3 space-y-2">
+
+        <!-- SI qty > 1 → permitir cancelar parcialmente -->
+        <div *ngIf="item.qty > 1">
+          <label class="text-xs font-semibold">¿Cuántas quieres cancelar?</label>
+          <select
+            [(ngModel)]="cancelQty"
+            class="w-full border rounded-md p-1 text-sm mt-1"
+          >
+            <option
+              *ngFor="let n of [].constructor(item.qty); let i = index"
+              [value]="i+1"
+            >
+              {{ i + 1 }}
+            </option>
+          </select>
+        </div>
+
+        <!-- NOTA -->
         <textarea
           [(ngModel)]="reason"
           rows="2"
@@ -91,20 +112,29 @@
           class="w-full border border-slate-300 rounded-md p-2 text-sm"
         ></textarea>
 
-        <button
-          (click)="confirmCancelItem()"
-          [disabled]="loadingCancel || !reason"
-          class="w-full bg-red-600 text-white py-1.5 rounded-md text-sm hover:bg-red-700 disabled:opacity-60"
-        >
-          {{ loadingCancel ? 'Cancelando...' : 'Confirmar cancelación' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            (click)="confirmCancelItem()"
+            [disabled]="loadingCancel || !reason"
+            class="flex-1 bg-red-600 text-white py-1.5 rounded-md text-sm hover:bg-red-700 disabled:opacity-60"
+          >
+            {{ loadingCancel ? 'Cancelando...' : 'Confirmar' }}
+          </button>
+
+          <button
+            class="flex-1 bg-slate-200 text-slate-700 py-1.5 rounded-md text-sm hover:bg-slate-300"
+            (click)="cancelTarget = null"
+          >
+            Volver
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 
   <!-- ===================== CANCELAR COMANDA ===================== -->
   <div class="mt-6 border-t pt-4">
-
     <label class="text-sm font-semibold text-slate-700 block mb-2">
       Motivo para cancelar toda la comanda:
     </label>

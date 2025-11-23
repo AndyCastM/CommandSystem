@@ -43,53 +43,93 @@ export class Orders implements OnInit{
   }
 
   /** CARGA DESDE BACKEND */
- async loadOrders() {
-  try {
-    this.loading.set(true);
+  async loadOrders() {
+    try {
+      this.loading.set(true);
 
-    const data = await this.ordersApi.getActiveOrdersByBranch();
-    console.log('ORDENES RECIBIDAS --- ', data);
+      const data = await this.ordersApi.getActiveOrdersByBranch();
+      console.log('ORDENES RECIBIDAS --- ', data);
 
-    const parsed = data.map(order => ({
-      id: order.id_order,
-      table:
-        order.table_sessions?.tables?.number
-          ? `Mesa ${order.table_sessions.tables.number}`
-          : order.customer_name
-          ? `Para llevar (${order.customer_name})`
-          : 'Sin mesa',
-      created: new Date(order.created_at).toLocaleTimeString(),
-      time: this.timeSince(order.created_at),
-      total: order.total,
-      products: order.order_items.map((oi: { id_order_item: any; branch_products: { company_products: { name: any; base_price: any; }; }; quantity: any; subtotal: any; notes: any; status: string; order_item_options: any[]; }) => ({
-        id_order_item: oi.id_order_item,
-        name: oi.branch_products.company_products.name,
-        qty: oi.quantity,
-        base_price: Number(oi.branch_products.company_products.base_price),
-        subtotal: oi.subtotal,
-        notes: oi.notes,
-        status: this.mapStatus(oi.status),
-        options: oi.order_item_options.map(o => ({
-          name: o.product_option_values.name,
-          extra: Number(o.product_option_values.extra_price),
-        }))
-      }))
-    }));
+      const parsed = data.map(order => {
 
-    this.orders.set(
-      parsed.filter(order => order.products.some((p: any) => p.status !== 'entregado'))
-    );
+        // === CALCULAR TOTAL SIN CANCELADOS ===
+        const total = order.order_items
+          .filter((oi: any) => oi.status !== 'cancelled')
+          .reduce((acc: number, oi: any) => {
+            const base = Number(oi.branch_products.company_products.base_price);
 
-    this.splitByStatus();
+            const optionsExtra = oi.order_item_options.reduce(
+              (acc2: number, o: any) =>
+                acc2 + Number(o.product_option_values.extra_price),
+              0
+            );
 
-  } catch (err) {
-    console.error(err);
-    this.toast.error('Error cargando comandas');
-  } finally {
-    this.loading.set(false);
+            return acc + (base + optionsExtra) * oi.quantity;
+          }, 0);
+
+        return {
+          id: order.id_order,
+
+          table:
+            order.table_sessions?.tables?.number
+              ? `Mesa ${order.table_sessions.tables.number}`
+              : order.customer_name
+              ? `Para llevar (${order.customer_name})`
+              : 'Sin mesa',
+
+          created: new Date(order.created_at).toLocaleTimeString(),
+          time: this.timeSince(order.created_at),
+          total,
+
+          // ================================
+          //   ITEMS — CORREGIDO COMPLETO
+          // ================================
+          products: order.order_items.map((oi: any) => {
+            // personalizaciones
+            const options = oi.order_item_options.map((o: any) => ({
+              name: o.product_option_values.name,
+              extra: Number(o.product_option_values.extra_price),
+            }));
+
+            // precio base
+            const base = Number(oi.branch_products.company_products.base_price);
+
+            // extra por opciones
+            const extra = options.reduce((acc: number, o: any) => acc + o.extra, 0);
+
+            // subtotal por item
+            const subtotal = (base + extra) * oi.quantity;
+
+            return {
+              id_order_item: oi.id_order_item,
+              name: oi.branch_products.company_products.name,
+              qty: oi.quantity,
+              base_price: base,
+              options,
+              notes: oi.notes,
+              subtotal,
+              status: this.mapStatus(oi.status),
+            };
+          }),
+        };
+      });
+
+      // Filtrar órdenes que tengan al menos 1 item activo
+      this.orders.set(
+        parsed.filter(order =>
+          order.products.some((p: any) => p.status !== 'entregado')
+        )
+      );
+
+      this.splitByStatus();
+
+    } catch (err) {
+      console.error(err);
+      this.toast.error('Error cargando comandas');
+    } finally {
+      this.loading.set(false);
+    }
   }
-}
-
 
   /**  Mapea el status del backend a lo que usa la UI */
   mapStatus(s: string) {

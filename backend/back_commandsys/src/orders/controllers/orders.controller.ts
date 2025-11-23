@@ -78,4 +78,13 @@ export class OrdersController {
     return this.ordersService.cancelOrder(+id_order, dto, +user.sub);
   }
 
+  @Post('item/:id/split')
+  @Roles(Role.Mesero, Role.Gerente)
+  splitItem(
+    @Param('id') id_order_item: number,
+    @Body('qty') qty: number,
+  ) {
+    return this.ordersService.splitItem(+id_order_item, qty);
+  }
+  
 }

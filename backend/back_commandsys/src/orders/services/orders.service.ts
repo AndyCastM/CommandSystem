@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException , ForbiddenException, NotFoundException} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { orders_status, order_items_status } from 'generated/prisma';
-import { CreateOrderDto } from '../dto/create-order.dto';
+import { CreateOrderDto, OrderItemDto } from '../dto/create-order.dto';
 import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 import { TableSessionsService } from 'src/table_sessions/services/table_sessions.service';
 import { CancelItemDto } from '../dto/cancel-item.dto';
@@ -11,114 +11,182 @@ import { CancelOrderDto } from '../dto/cancel-order.dto';
 export class OrdersService {
   constructor(private prisma: PrismaService, private notif: NotificationsGateway, private tables: TableSessionsService) {}
 
-   async createOrder(dto: CreateOrderDto, id_branch, id_user) {
-    console.log('Usuario creando la comanda:',id_user);
-    console.log('Comanda para llevar o para mesa:', dto.order_type);
-
-    // Validaciones lógicas
+  async createOrder(dto: CreateOrderDto, id_branch: number, id_user: number) {
+    // --- VALIDACIONES GENERALES ---
     if (dto.order_type === 'dine_in' && !dto.id_session) {
       throw new BadRequestException('Una orden dine_in requiere id_session.');
     }
 
     if (dto.order_type !== 'dine_in' && dto.id_session) {
-      throw new BadRequestException('Los pedidos takeout/delivery no deben tener id_session.');
+      throw new BadRequestException('Los pedidos takeout no deben tener id_session.');
     }
 
     if (dto.order_type === 'takeout' && !dto.customer_name) {
       throw new BadRequestException('Los pedidos para llevar requieren nombre del cliente.');
     }
 
-    // Obtener id_session (puede ser null si takeout)
-    const sessionId = dto.id_session ?? null;
+    // --- VALIDAR SESIÓN Y PROPIETARIO ---
     let id_table: number | null = null;
 
-    // Si es pedido dentro del restaurante
     if (dto.order_type === 'dine_in') {
-      // Obtener la sesión
       const session = await this.prisma.table_sessions.findUnique({
-        where: { id_session: sessionId },
+        where: { id_session: dto.id_session },
       });
 
-      if (!session) {
-        throw new BadRequestException('La sesión de la mesa no existe.');
-      }
+      if (!session) throw new BadRequestException('La sesión no existe.');
 
       id_table = session.id_table;
 
-      //  Validar que el mesero sea el dueño real de la mesa
       await this.tables.validateTableOwnership(id_table, id_user);
     }
 
-    //  Crear la orden principal
+    // --- CREAR ORDEN ---
     const order = await this.prisma.orders.create({
       data: {
-        id_branch: id_branch,
-        id_session: sessionId,
-        id_user: id_user,
-        status: 'pending',
+        id_branch,
+        id_session: dto.id_session ?? null,
+        id_user,
         notes: dto.notes ?? null,
+        status: 'pending',
         order_type: dto.order_type,
         customer_name: dto.order_type === 'takeout' ? dto.customer_name : null,
       },
     });
 
-    //  Recorrer cada ítem del pedido
-    for (const item of dto.items) {
-      // Caso 1: Producto individual normal
+    // ============================================================
+    // FUNCIÓN PARA CALCULAR PRECIOS (por item individual)
+    // ============================================================
+    const calculateUnitPrice = async (item: OrderItemDto): Promise<number> => {
+      let base = 0;
+
+      // PRODUCTO NORMAL
       if (item.id_branch_product) {
+        const prod = await this.prisma.branch_products.findUnique({
+          where: { id_branch_product: item.id_branch_product },
+          include: {
+            company_products: {
+              include: {
+                product_options: {
+                  include: { product_option_values: true, product_option_tiers: true }
+                }
+              }
+            }
+          }
+        });
+
+        if (!prod) throw new BadRequestException('El producto no existe');
+
+        base = Number(prod.company_products.base_price);
+
+        // --- OPCIONES EXTRA ---
+        if (item.options?.length) {
+          for (const opt of item.options) {
+            const val = await this.prisma.product_option_values.findUnique({
+              where: { id_option_value: opt.id_option_value }
+            });
+
+            if (val) base += Number(val.extra_price);
+          }
+        }
+
+        // --- TIERS ---
+        if (item.options?.length) {
+          const groups = prod.company_products.product_options;
+
+          for (const group of groups) {
+            const selectedValues = item.options.filter(o => 
+              o.id_option_value && 
+              group.product_option_values.some(v => v.id_option_value === o.id_option_value)
+            );
+
+            const count = selectedValues.length;
+            const tier = group.product_option_tiers.find(t => t.selection_count === count);
+
+            if (tier) base += Number(tier.extra_price);
+          }
+        }
+      }
+
+      // COMBO
+      if (item.id_combo) {
+        const combo = await this.prisma.combos.findUnique({
+          where: { id_combo: item.id_combo },
+          include: {
+            combo_groups: {
+              include: {
+                combo_group_options: {
+                  include: { company_products: true }
+                }
+              }
+            }
+          }
+        });
+
+        if (!combo) throw new BadRequestException('El combo no existe');
+
+        for (const group of item.combo_groups ?? []) {
+          for (const sel of group.selected_options) {
+            const optionProduct = await this.prisma.company_products.findUnique({
+              where: { id_company_product: sel.id_company_product }
+            });
+
+            if (optionProduct) base += Number(optionProduct.base_price);
+          }
+        }
+      }
+
+      return base;
+    };
+
+    // ============================================================
+    //  INSERTAR ITEMS — UNO POR UNO (quantity > 1 = N items)
+    // ============================================================
+    for (const item of dto.items) {
+      const qty = item.quantity || 1;
+
+      for (let i = 0; i < qty; i++) {
+        const unit_price = await calculateUnitPrice(item);
+
         const createdItem = await this.prisma.order_items.create({
           data: {
             id_order: order.id_order,
-            id_branch_product: item.id_branch_product,
-            quantity: item.quantity,
+            id_branch_product: item.id_branch_product ?? null,
+            id_combo: item.id_combo ?? null,
+            quantity: 1,
             notes: item.notes ?? null,
+            unit_price: unit_price,
+            subtotal: unit_price,
             status: 'pending',
-          },
+          }
         });
 
-        // Si tiene opciones (tamaño, sabor, etc.)
-        if (item.options?.length) {
-          for (const opt of item.options) {
+        // INSERTAR OPCIONES INDIVIDUALES
+        for (const opt of item.options ?? []) {
+          await this.prisma.order_item_options.create({
+            data: {
+              id_order_item: createdItem.id_order_item,
+              id_option_value: opt.id_option_value,
+            },
+          });
+        }
+
+        // INSERTAR COMBOS
+        for (const group of item.combo_groups ?? []) {
+          for (const sel of group.selected_options ?? []) {
             await this.prisma.order_item_options.create({
               data: {
                 id_order_item: createdItem.id_order_item,
-                id_option_value: opt.id_option_value,
+                id_option_value: sel.id_company_product, // reusamos para combos
               },
             });
           }
         }
       }
-
-      // Caso 2: Combo configurable
-      if (item.id_combo) {
-        const createdCombo = await this.prisma.order_items.create({
-          data: {
-            id_order: order.id_order,
-            id_combo: item.id_combo,
-            quantity: item.quantity,
-            notes: item.notes ?? null,
-            status: 'pending',
-          },
-        });
-
-        // Recorrer los grupos del combo (bebidas, acompañamientos, etc.)
-        if (item.combo_groups?.length) {
-          for (const group of item.combo_groups) {
-            // Cada grupo puede tener varias opciones seleccionadas
-            for (const selected of group.selected_options) {
-              await this.prisma.order_item_options.create({
-                data: {
-                  id_order_item: createdCombo.id_order_item,
-                  id_option_value: selected.id_company_product, // se reusa el campo como referencia del producto
-                },
-              });
-            }
-          }
-        }
-      }
     }
 
-    //  Retornar la orden completa con todos los detalles
+    // ============================================================
+    //  RETORNAR ORDEN COMPLETA REFRESCADA
+    // ============================================================
     const fullOrder = await this.prisma.orders.findUnique({
       where: { id_order: order.id_order },
       include: {
@@ -128,42 +196,28 @@ export class OrdersService {
               include: {
                 company_products: {
                   include: {
-                    print_areas: true,
-                    product_options: {
-                      include: { product_option_values: true },
-                    },
-                  },
-                },
-              },
-            },
-            combos: {
-              include: {
-                combo_groups: {
-                  include: {
-                    combo_group_options: {
-                      include: { company_products: { include: { print_areas: true } } },
-                    },
-                  },
-                },
-              },
+                    product_options: { include: { product_option_values: true } },
+                  }
+                }
+              }
             },
             order_item_options: {
-              include: {
-                product_option_values: {
-                  include: { product_options: true },
-                },
-              },
-            },
-          },
-        },
-      },
+              include: { product_option_values: true },
+            }
+          }
+        }
+      }
     });
+
+    // recalcular total general
+    await this.recalcTotal(order.id_order);
 
     return {
       message: 'Comanda creada correctamente',
-      order: fullOrder,
+      order: fullOrder
     };
   }
+
 
   async getOrderById(id: number) {
     return this.prisma.orders.findUnique({
@@ -257,124 +311,73 @@ export class OrdersService {
     });
   }
 
-
- async getActiveOrdersByBranch(id_branch: number, id_user: number) {
-    const orders = await this.prisma.orders.findMany({
-      where: {
-        id_branch,
-        id_user,
-        NOT: [{ status: 'delivered' }, { status: 'cancelled' }],
+  async getActiveOrdersByBranch(id_branch: number, id_user: number) {
+  const orders = await this.prisma.orders.findMany({
+    where: {
+      id_branch,
+      id_user,
+      status: { in: ['pending', 'in_progress', 'ready'] }, // excluye canceladas/cerradas
+    },
+    orderBy: { created_at: 'asc' },
+    include: {
+      table_sessions: {
+        include: {
+          tables: true,
+        },
       },
-      orderBy: { created_at: 'desc' },
-
-      include: {
-        // sesión dine_in
-        table_sessions: {
-          include: {
-            tables: true,
+      order_items: {
+        include: {
+          branch_products: {
+            include: {
+              company_products: true,
+            },
+          },
+          order_item_options: {
+            include: {
+              product_option_values: true,
+            },
           },
         },
-
-        order_items: {
-          include: {
-            branch_products: {
-              include: {
-                company_products: {
-                  include: {
-                    product_options: {
-                      include: {
-                        product_option_values: true,
-                        product_option_tiers: true, 
-                      },
-                    },
-                  },
-                },
-              },
-            },
-
-            order_item_options: {
-              include: {
-                product_option_values: true,
-              },
-            },
-
-            combos: {
-              include: {
-                combo_groups: {
-                  include: {
-                    combo_group_options: {
-                      include: {
-                        company_products: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }
       },
-    });
+    },
+  });
 
-    // === CALCULAR SUBTOTALES DE CADA ITEM ===
-    const enriched = orders.map(order => {
-      let orderTotal = 0;
+  // transformar + calcular total dinámico
+  return orders.map((o) => {
+    // total solo de items no cancelados
+    const total = o.order_items
+      .filter((i) => i.status !== 'cancelled')
+      .reduce((acc, i) => acc + Number(i.subtotal ?? 0), 0);
 
-      const items = order.order_items.map(oi => {
-        const base = oi.branch_products?.company_products?.base_price ?? 0;
+    return {
+      id_order: o.id_order,
+      created_at: o.created_at,
+      status: o.status,
+      order_type: o.order_type,
+      customer_name: o.customer_name,
+      total, // <-- este es el que usas en el front
 
-        // --- Precio por opciones ---
-        const optionsExtra = oi.order_item_options.reduce((acc, opt) => {
-          // extra_price can be a number or a Decimal; normalize to number to avoid type errors
-          const extra = opt.product_option_values?.extra_price ?? 0;
-          return acc + Number(extra);
-        }, 0);
+      table_sessions: o.table_sessions,
+      order_items: o.order_items.map((oi) => ({
+        id_order_item: oi.id_order_item,
+        status: oi.status,
+        notes: oi.notes,
+        quantity: oi.quantity, // ahora siempre 1
+        unit_price: Number(oi.unit_price ?? 0),
+        subtotal: Number(oi.subtotal ?? 0),
 
-        // --- Precio por tiers ---
-        let tierExtra = 0;
-        if (oi.branch_products?.company_products?.product_options?.length) {
-          for (const po of oi.branch_products.company_products.product_options) {
-            if (!po.product_option_tiers?.length) continue;
+        branch_products: oi.branch_products && {
+          company_products: oi.branch_products.company_products,
+        },
 
-            const selectedValues = oi.order_item_options.filter(
-              oio => oio.product_option_values.id_option === po.id_option
-            );
+        order_item_options: oi.order_item_options.map((opt) => ({
+          product_option_values: opt.product_option_values,
+        })),
+      })),
+    };
+  });
+}
 
-            const count = selectedValues.length;
-
-            const tier = po.product_option_tiers.find(t => t.selection_count === count);
-            if (tier) tierExtra += Number(tier.extra_price);
-          }
-        }
-
-        // --- Precio por combos ---
-        let comboExtra = 0;
-        if (oi.combos) {
-          for (const group of oi.combos.combo_groups) {
-            for (const sel of group.combo_group_options) {
-              comboExtra += Number(sel.company_products?.base_price) ?? 0;
-            }
-          }
-        }
-
-        const subtotal = (Number(base) + Number(optionsExtra) + Number(tierExtra) + Number(comboExtra)) * oi.quantity;
-        orderTotal += subtotal;
-
-        return {
-          ...oi,
-          subtotal,
-        };
-      });
-
-      return {
-        ...order,
-        order_items: items,
-        total: orderTotal,
-      };
-    });
-
-    return enriched;
-  }
 
   async updateOrderStatus(id_order: number, status: orders_status) {
     const validStatuses = ['pending', 'in_progress', 'ready', 'delivered', 'cancelled'];
@@ -453,11 +456,7 @@ export class OrdersService {
     const item = await this.prisma.order_items.findUnique({
       where: { id_order_item },
       include: {
-        orders: {
-          include: {
-            order_items: true,
-          },
-        },
+        orders: true,
         order_item_cancellations: true,
       },
     });
@@ -466,37 +465,32 @@ export class OrdersService {
       throw new NotFoundException('El item no existe');
     }
 
-    // No cancelar entregado
+    // ya cancelado -> no duplicar auditoría
+    if (item.status === 'cancelled') {
+      throw new BadRequestException('Este producto ya fue cancelado anteriormente');
+    }
+
+    // no se puede cancelar algo entregado
     if (item.status === 'delivered') {
       throw new BadRequestException(
         'No puedes cancelar un producto que ya fue entregado',
       );
     }
 
-    // No cancelar si el item YA está cancelado
-    if (item.status === 'cancelled') {
-      throw new BadRequestException(
-        'Este producto ya fue cancelado anteriormente',
-      );
-    }
-
-    // Validar dueño de la comanda
+    // validar dueño de la comanda
     if (item.orders.id_user !== id_user) {
       throw new ForbiddenException('No puedes cancelar comandas de otro mesero');
     }
 
-    // Update status del item
+    // 1) marcar item como cancelado
     const updated = await this.prisma.order_items.update({
       where: { id_order_item },
       data: { status: 'cancelled' },
+      include: { orders: true },
     });
 
-    //  Registrar en auditoría SOLO SI NO EXISTE
-    const alreadyLogged = await this.prisma.order_item_cancellations.findFirst({
-      where: { id_order_item },
-    });
-
-    if (!alreadyLogged) {
+    // 2) registrar en tabla de auditoría SOLO si no había registro previo
+    if (!item.order_item_cancellations?.length) {
       await this.prisma.order_item_cancellations.create({
         data: {
           id_order_item,
@@ -506,30 +500,46 @@ export class OrdersService {
       });
     }
 
-    //  Ahora validar si TODOS los items quedaron cancelados
-    const allCancelled = item.orders.order_items.every(
-      (i) => i.status === 'cancelled' || i.id_order_item === id_order_item
-    );
+    // 3) si TODOS los items de la comanda están cancelados -> comanda cancelada
+    const remaining = await this.prisma.order_items.count({
+      where: {
+        id_order: updated.id_order,
+        status: { not: 'cancelled' },
+      },
+    });
 
-    if (allCancelled) {
+    if (remaining === 0) {
       await this.prisma.orders.update({
-        where: { id_order: item.orders.id_order },
+        where: { id_order: updated.id_order },
         data: { status: 'cancelled' },
       });
     }
 
+    // notificación
+    // this.notif.emitToBranch(
+    //   updated.orders.id_branch,
+    //   'order:item-cancelled',
+    //   { id_order_item, id_order: updated.id_order, reason: dto.reason, user: id_user },
+    // );
+
+    //  recalcular total
+    await this.recalcTotal(updated.id_order);
+    
     return {
       message: 'Producto cancelado correctamente',
       id_order_item,
     };
   }
 
+
   async cancelOrder(id_order: number, dto: CancelOrderDto, id_user: number) {
     const order = await this.prisma.orders.findUnique({
       where: { id_order },
       include: {
         order_items: {
-          include: { order_item_cancellations: true },
+          include: {
+            order_item_cancellations: true,
+          },
         },
       },
     });
@@ -538,37 +548,37 @@ export class OrdersService {
       throw new NotFoundException('La comanda no existe');
     }
 
-    //  Validación de dueño
+    // validar dueño
     if (order.id_user !== id_user) {
       throw new ForbiddenException('No puedes cancelar comandas de otro mesero');
     }
 
-    //  No cancelar si hay entregados
-    const hasDelivered = order.order_items.some((i) => i.status === 'delivered');
+    // si hay algún delivered, bloquear
+    const hasDelivered = order.order_items.some(
+      (i) => i.status === 'delivered',
+    );
     if (hasDelivered) {
       throw new BadRequestException(
         'No se puede cancelar completamente una comanda con productos entregados',
       );
     }
 
-    //  Cancelar todos los items (solo los que no lo estén)
+    // 1) marcar todos los items como cancelados
     await this.prisma.order_items.updateMany({
-      where: { id_order, NOT: { status: 'cancelled' } },
+      where: { id_order },
       data: { status: 'cancelled' },
     });
 
-    //  Cancelar comanda completa
+    // 2) marcar la comanda como cancelada
     await this.prisma.orders.update({
       where: { id_order },
       data: { status: 'cancelled' },
     });
 
-    //  Registrar solo items sin registro previo
+    // 3) registrar cancelación SOLO para los items que NO tienen auditoría previa
     for (const item of order.order_items) {
-
-      const exists = item.order_item_cancellations.length > 0;
-
-      if (!exists) {
+      const yaTieneAuditoria = item.order_item_cancellations?.length > 0;
+      if (!yaTieneAuditoria) {
         await this.prisma.order_item_cancellations.create({
           data: {
             id_order_item: item.id_order_item,
@@ -579,7 +589,73 @@ export class OrdersService {
       }
     }
 
+    // notificación 
+    // this.notif.emitToBranch(order.id_branch, 'order:cancelled', {
+    //   id_order,
+    //   reason: dto.reason,
+    //   user: id_user,
+    // });
+
+    // total = 0
+    await this.prisma.orders.update({
+      where: { id_order },
+      data: { total: 0 }
+    });
+
     return { message: 'Comanda cancelada correctamente', id_order };
+  }
+
+  async splitItem(id_order_item: number, qtyToSplit: number) {
+    const item = await this.prisma.order_items.findUnique({
+      where: { id_order_item }
+    });
+
+    if (!item) throw new NotFoundException('El item no existe');
+
+    if (qtyToSplit <= 0 || qtyToSplit >= item.quantity)
+      throw new BadRequestException('Cantidad inválida para dividir');
+
+    // Crear nuevo item con qtyToSplit
+    const newItem = await this.prisma.order_items.create({
+      data: {
+        id_order: item.id_order,
+        id_branch_product: item.id_branch_product,
+        quantity: qtyToSplit,
+        notes: item.notes,
+        status: item.status,
+      }
+    });
+
+    // Actualizar cantidad original
+    await this.prisma.order_items.update({
+      where: { id_order_item },
+      data: {
+        quantity: item.quantity - qtyToSplit
+      }
+    });
+
+    return newItem;
+  }
+
+  /** Recalcula el total de una comanda */
+  private async recalcTotal(id_order: number) {
+    // Sumamos solo productos NO cancelados
+    const r = await this.prisma.order_items.aggregate({
+      where: {
+        id_order,
+        status: { not: 'cancelled' }
+      },
+      _sum: {
+        subtotal: true
+      }
+    });
+
+    await this.prisma.orders.update({
+      where: { id_order },
+      data: {
+        total: r._sum.subtotal ?? 0
+      }
+    });
   }
 
 }

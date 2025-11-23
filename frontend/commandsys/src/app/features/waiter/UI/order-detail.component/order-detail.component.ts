@@ -21,6 +21,7 @@ export class OrderDetailComponent {
 
   reason: string = '';
   cancelTarget: any = null; // item a cancelar
+  cancelQty = 1;
 
   orderReason : string = ''
   constructor(
@@ -48,7 +49,7 @@ export class OrderDetailComponent {
 
     this.loadingCancel = true;
     try {
-      await this.ordersApi.cancelItem(this.cancelTarget.id_order_item, this.reason);
+      await this.ordersApi.cancelItem(this.cancelTarget.id_order_item, this.reason, this.cancelQty);
       this.toast.success('Producto cancelado');
       this.dialogRef.close('updated');
     } catch (err: any) {
