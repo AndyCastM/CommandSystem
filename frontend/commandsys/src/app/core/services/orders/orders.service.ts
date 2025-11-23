@@ -69,4 +69,16 @@ export class OrderService {
     );
   }
 
+  cancelItem(id_order_item: number, reason: string) {
+    return firstValueFrom(
+        this.http.patch(`${this.API_URL}/items/${id_order_item}/cancel`, { reason })
+    );
+  }
+
+  cancelOrder(id_order: number, reason: string) {
+    return firstValueFrom(
+        this.http.patch(`${this.API_URL}/${id_order}/cancel`, { reason })
+    );
+  }
+  
 }

@@ -74,6 +74,7 @@
               {{ formatTotal(order) }}
             </span>
           </div>
+
           <p class="text-xs text-slate-400 mb-3">
             Comanda #{{ order.id }} • {{ order.time }} •
             {{ order.products.length }} productos
@@ -82,25 +83,32 @@
           <ul class="text-sm text-slate-700 space-y-2 mb-3">
             <li *ngFor="let p of order.products">
               <div class="flex justify-between items-start gap-2">
-                <span class="flex-1">
+                <span class="flex-1 truncate">
                   {{ p.name }} <small class="text-slate-500">x{{ p.qty }}</small>
                 </span>
                 <span class="text-slate-600 text-xs font-medium whitespace-nowrap">
                   {{ p.subtotal | currency }}
                 </span>
               </div>
-              
+
               <div *ngIf="p.options?.length" class="ml-4 mt-1 space-y-0.5">
-                <div *ngFor="let opt of p.options" class="text-[11px] text-slate-500 flex items-center gap-1">
+                <div
+                  *ngFor="let opt of p.options"
+                  class="text-[11px] text-slate-500 flex items-center gap-1"
+                >
                   <span class="w-1 h-1 rounded-full bg-slate-400"></span>
                   <span>{{ opt.name }}</span>
-                  <span *ngIf="opt.extra > 0" class="text-slate-600">(+{{ opt.extra | currency }})</span>
+                  <span
+                    *ngIf="opt.extra > 0"
+                    class="text-slate-600"
+                    >(+{{ opt.extra | currency }})</span
+                  >
                 </div>
               </div>
             </li>
           </ul>
-                    
-          <div class="flex flex-wrap gap-2">
+
+          <div class="flex flex-wrap gap-2 mb-3">
             <span
               *ngFor="let p of order.products"
               class="px-2 py-1 rounded-full text-xs font-medium"
@@ -108,27 +116,41 @@
                 'bg-yellow-100 text-yellow-700': p.status === 'preparando',
                 'bg-green-100 text-green-700': p.status === 'listo',
                 'bg-red-100 text-red-700': p.status === 'pendiente',
-                'bg-slate-100 text-slate-600': p.status === 'entregado'
+                'bg-slate-100 text-slate-600': p.status === 'entregado',
+                'bg-red-300 text-red-900 border border-red-400': p.status === 'cancelado'
               }"
             >
               {{ p.status }}
             </span>
           </div>
 
-          <p class="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
-            <mat-icon fontIcon="access_time" class="!text-[14px] !w-[14px] !h-[14px]"></mat-icon>
+          <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
+            <mat-icon
+              fontIcon="access_time"
+              class="!text-[14px] !w-[14px] !h-[14px]"
+            ></mat-icon>
             <span>Creada: {{ order.created }}</span>
           </p>
+
+          <!-- ========== BOTÓN PARA ABRIR EL MODAL ========== -->
+          <button
+            class="w-full bg-sky-600 hover:bg-sky-700 text-white text-sm py-2 rounded-md flex items-center justify-center gap-2"
+            (click)="openOrderModal(order)"
+          >
+            <mat-icon fontIcon="receipt_long"></mat-icon>
+            Ver Comanda
+          </button>
         </div>
       </div>
     </div>
+
 
     <!-- =================== VISTA POR PRODUCTO =================== -->
     <div *ngIf="viewMode() === 'producto'">
       <!-- LISTOS -->
       <h2
         *ngIf="readyProducts().length"
-        class="text-green-700 font-semibold flex items-center gap-2 mb-3 mt-4"
+        class="text-green-700 font-semibold flex items-center gap-2"
       >
         <mat-icon fontIcon="notifications_active" class="text-green-600"></mat-icon>
         Productos Listos para Servir ({{ readyProducts().length }})
@@ -172,27 +194,27 @@
       </div>
 
       <!-- EN PREPARACIÓN -->
-      <h2 *ngIf="preparingProducts().length" class="text-blue-700 font-semibold mb-2">
+      <h2 *ngIf="preparingProducts().length" class="text-yellow-700 font-semibold mb-2">
         En Preparación ({{ preparingProducts().length }})
       </h2>
       <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
         <div
           *ngFor="let p of preparingProducts()"
-          class="border border-blue-300 bg-blue-50 rounded-lg p-3 text-sm"
+          class="border border-yellow-300 bg-yellow-50 rounded-lg p-3 text-sm"
         >
           <div class="flex justify-between font-medium">
             <span>{{ p.name }}</span>
-            <span class="text-blue-700 text-xs">preparando</span>
+            <span class="text-yellow-700 text-xs">preparando</span>
           </div>
           <p class="text-xs text-slate-500">{{ p.table }} • Cant: {{ p.qty }}</p>
           <!-- PERSONALIZACIONES -->
-          <div *ngIf="p.options?.length || p.notes" class="mt-2 ml-1 pl-2 border-l border-blue-300 space-y-1">
-            <div *ngFor="let opt of p.options" class="text-[11px] text-blue-700 flex gap-1 items-center">
-              <span class="w-1 h-1 bg-blue-500 rounded-full"></span>
+          <div *ngIf="p.options?.length || p.notes" class="mt-2 ml-1 pl-2 border-l border-yellow-300 space-y-1">
+            <div *ngFor="let opt of p.options" class="text-[11px] text-yellow-700 flex gap-1 items-center">
+              <span class="w-1 h-1 bg-yellow-500 rounded-full"></span>
               <span>{{ opt.name }}</span>
               <span *ngIf="opt.extra > 0">(+{{ opt.extra | currency }})</span>
             </div>
-            <div *ngIf="p.notes" class="text-[11px] text-blue-700 italic">
+            <div *ngIf="p.notes" class="text-[11px] text-yellow-700 italic">
               Nota: {{ p.notes }}
             </div>
           </div>

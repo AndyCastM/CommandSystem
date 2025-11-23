@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException , ForbiddenException, NotFoundException} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { orders_status, order_items_status } from 'generated/prisma';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 import { TableSessionsService } from 'src/table_sessions/services/table_sessions.service';
+import { CancelItemDto } from '../dto/cancel-item.dto';
+import { CancelOrderDto } from '../dto/cancel-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -445,6 +447,139 @@ export class OrdersService {
       );
     }
     return item;
+  }
+
+  async cancelItem(id_order_item: number, dto: CancelItemDto, id_user: number) {
+    const item = await this.prisma.order_items.findUnique({
+      where: { id_order_item },
+      include: {
+        orders: {
+          include: {
+            order_items: true,
+          },
+        },
+        order_item_cancellations: true,
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException('El item no existe');
+    }
+
+    // No cancelar entregado
+    if (item.status === 'delivered') {
+      throw new BadRequestException(
+        'No puedes cancelar un producto que ya fue entregado',
+      );
+    }
+
+    // No cancelar si el item YA está cancelado
+    if (item.status === 'cancelled') {
+      throw new BadRequestException(
+        'Este producto ya fue cancelado anteriormente',
+      );
+    }
+
+    // Validar dueño de la comanda
+    if (item.orders.id_user !== id_user) {
+      throw new ForbiddenException('No puedes cancelar comandas de otro mesero');
+    }
+
+    // Update status del item
+    const updated = await this.prisma.order_items.update({
+      where: { id_order_item },
+      data: { status: 'cancelled' },
+    });
+
+    //  Registrar en auditoría SOLO SI NO EXISTE
+    const alreadyLogged = await this.prisma.order_item_cancellations.findFirst({
+      where: { id_order_item },
+    });
+
+    if (!alreadyLogged) {
+      await this.prisma.order_item_cancellations.create({
+        data: {
+          id_order_item,
+          id_user,
+          reason: dto.reason,
+        },
+      });
+    }
+
+    //  Ahora validar si TODOS los items quedaron cancelados
+    const allCancelled = item.orders.order_items.every(
+      (i) => i.status === 'cancelled' || i.id_order_item === id_order_item
+    );
+
+    if (allCancelled) {
+      await this.prisma.orders.update({
+        where: { id_order: item.orders.id_order },
+        data: { status: 'cancelled' },
+      });
+    }
+
+    return {
+      message: 'Producto cancelado correctamente',
+      id_order_item,
+    };
+  }
+
+  async cancelOrder(id_order: number, dto: CancelOrderDto, id_user: number) {
+    const order = await this.prisma.orders.findUnique({
+      where: { id_order },
+      include: {
+        order_items: {
+          include: { order_item_cancellations: true },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('La comanda no existe');
+    }
+
+    //  Validación de dueño
+    if (order.id_user !== id_user) {
+      throw new ForbiddenException('No puedes cancelar comandas de otro mesero');
+    }
+
+    //  No cancelar si hay entregados
+    const hasDelivered = order.order_items.some((i) => i.status === 'delivered');
+    if (hasDelivered) {
+      throw new BadRequestException(
+        'No se puede cancelar completamente una comanda con productos entregados',
+      );
+    }
+
+    //  Cancelar todos los items (solo los que no lo estén)
+    await this.prisma.order_items.updateMany({
+      where: { id_order, NOT: { status: 'cancelled' } },
+      data: { status: 'cancelled' },
+    });
+
+    //  Cancelar comanda completa
+    await this.prisma.orders.update({
+      where: { id_order },
+      data: { status: 'cancelled' },
+    });
+
+    //  Registrar solo items sin registro previo
+    for (const item of order.order_items) {
+
+      const exists = item.order_item_cancellations.length > 0;
+
+      if (!exists) {
+        await this.prisma.order_item_cancellations.create({
+          data: {
+            id_order_item: item.id_order_item,
+            id_user,
+            reason: dto.reason,
+          },
+        });
+      }
+    }
+
+    return { message: 'Comanda cancelada correctamente', id_order };
   }
 
 }

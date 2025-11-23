@@ -5,10 +5,12 @@ import { ToastService } from '../../../shared/UI/toast.service';
 import { OrderService } from '../../../core/services/orders/orders.service';
 import { NotificationsService } from '../../../core/services/notifications/notifications.service';
 import { isPlatformBrowser } from '@angular/common';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { OrderDetailComponent } from '../UI/order-detail.component/order-detail.component';
 
 @Component({
   selector: 'app-orders',
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, MatDialogModule],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })
@@ -16,6 +18,7 @@ export class Orders implements OnInit{
   private toast = inject(ToastService);
   private ordersApi = inject(OrderService);
   private notif = inject(NotificationsService);
+  private dialog = inject(MatDialog);
 
   loading = signal(false);
   viewMode = signal<'mesa' | 'producto'>('mesa');
@@ -94,7 +97,8 @@ export class Orders implements OnInit{
       pending: 'pendiente',
       in_preparation: 'preparando',
       ready: 'listo',
-      delivered: 'entregado'
+      delivered: 'entregado',
+      cancelled: 'cancelado',
     }[s] || 'pendiente';
   }
 
@@ -156,6 +160,17 @@ export class Orders implements OnInit{
       console.error(err);
       this.toast.error('Error al marcar como entregado');
     }
+  }
+
+  openOrderModal(order: any) {
+    const dialogRef = this.dialog.open(OrderDetailComponent, {
+      width: '480px',
+      data: { order }
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.loadOrders();
+    });
   }
 
 }

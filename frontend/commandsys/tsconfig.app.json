@@ -10,7 +10,7 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
+, "src/app/features/waiter/UI/order-detail.component"  ],
   "exclude": [
     "src/**/*.spec.ts"
   ]

@@ -1,0 +1,128 @@
+<div class="p-5 w-full">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+      <mat-icon>receipt_long</mat-icon>
+      Comanda #{{ data.order.id }}
+    </h2>
+
+    <button class="text-slate-400 hover:text-slate-600" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <p class="text-sm text-slate-500 mb-3">
+    Mesa: <span class="font-medium">{{ data.order.table }}</span> •
+    {{ data.order.products.length }} productos
+  </p>
+
+  <!-- LISTA DE ITEMS -->
+  <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-2">
+    <div
+      *ngFor="let item of data.order.products"
+      class="border rounded-lg p-3"
+      [ngClass]="{
+        'border-slate-200': item.status !== 'cancelado',
+        'border-red-400 bg-red-50': item.status === 'cancelado'
+      }"
+    >
+      <div class="flex justify-between mb-1">
+        <h3 class="font-semibold text-slate-800">
+          {{ item.name }}
+          <span class="text-sm text-slate-500">x{{ item.qty }}</span>
+        </h3>
+
+        <span class="font-medium text-slate-700">
+          {{ item.subtotal | currency }}
+        </span>
+      </div>
+
+      <!-- OPCIONES -->
+      <div *ngIf="item.options?.length" class="ml-2 mt-1 space-y-1">
+        <div
+          *ngFor="let opt of item.options"
+          class="text-xs text-slate-600 flex items-center gap-1"
+        >
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span>{{ opt.name }}</span>
+          <span *ngIf="opt.extra > 0" class="font-medium">
+            (+{{ opt.extra | currency }})
+          </span>
+        </div>
+      </div>
+
+      <!-- NOTA DE PRODUCTO -->
+      <div *ngIf="item.notes" class="text-xs text-slate-500 ml-2 mt-1 italic">
+        Nota: {{ item.notes }}
+      </div>
+
+      <!-- ESTADO -->
+      <div class="mt-3">
+        <span
+          class="px-2 py-1 rounded-full text-xs font-medium"
+          [ngClass]="{
+            'bg-yellow-100 text-yellow-700': item.status === 'preparando',
+            'bg-green-100 text-green-700': item.status === 'listo',
+            'bg-red-100 text-red-700': item.status === 'pendiente',
+            'bg-slate-100 text-slate-600': item.status === 'entregado',
+            'bg-red-700 text-white': item.status === 'cancelado'
+          }"
+        >
+          {{ item.status }}
+        </span>
+      </div>
+
+      <!-- BOTÓN CANCELAR ITEM -->
+      <button
+        *ngIf="item.status !== 'cancelado' && item.status !== 'entregado'"
+        class="mt-3 w-full bg-red-100 text-red-700 hover:bg-red-200 py-1.5 rounded-md text-sm"
+        (click)="startCancelItem(item)"
+      >
+        Cancelar producto
+      </button>
+
+      <!-- FORMULARIO CANCELACIÓN ITEM -->
+      <div *ngIf="cancelTarget === item" class="mt-3 space-y-2">
+        <textarea
+          [(ngModel)]="reason"
+          rows="2"
+          placeholder="Motivo de cancelación..."
+          class="w-full border border-slate-300 rounded-md p-2 text-sm"
+        ></textarea>
+
+        <button
+          (click)="confirmCancelItem()"
+          [disabled]="loadingCancel || !reason"
+          class="w-full bg-red-600 text-white py-1.5 rounded-md text-sm hover:bg-red-700 disabled:opacity-60"
+        >
+          {{ loadingCancel ? 'Cancelando...' : 'Confirmar cancelación' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CANCELAR COMANDA ===================== -->
+  <div class="mt-6 border-t pt-4">
+
+    <label class="text-sm font-semibold text-slate-700 block mb-2">
+      Motivo para cancelar toda la comanda:
+    </label>
+
+    <textarea
+      [(ngModel)]="orderReason"
+      rows="3"
+      placeholder="Explica por qué se quiere cancelar la comanda completa..."
+      class="w-full border border-slate-300 rounded-md p-3 text-sm"
+    ></textarea>
+
+    <button
+      class="mt-3 w-full bg-red-700 text-white py-2 rounded-md hover:bg-red-800 text-sm"
+      (click)="cancelOrder()"
+      [disabled]="loadingOrderCancel || !orderReason"
+    >
+      {{ loadingOrderCancel ? 'Cancelando...' : 'Cancelar comanda completa' }}
+    </button>
+  </div>
+
+</div>

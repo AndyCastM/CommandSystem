@@ -52,19 +52,20 @@ model branches {
 }
 
 model order_items {
-  id_order_item      Int                  @id @default(autoincrement())
-  id_order           Int
-  id_branch_product  Int?
-  id_combo           Int?
-  quantity           Int
-  notes              String?              @db.Text
-  service_order      Int?                 @default(1)
-  status             order_items_status?  @default(pending)
-  created_at         DateTime?            @default(now()) @db.Timestamp(0)
-  order_item_options order_item_options[]
-  combos             combos?              @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
-  branch_products    branch_products?     @relation(fields: [id_branch_product], references: [id_branch_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_prod_orditems")
-  orders             orders               @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
+  id_order_item            Int                        @id @default(autoincrement())
+  id_order                 Int
+  id_branch_product        Int?
+  id_combo                 Int?
+  quantity                 Int
+  notes                    String?                    @db.Text
+  service_order            Int?                       @default(1)
+  status                   order_items_status?        @default(pending)
+  created_at               DateTime?                  @default(now()) @db.Timestamp(0)
+  order_item_cancellations order_item_cancellations[]
+  order_item_options       order_item_options[]
+  combos                   combos?                    @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
+  branch_products          branch_products?           @relation(fields: [id_branch_product], references: [id_branch_product], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_prod_orditems")
+  orders                   orders                     @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
 
   @@index([id_order], map: "id_order")
   @@index([id_combo], map: "fk:combo_orditems_idx")
@@ -143,24 +144,25 @@ model tables {
 }
 
 model users {
-  id_user        Int              @id @default(autoincrement())
-  id_company     Int?
-  id_branch      Int?
-  id_role        Int
-  name           String           @db.VarChar(30)
-  last_name      String           @db.VarChar(30)
-  last_name2     String?          @db.VarChar(45)
-  username       String           @unique(map: "username_UNIQUE") @db.VarChar(25)
-  password       String           @db.VarChar(255)
-  created_at     DateTime         @default(now()) @db.Timestamp(0)
-  updated_at     DateTime         @updatedAt @db.Timestamp(0)
-  is_active      Int              @default(1) @db.TinyInt
-  orders         orders[]
-  table_sessions table_sessions[]
-  user_tokens    user_tokens[]
-  branches       branches?        @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
-  roles          roles            @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_2")
-  companies      companies?       @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_3")
+  id_user                  Int                        @id @default(autoincrement())
+  id_company               Int?
+  id_branch                Int?
+  id_role                  Int
+  name                     String                     @db.VarChar(30)
+  last_name                String                     @db.VarChar(30)
+  last_name2               String?                    @db.VarChar(45)
+  username                 String                     @unique(map: "username_UNIQUE") @db.VarChar(25)
+  password                 String                     @db.VarChar(255)
+  created_at               DateTime                   @default(now()) @db.Timestamp(0)
+  updated_at               DateTime                   @updatedAt @db.Timestamp(0)
+  is_active                Int                        @default(1) @db.TinyInt
+  order_item_cancellations order_item_cancellations[]
+  orders                   orders[]
+  table_sessions           table_sessions[]
+  user_tokens              user_tokens[]
+  branches                 branches?                  @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
+  roles                    roles                      @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_2")
+  companies                companies?                 @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_3")
 
   @@index([id_role], map: "id_role")
   @@index([id_branch], map: "users_ibfk_1")
@@ -417,6 +419,19 @@ model combo_groups {
   combos              combos                @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk_combo_combogroup")
 
   @@index([id_combo], map: "fk_combo_combogroup_idx")
+}
+
+model order_item_cancellations {
+  id            Int         @id @default(autoincrement())
+  id_order_item Int
+  id_user       Int
+  reason        String?     @db.VarChar(65)
+  created_at    DateTime?   @default(now()) @db.Timestamp(0)
+  order_items   order_items @relation(fields: [id_order_item], references: [id_order_item], onDelete: NoAction, onUpdate: NoAction, map: "fk_idcancell_order_item")
+  users         users       @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "fk_idcancell_user")
+
+  @@index([id_order_item], map: "fk_idcancell_order_item_idx")
+  @@index([id_user], map: "fk_idcancell_user_idx")
 }
 
 enum orders_status {
