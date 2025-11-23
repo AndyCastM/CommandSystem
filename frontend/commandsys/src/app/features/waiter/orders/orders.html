@@ -144,6 +144,24 @@
             <span class="text-green-700 text-xs">listo</span>
           </div>
           <p class="text-xs text-slate-500 mb-2">{{ p.table }} • Cant: {{ p.qty }}</p>
+          <!-- PERSONALIZACIONES -->
+          <div *ngIf="p.options?.length || p.notes" class="mt-2 ml-1 pl-2 border-l border-slate-300 space-y-1">
+
+            <!-- Opciones -->
+            <div *ngFor="let opt of p.options" class="text-[11px] text-slate-600 flex gap-1 items-center">
+              <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+              <span>{{ opt.name }}</span>
+              <span *ngIf="opt.extra > 0" class="text-slate-700 font-medium">
+                (+{{ opt.extra | currency }})
+              </span>
+            </div>
+
+            <!-- Nota del producto -->
+            <div *ngIf="p.notes" class="text-[11px] text-slate-500 italic">
+              Nota: {{ p.notes }}
+            </div>
+          </div>
+
           <button
             (click)="markDelivered(p)"
             class="w-full bg-green-500 text-white rounded-md text-xs py-1 hover:bg-green-600"
@@ -167,6 +185,17 @@
             <span class="text-blue-700 text-xs">preparando</span>
           </div>
           <p class="text-xs text-slate-500">{{ p.table }} • Cant: {{ p.qty }}</p>
+          <!-- PERSONALIZACIONES -->
+          <div *ngIf="p.options?.length || p.notes" class="mt-2 ml-1 pl-2 border-l border-blue-300 space-y-1">
+            <div *ngFor="let opt of p.options" class="text-[11px] text-blue-700 flex gap-1 items-center">
+              <span class="w-1 h-1 bg-blue-500 rounded-full"></span>
+              <span>{{ opt.name }}</span>
+              <span *ngIf="opt.extra > 0">(+{{ opt.extra | currency }})</span>
+            </div>
+            <div *ngIf="p.notes" class="text-[11px] text-blue-700 italic">
+              Nota: {{ p.notes }}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -184,6 +213,17 @@
             <span class="text-red-700 text-xs">pendiente</span>
           </div>
           <p class="text-xs text-slate-500">{{ p.table }} • Cant: {{ p.qty }}</p>
+          <!-- PERSONALIZACIONES -->
+          <div *ngIf="p.options?.length || p.notes" class="mt-2 ml-1 pl-2 border-l border-red-300 space-y-1">
+            <div *ngFor="let opt of p.options" class="text-[11px] text-red-700 flex gap-1 items-center">
+              <span class="w-1 h-1 bg-red-500 rounded-full"></span>
+              <span>{{ opt.name }}</span>
+              <span *ngIf="opt.extra > 0">(+{{ opt.extra | currency }})</span>
+            </div>
+            <div *ngIf="p.notes" class="text-[11px] text-red-700 italic">
+              Nota: {{ p.notes }}
+            </div>
+          </div>
         </div>
       </div>
     </div>

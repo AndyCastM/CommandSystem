@@ -28,7 +28,7 @@ export class OrdersController {
 
   @Get('/branch/active')
   async getActiveOrders(@CurrentUser() user: any ) {
-    return this.ordersService.getActiveOrdersByBranch(+user.id_branch);
+    return this.ordersService.getActiveOrdersByBranch(+user.id_branch, +user.sub);
   }
 
   @Patch(':id/status')

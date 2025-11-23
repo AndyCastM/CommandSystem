@@ -79,4 +79,16 @@ export class Superadmin {
     );
   }
 
+  // Toggle usuario
+  async activateUser(id_user: number) {
+    return firstValueFrom(
+      this.http.patch(`${this.API_URL2}/${id_user}/activate`, {})
+    );
+  }
+
+  async deactivateUser(id_user: number) {
+    return firstValueFrom(
+      this.http.delete(`${this.API_URL2}/${id_user}`, {})
+    );
+  }
 }

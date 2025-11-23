@@ -49,6 +49,7 @@ export class Login {
       this.redirectByRole(res!);
     } catch (e: any) {
       this.toast.error(e?.error?.message ?? 'Usuario o contraseña incorrectos');
+      console.error('Error en login:', e);
     } finally {
       this.loading.set(false);
     }

@@ -26,7 +26,8 @@ export class NotificationsService {
   private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
 
   private apiUrl = 'http://localhost:3000';
-  events$: any;
+  private _events$ = new BehaviorSubject<any>(null);
+  public events$ = this._events$.asObservable();
 
   constructor(private zone: NgZone, private toast: ToastService) {}
 
@@ -77,7 +78,7 @@ export class NotificationsService {
       this.zone.run(() => {
         // Emitir a un observable o simplemente refrescar
         this.toast.info(`Comanda #${data.id_order} completada`);
-        this.events$.next({ type: 'order-delivered', id: data.id_order });
+        this._events$.next({ type: 'order-delivered', id: data.id_order });
       });
     });
 

@@ -11,6 +11,7 @@ export class OrdersService {
 
    async createOrder(dto: CreateOrderDto, id_branch, id_user) {
     console.log('Usuario creando la comanda:',id_user);
+    console.log('Comanda para llevar o para mesa:', dto.order_type);
 
     // Validaciones lógicas
     if (dto.order_type === 'dine_in' && !dto.id_session) {
@@ -53,8 +54,9 @@ export class OrdersService {
         id_session: sessionId,
         id_user: id_user,
         status: 'pending',
-        customer_name: dto.order_type === 'takeout' ? dto.customer_name : null,
         notes: dto.notes ?? null,
+        order_type: dto.order_type,
+        customer_name: dto.order_type === 'takeout' ? dto.customer_name : null,
       },
     });
 
@@ -254,10 +256,11 @@ export class OrdersService {
   }
 
 
- async getActiveOrdersByBranch(id_branch: number) {
+ async getActiveOrdersByBranch(id_branch: number, id_user: number) {
     const orders = await this.prisma.orders.findMany({
       where: {
         id_branch,
+        id_user,
         NOT: [{ status: 'delivered' }, { status: 'cancelled' }],
       },
       orderBy: { created_at: 'desc' },

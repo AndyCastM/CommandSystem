@@ -1,12 +1,8 @@
-<div class="max-w-6xl mx-auto relative">
-  <div
-    [ngClass]="{
-      'grid grid-cols-[2fr_1fr] gap-6': isAdding,
-      'grid grid-cols-1': !isAdding
-    }"
-  >
+<div class="max-w-6xl mx-auto z-0">
+  <div class="flex flex-col lg:flex-row lg:gap-6">
+
     <!-- IZQUIERDA: MENÚ -->
-    <div>
+    <div class="flex-1 pb-24 lg:pb-0">
 
       <!-- encabezado -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
@@ -27,7 +23,7 @@
         </button>
       </div>
 
-            <!-- SELECTOR TIPO DE ORDEN -->
+      <!-- SELECTOR TIPO DE ORDEN -->
       <div class="flex items-center gap-3 mb-4">
         <label class="text-base font-medium text-slate-700">Tipo de orden:</label>
 
@@ -51,7 +47,6 @@
           </ng-container>
 
         </mat-select>
-
       </div>
       
       <!-- ÁREAS -->
@@ -107,15 +102,16 @@
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- DERECHA: COMANDA -->
-    <div *ngIf="isAdding" class="hidden md:block">
+    <!-- DERECHA: COMANDA (Desktop/Tablet) -->
+    <div *ngIf="isAdding" class="hidden lg:block lg:w-96 sticky top-4 h-fit">
       <app-order-preview
-        [cart]="cart"
+        [cart]="$any(cart)"
         [totalAmount]="totalAmount"
-        [updateQuantity]="updateQuantity"
-        [removeFromCart]="removeFromCart"
+        [updateQuantity]="$any(updateQuantity)"
+        [removeFromCart]="$any(removeFromCart)"
         [confirmOrder]="confirmOrder.bind(this)"
         [isAdding]="isAdding"
       ></app-order-preview>
@@ -123,31 +119,89 @@
 
   </div>
 
-  <!-- DRAWER MÓVIL -->
-  <div *ngIf="isAdding" class="block md:hidden">
+  <!-- DRAWER MÓVIL (< lg) -->
+  <div *ngIf="isAdding" class="lg:hidden">
+
+    <!-- Botón flotante -->
     <button
       (click)="drawerOpen = !drawerOpen"
-      class="fixed bottom-4 right-4 bg-sky-500 text-white rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
+      class="fixed bottom-6 right-6 bg-sky-600 text-white rounded-full shadow-2xl 
+             w-16 h-16 flex items-center justify-center z-[9999] hover:bg-sky-700 
+             transition-all active:scale-95"
     >
-      <mat-icon>{{ drawerOpen ? 'close' : 'shopping_cart' }}</mat-icon>
+      <div class="relative">
+        <mat-icon class="!text-2xl">{{ drawerOpen ? 'close' : 'shopping_cart' }}</mat-icon>
+        <span 
+          *ngIf="cart().size > 0 && !drawerOpen"
+          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold 
+                 w-5 h-5 rounded-full flex items-center justify-center"
+        >
+          {{ cart().size }}
+        </span>
+      </div>
     </button>
 
+    <!-- Overlay -->
     <div
-      class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 rounded-t-2xl shadow-xl transition-transform duration-300"
-      [ngClass]="{ 'translate-y-0': drawerOpen, 'translate-y-full': !drawerOpen }"
-    >
-      <div class="p-4">
-        <h2 class="text-lg font-semibold text-slate-800 mb-3">🧾 Comanda</h2>
+      *ngIf="drawerOpen"
+      (click)="drawerOpen = false"
+      class="fixed inset-0 bg-black/50 z-[9998] animate-fade-in"
+    ></div>
 
-        <app-order-preview
-          [cart]="cart"
-          [totalAmount]="totalAmount"
-          [updateQuantity]="updateQuantity"
-          [removeFromCart]="removeFromCart"
-          [confirmOrder]="confirmOrder.bind(this)"
-          [isAdding]="isAdding"
-        ></app-order-preview>
+    <!-- Drawer -->
+    <div
+      class="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl 
+             z-[9999] transition-transform duration-300 ease-out overflow-hidden
+             translate-y-full"
+      [class.translate-y-0]="drawerOpen"
+      style="max-height: 80vh;"
+    >
+      <!-- Handle -->
+      <div class="flex justify-center pt-3 pb-2 bg-slate-50">
+        <div class="w-12 h-1.5 bg-slate-300 rounded-full"></div>
       </div>
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-3 bg-white 
+                  border-b border-slate-200 sticky top-0 z-10">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <mat-icon class="text-sky-600">receipt_long</mat-icon>
+          Tu Comanda
+        </h2>
+        <button
+          (click)="drawerOpen = false"
+          class="text-slate-400 hover:text-slate-600 p-1 -mr-1"
+        >
+          <mat-icon>expand_more</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div class="overflow-y-auto" style="max-height: calc(80vh - 80px);">
+        <div class="px-5 py-4">
+          <app-order-preview
+            [cart]="$any(cart)"
+            [totalAmount]="totalAmount"
+            [updateQuantity]="$any(updateQuantity)"
+            [removeFromCart]="$any(removeFromCart)"
+            [confirmOrder]="confirmOrder.bind(this)"
+            [isAdding]="isAdding"
+          ></app-order-preview>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+
+<!-- Animación -->
+<style>
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+</style>

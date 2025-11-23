@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { OrderService } from '../../../core/services/orders/orders.service';
 import { NotificationsService } from '../../../core/services/notifications/notifications.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-orders',
@@ -24,17 +25,14 @@ export class Orders implements OnInit{
   preparingProducts = signal<any[]>([]);
   pendingProducts = signal<any[]>([]);
 
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   async ngOnInit() {
+    if (!this.isBrowser) return;  // ← evita 401 SSR
     await this.loadOrders();
     this.notif.onItemReady().subscribe((alert) => {
       if (alert) {
         // vuelve a cargar las comandas para actualizar estados
-        this.loadOrders();
-      }
-    });
-
-    this.notif.events$.subscribe((e: { type: string; }) => {
-      if (e.type === 'order-delivered') {
         this.loadOrders();
       }
     });

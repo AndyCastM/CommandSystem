@@ -211,9 +211,38 @@
 
             <mat-divider></mat-divider>
 
+            <!-- ENCABEZADO DEL TICKET -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Encabezado del Ticket (opcional)</label>
+              <textarea
+                rows="2"
+                [formControl]="companyForm.controls.ticket_header"
+                class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
+                      focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                placeholder="Ejemplo: Gracias por elegirnos ! Vuelve pronto."
+              ></textarea>
+            </div>
+
+            <!-- PIE DEL TICKET -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Mensaje al Pie del Ticket (opcional)</label>
+              <textarea
+                rows="2"
+                [formControl]="companyForm.controls.ticket_footer"
+                class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
+                      focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                placeholder="Ejemplo: Solicita tu factura en www.empresa.com/facturar"
+              ></textarea>
+            </div>
+
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 class="font-medium text-blue-800 mb-3">Vista Previa del Ticket</h3>
               <div class="bg-white p-4 rounded border font-mono text-sm">
+                <!-- Encabezado del ticket -->
+                <div *ngIf="company.ticket_header" class="text-center text-xs mb-2">
+                  {{ company.ticket_header }}
+                </div>
+
                 <div class="text-center border-b pb-2 mb-2">
                   <div class="font-medium">{{ company.name }}</div>
                   <div class="text-xs">{{ company.legal_name }}</div>
@@ -225,6 +254,10 @@
                   <div class="text-xs">Tel: {{ company.phone }}</div>
                 </div>
                 <div class="text-xs text-center text-gray-600">IVA: {{ company.tax_percentage }}%</div>
+                <!-- Pie del ticket -->
+                <div *ngIf="company.ticket_footer" class="text-center text-xs mt-2">
+                  {{ company.ticket_footer }}
+                </div>
               </div>
             </div>
 

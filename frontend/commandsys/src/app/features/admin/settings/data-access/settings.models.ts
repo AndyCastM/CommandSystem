@@ -1,4 +1,5 @@
 export interface CompanySettings {
+  id_company: number;
   name: string;
   legal_name: string;
   rfc: string;
@@ -11,5 +12,11 @@ export interface CompanySettings {
   phone: string;
   email: string;
   tax_percentage: number;
+  ticket_header?: string ;
+  ticket_footer?: string;
 }
 
+export interface UpdateCompanyResponse {
+  message: string;
+  company: CompanySettings;
+}

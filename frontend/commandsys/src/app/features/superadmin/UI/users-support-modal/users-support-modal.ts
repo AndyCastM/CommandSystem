@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { UsersService } from '../../../../core/services/users/users.service';
 import { ToastService } from '../../../../shared/UI/toast.service';
 import { firstValueFrom } from 'rxjs';
+import { Superadmin } from '../../data-access/superadmin';
 
 @Component({
   selector: 'app-users-support-modal',
@@ -17,6 +18,7 @@ export class UsersSupportModalComponent implements OnChanges {
 
   private userSrv = inject(UsersService);
   private toast = inject(ToastService);
+  private superadmin = inject(Superadmin);
 
   users = signal<any[]>([]);
   loading = signal(false);
@@ -54,6 +56,13 @@ export class UsersSupportModalComponent implements OnChanges {
 
   async toggleActive(u: any) {
     try {
+      if (u.is_active){
+        // Desactivar usuario
+        await this.superadmin.deactivateUser(u.id_user);
+      } else {
+        // Activar usuario
+        await this.superadmin.activateUser(u.id_user);
+      }
       this.toast.success(`Usuario ${u.is_active ? 'desactivado' : 'activado'}`);
       this.loadUsers();
     } catch {

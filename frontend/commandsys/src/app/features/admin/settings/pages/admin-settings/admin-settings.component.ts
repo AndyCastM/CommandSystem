@@ -12,12 +12,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { SettingsApi } from '../../../settings/data-access/settings.api';
 import { CompanySettings } from '../../../settings/data-access/settings.models';
 import { ToastService } from '../../../../../shared/UI/toast.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
   imports: [
     // Angular
+    CommonModule,
     ReactiveFormsModule,
     // Material
     MatTabsModule, MatCardModule, MatFormFieldModule, MatInputModule,
@@ -59,6 +61,9 @@ export class AdminSettingsComponent {
     phone: [''],
     email: ['', Validators.email],
     tax_percentage: [16],
+
+    ticket_header: [''],
+    ticket_footer: [''],
   });
 
   // getters de vista
@@ -66,19 +71,36 @@ export class AdminSettingsComponent {
     return this.companyForm.getRawValue() as CompanySettings;
   }
 
-  saveCompany() {
+  async saveCompany() {
     if (this.companyForm.invalid) {
       this.toast.warning('Revisa los campos requeridos.');
       this.companyForm.markAllAsTouched();
       return;
     }
-    this.api.saveCompany(this.company);
-    this.toast.success('Configuración de la empresa guardada');
+
+    try {
+      const body = Object.fromEntries(
+        Object.entries(this.companyForm.value).map(([k, v]) => [k, v === null ? undefined : v])
+      );
+      await this.api.saveCompany(body);
+      this.toast.success('Configuración de la empresa guardada');
+    } catch (err) {
+      this.toast.error('Error al guardar la configuración');
+      console.error(err);
+    }
   }
 
-  saveFiscal() {
-    this.api.saveCompany(this.company);
-    this.toast.success('Configuración fiscal guardada');
+  async saveFiscal() {
+    try {
+      const body = Object.fromEntries(
+        Object.entries(this.companyForm.value).map(([k, v]) => [k, v === null ? undefined : v])
+      );
+      await this.api.saveCompany(body);
+      this.toast.success('Configuración fiscal guardada');
+    } catch (err) {
+      this.toast.error('No se pudo guardar la configuración fiscal');
+      console.error(err);
+    }
   }
 
 }

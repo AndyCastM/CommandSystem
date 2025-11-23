@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal , PLATFORM_ID} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { OrderPreviewComponent } from '../order-preview/app-order-preview.compon
 import { MatOption, MatSelect } from '@angular/material/select';
 import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm/order-confirm.modal';
 import { OrderService, CreateOrderPayload } from '../../../core/services/orders/orders.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-menu-page',
@@ -26,6 +27,9 @@ export class Menu implements OnInit {
   private orderApi = inject(OrderService);
   private dialog = inject(MatDialog);
 
+  private platformId = inject(PLATFORM_ID);
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   menu = signal<any[]>([]);
   loading = signal(false);
 
@@ -36,18 +40,23 @@ export class Menu implements OnInit {
   // para siempre agregar productos:
   isAdding: boolean = true;
 
-  cart = signal<Map<number, any>>(new Map());
+  cart = signal<Map<string, any>>(new Map());
   selectedArea: any = {};
   drawerOpen = false;
 
   ngOnInit() {
-    const state = history.state;
+    let state: any = null;
+
+    //  Solo tocar `history` cuando estás en navegador
+    if (isPlatformBrowser(this.platformId)) {
+      state = history.state;
+    }
 
     // 1) CONSULTA — si no viene nada en el state
     if (!state?.id_session && !state?.type && !state?.mode) {
       this.isAdding = false;
       this.id_session = null;
-      this.orderType = null; // irrelevante
+      this.orderType = null;
       this.isDineInLocked = false;
     }
 
@@ -55,7 +64,7 @@ export class Menu implements OnInit {
     else if (state?.mode === 'view') {
       this.isAdding = false;
       this.id_session = null;
-      this.orderType = null; // irrelevante
+      this.orderType = null;
       this.isDineInLocked = false;
     }
 
@@ -64,10 +73,10 @@ export class Menu implements OnInit {
       this.isAdding = true;
       this.id_session = state.id_session;
       this.orderType = 'dine_in';
-      this.isDineInLocked = true; //Para bloquear el cambio de tipo de orden
+      this.isDineInLocked = true;
     }
 
-    // 4) TAKEOUT 
+    // 4) TAKEOUT
     else if (state?.type) {
       this.isAdding = true;
       this.id_session = null;
@@ -75,16 +84,16 @@ export class Menu implements OnInit {
       this.isDineInLocked = false;
     }
 
-    console.log(' Menu loaded with:', {
+    console.log('Menu loaded with:', {
       isAdding: this.isAdding,
       idSession: this.id_session,
       orderType: this.orderType,
       isDineInLocked: this.isDineInLocked
     });
 
+    if (!this.isBrowser) return;  // ← evita 401 SSR
     this.loadMenu();
   }
-
 
   async loadMenu() {
     this.loading.set(true);
@@ -154,13 +163,28 @@ export class Menu implements OnInit {
     });
   }
 
+  generateCartKey(product: any, options: any[], notes: string): string {
+    const baseId = product.id_branch_product;
+    const opt = JSON.stringify(options || []);
+    const note = notes || '';
+    return `${baseId}--${opt}--${note}`;
+  }
+
   addProductToCart(productData: any) {
-    const existing = this.cart().get(productData.product.id_branch_product);
+    const key = this.generateCartKey(
+      productData.product,
+      productData.options,
+      productData.notes
+    );
+
+    const cartMap = this.cart(); // Map actual
+
+    const existing = cartMap.get(key);
 
     if (existing) {
       existing.quantity += productData.quantity;
     } else {
-      this.cart().set(productData.product.id_branch_product, {
+      cartMap.set(key, {
         product: productData.product,
         quantity: productData.quantity,
         options: productData.options,
@@ -168,16 +192,17 @@ export class Menu implements OnInit {
       });
     }
 
+    // actualizar señal
+    this.cart.set(new Map(cartMap));
+  }
+
+  removeFromCart(key: string) {
+    this.cart().delete(key);
     this.cart.set(new Map(this.cart()));
   }
 
-  removeFromCart(id_branch_product: number) {
-    this.cart().delete(id_branch_product);
-    this.cart.set(new Map(this.cart()));
-  }
-
-  updateQuantity(id_branch_product: number, delta: number) {
-    const item = this.cart().get(id_branch_product);
+  updateQuantity(key: string, delta: number) {
+    const item = this.cart().get(key);
     if (!item) return;
 
     item.quantity = Math.max(1, item.quantity + delta);

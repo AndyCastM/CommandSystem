@@ -77,7 +77,7 @@ model orders {
   id_session     Int?
   id_user        Int?
   notes          String?            @db.VarChar(85)
-  order_type     orders_order_type? @default(dine_in)
+  order_type     orders_order_type?
   customer_name  String?            @db.VarChar(65)
   status         orders_status?     @default(pending)
   created_at     DateTime?          @default(now()) @db.Timestamp(0)
@@ -229,6 +229,8 @@ model companies {
   phone              String               @db.VarChar(20)
   email              String               @db.VarChar(50)
   tax_percentage     Decimal              @default(16.00) @db.Decimal(5, 2)
+  ticket_header      String?              @db.VarChar(85)
+  ticket_footer      String?              @db.VarChar(85)
   created_at         DateTime             @default(now()) @db.Timestamp(0)
   updated_at         DateTime?            @default(now()) @db.Timestamp(0)
   is_active          Int                  @default(1) @db.TinyInt

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateCompanyDto } from '../dto/create-company.dto';
 import { UpdateCompanyDto } from '../dto/update-company.dto';
 import { CompanyResponseDto } from '../dto/company-response.dto';
@@ -136,15 +136,34 @@ export class CompaniesService {
     return company;
   }
 
-  async update(id:number, dto: UpdateCompanyDto){
-    let data = { ...dto };
+  async update(id: number, dto: UpdateCompanyDto) {
+    // Verificar que exista la empresa
+    const exists = await this.prisma.companies.findUnique({
+      where: { id_company: id },
+    });
 
-    const company = await this.prisma.companies.update({
+    if (!exists) {
+      throw new NotFoundException('La empresa no existe.');
+    }
+
+    // Filtrar campos undefined (solo actualizar campos enviados)
+    const data: Record<string, any> = {};
+    for (const key in dto) {
+      if (dto[key] !== undefined) {
+        data[key] = dto[key];
+      }
+    }
+
+    // Actualizar empresa
+    const updated = await this.prisma.companies.update({
       where: { id_company: id },
       data,
     });
+
     return {
-      message: 'Actualización exitosa', company
+      message: 'Actualización exitosa',
+      company: updated,
     };
   }
+
 }
