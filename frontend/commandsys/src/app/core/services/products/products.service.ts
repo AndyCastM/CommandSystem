@@ -18,11 +18,12 @@ import {
   BranchProduct,
   ProductDetail
 } from './products.models';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:3000';
+  private base = API_URL;
   
   loadingSig = signal<boolean>(false);
   productsSig = signal<CompanyProduct[]>([]);
@@ -51,9 +52,9 @@ export class ProductService {
   loadAll() {
     this.loadingSig.set(true);
 
-    const urlProducts = `${this.base}/api/company-products`;
-    const urlCats     = `${this.base}/api/product-categories`;
-    const urlAreas    = `${this.base}/api/print-areas`;
+    const urlProducts = `${this.base}/company-products`;
+    const urlCats     = `${this.base}/product-categories`;
+    const urlAreas    = `${this.base}/print-areas`;
 
     const req$ = forkJoin({
       categories: this.categoriesLoaded ? of(this.categoriesSig()) : this.http.get<Category[]>(urlCats),
@@ -87,13 +88,13 @@ export class ProductService {
   uploadImageForProduct(id_company_product: number, file: File) {
     const fd = new FormData();
     fd.append('file', file); //  clave correcta
-    const url = `${this.base}/api/company-products/${id_company_product}/upload`; // usa :id
+    const url = `${this.base}/company-products/${id_company_product}/upload`; // usa :id
     return this.http.post<any>(url, fd);
   }
 
   // ---------- CRUD ----------
   create(input: CreateCompanyProductDto, imageFile?: File): Observable<CompanyProduct> {
-    const createUrl = `${this.base}/api/company-products`;
+    const createUrl = `${this.base}/company-products`;
 
     return this.http.post<CompanyProduct>(createUrl, input).pipe(
       switchMap(created => {
@@ -123,7 +124,7 @@ export class ProductService {
   }
 
   update(id_company_product: number, patch: UpdateCompanyProductDto, imageFile?: File) {
-    const url = `${this.base}/api/company-products/${id_company_product}`;
+    const url = `${this.base}/company-products/${id_company_product}`;
 
     return this.http.patch<CompanyProduct>(url, patch).pipe(
       switchMap(updated => {
@@ -143,7 +144,7 @@ export class ProductService {
   }
 
   remove(id_company_product: number) {
-    const url = `${this.base}/api/company-products/${id_company_product}`;
+    const url = `${this.base}/company-products/${id_company_product}`;
     return this.http.delete(url).pipe(
       tap(() => this.productsSig.set(this.productsSig().filter(p => p.id_company_product !== id_company_product)))
     ).subscribe();
@@ -151,7 +152,7 @@ export class ProductService {
 
   setActive(id_company_product: number, active: boolean) {
     // si tu endpoint es este (como mostraste):
-    const url = `${this.base}/api/company-products/company/${id_company_product}/toggle`;
+    const url = `${this.base}/company-products/company/${id_company_product}/toggle`;
     // si tu backend realmente usa PATCH /api/company-products/:id con body { is_active }, cambia esa URL
     const body = { is_active: active ? 1 : 0 };
 
@@ -189,14 +190,14 @@ export class ProductService {
   }
 
   async getDetail(id_branch_product: number): Promise<{ data: ProductDetail }> {
-    const url = `${this.base}/api/company-products/${id_branch_product}`;
+    const url = `${this.base}/company-products/${id_branch_product}`;
     return await firstValueFrom(this.http.get<{ data: ProductDetail }>(url));
   }
 
   // === OBTENER IMÁGENES DE UN PRODUCTO ===
   // Tu controller expone GET /api/company-products/:id_product/images
   getProductImages(id_company_product: number) {
-    const url = `${this.base}/api/company-products/${id_company_product}/images`; // usa :id_product
+    const url = `${this.base}/company-products/${id_company_product}/images`; // usa :id_product
     return this.http.get<ProductImagesResponse | ProductImage[]>(url).pipe(
       // Soporta dos formatos: { images: [...] } o directamente [...]
       map(res => {

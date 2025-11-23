@@ -1,0 +1,154 @@
+<div class="max-w-6xl mx-auto flex flex-col gap-6">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
+          <span>Admin / <span class="text-slate-700 font-medium">Dashboard</span></span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">
+          Métricas de la Empresa
+        </h1>
+        <p class="text-sm text-slate-600">
+          Ventas, comandas y desempeño del periodo seleccionado
+        </p>
+      </div>
+
+      <!-- FILTRO FECHAS -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-slate-600">Desde</label>
+            <input
+              type="date"
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all"
+              [value]="from()"
+              (change)="onDateChange('from', $any($event.target).value)"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-slate-600">Hasta</label>
+            <input
+              type="date"
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all"
+              [value]="to()"
+              (change)="onDateChange('to', $any($event.target).value)"
+            />
+          </div>
+
+          <button
+            (click)="refresh()"
+            class="mt-auto px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-sky-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="loading()"
+          >
+            <mat-icon [fontIcon]="loading() ? 'hourglass_empty' : 'refresh'" class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="loading()"></mat-icon>
+            <span>{{ loading() ? 'Cargando...' : 'Actualizar' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs MINIMALISTAS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Ventas Totales -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-emerald-500 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+            <mat-icon class="!text-xl text-emerald-600">attach_money</mat-icon>
+          </div>
+          <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Total</span>
+        </div>
+        <div class="text-sm text-slate-600 mb-1">Ventas totales</div>
+        <div class="text-2xl font-bold text-slate-800">
+          {{ metrics()?.total_sales || 0 | currency: 'MXN' : 'symbol' : '1.0-0' }}
+        </div>
+      </div>
+
+      <!-- Comandas -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+            <mat-icon class="!text-xl text-blue-600">receipt_long</mat-icon>
+          </div>
+          <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Órdenes</span>
+        </div>
+        <div class="text-sm text-slate-600 mb-1">Comandas</div>
+        <div class="text-2xl font-bold text-slate-800">
+          {{ metrics()?.total_orders || 0 }}
+        </div>
+      </div>
+
+      <!-- Ticket Promedio -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-amber-500 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+            <mat-icon class="!text-xl text-amber-600">point_of_sale</mat-icon>
+          </div>
+          <span class="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Promedio</span>
+        </div>
+        <div class="text-sm text-slate-600 mb-1">Ticket promedio</div>
+        <div class="text-2xl font-bold text-slate-800">
+          {{ metrics()?.avg_ticket || 0 | currency: 'MXN' : 'symbol' : '1.0-0' }}
+        </div>
+      </div>
+
+      <!-- Productos Vendidos -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-purple-500 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+            <mat-icon class="!text-xl text-purple-600">restaurant</mat-icon>
+          </div>
+          <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">Items</span>
+        </div>
+        <div class="text-sm text-slate-600 mb-1">Productos vendidos</div>
+        <div class="text-2xl font-bold text-slate-800">
+          {{ metrics()?.total_items || 0 }}
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICAS MEJORADAS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Ventas por Día -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg transition-shadow">
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+            <mat-icon class="!text-xl text-white">trending_up</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Ventas por día</h2>
+            <p class="text-xs text-slate-500">Evolución de ingresos</p>
+          </div>
+        </div>
+        <div class="h-80 relative">
+          <canvas #salesChart></canvas>
+        </div>
+      </div>
+
+      <!-- Comandas por Día -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg transition-shadow">
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <mat-icon class="!text-xl text-white">equalizer</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Comandas por día</h2>
+            <p class="text-xs text-slate-500">Volumen de órdenes</p>
+          </div>
+        </div>
+        <div class="h-80 relative">
+          <canvas #ordersChart></canvas>
+        </div>
+      </div>
+    </div>
+</div>
+
+<style>
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+</style>

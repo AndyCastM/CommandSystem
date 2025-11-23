@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../shared/UI/toast.service';
 import { SafeCookieService } from '../../core/utils/ssr-cookie';
 import { isBrowser } from '../../core/utils/platform';
+import { API_URL } from '../../core/services/constants';
 
 export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | 'Superadmin';
 
@@ -27,7 +28,7 @@ export class AuthService {
 
   currentUser = signal<LoginResponse['user'] | null>(null);
 
-  apiUrl = 'http://localhost:3000/api';
+  apiUrl = API_URL;
 
   constructor() {
 

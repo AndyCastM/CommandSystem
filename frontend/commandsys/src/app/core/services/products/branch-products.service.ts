@@ -9,11 +9,12 @@ import {
   ProductImage,
   ProductImagesResponse,
 } from './products.models';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class BranchProductsService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:3000';
+  private base = API_URL; // API_URL
 
   loadingSig = signal(false);
   productsSig = signal<BranchProduct[]>([]);
@@ -32,7 +33,7 @@ export class BranchProductsService {
     if (filters?.id_area) q.set('id_area', String(filters.id_area));
     if (filters?.search) q.set('search', filters.search);
 
-    const url = `${this.base}/api/company-products/branch_products`;
+    const url = `${this.base}/company-products/branch_products`;
 
     const req$ = this.http.get<CompanyProductApiResponse>(url).pipe(
       map(res => res.data as unknown as BranchProduct[]),
@@ -52,7 +53,7 @@ export class BranchProductsService {
 
   // === Toggle disponibilidad de un producto de sucursal ===
   toggleActive(id_branch_product: number, active: boolean) {
-    const url = `${this.base}/api/company-products/branch/${id_branch_product}/toggle`;
+    const url = `${this.base}/company-products/branch/${id_branch_product}/toggle`;
     const body = { is_active: active }; // ya como number (0 | 1)
 
     // Optimista: cambia localmente
@@ -84,7 +85,7 @@ export class BranchProductsService {
 
   // === Obtener imágenes (usa id_company_product del producto base) ===
   getProductImages(id_company_product: number) {
-    const url = `${this.base}/api/company-products/${id_company_product}/images`;
+    const url = `${this.base}/company-products/${id_company_product}/images`;
     return this.http.get<ProductImagesResponse | ProductImage[]>(url).pipe(
       map(res => Array.isArray(res) ? res : (res?.images ?? []))
     );

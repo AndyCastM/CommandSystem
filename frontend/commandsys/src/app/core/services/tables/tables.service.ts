@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, tap, catchError, throwError, shareReplay } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../constants';
 
 export interface Table {
   id_table: number;
@@ -24,7 +25,7 @@ export interface TableInfo {
 @Injectable({ providedIn: 'root' })
 export class TablesService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:3000/api/tables';
+  private base = API_URL + '/tables';
 
   loading = signal(false);
   tables = signal<Table[]>([]);

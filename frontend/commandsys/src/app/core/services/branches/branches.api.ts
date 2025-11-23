@@ -2,11 +2,12 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Branch, CreateBranchDto, UpdateBranchDto } from './branches.models';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class BranchesApi {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:3000/api';
+  private baseUrl = API_URL;
 
   branches = signal<Branch[]>([]);
   loading = signal(false);

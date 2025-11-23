@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { API_URL } from './constants';
 
 export interface Role {
     id_role: number;
@@ -12,7 +13,7 @@ export class RolesService {
   private roles$ = new BehaviorSubject<Role[] | null>(null);
 
   getRoles(): Observable<Role[]> {
-    const url = 'http://localhost:3000/api/users/roles'
+    const url =  API_URL + '/users/roles';
     return this.http.get<Role[]>(url).pipe(tap(list => this.roles$.next(list)));
   }
 

@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class BranchSchedulesApi {
-  private base = 'http://localhost:3000/api/branches/schedules';
+  private base = API_URL + '/branches/schedules';
 
   private http = inject(HttpClient);
 

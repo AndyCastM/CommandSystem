@@ -176,7 +176,7 @@
             <!-- Imagen -->
             <div class="w-[90px] h-[64px] rounded-xl overflow-hidden ring-1 ring-slate-200 bg-slate-50">
               <img
-                [ngSrc]="img(p)"
+                [src]="img(p)"
                 alt="{{ p.name }}"
                 width="120" height="86"
                 class="w-full h-full object-cover"
@@ -241,7 +241,7 @@
           <!-- Vista Móvil -->
           <div class="md:hidden p-4 flex flex-col gap-2 border-b">
             <div class="flex items-center gap-3">
-              <img [ngSrc]="img(p)" width="80" height="80"
+              <img [src]="img(p)" width="80" height="80"
                   class="w-20 h-16 rounded-xl object-cover ring-1 ring-slate-200" />
               <div>
                 <div class="font-medium text-slate-800">

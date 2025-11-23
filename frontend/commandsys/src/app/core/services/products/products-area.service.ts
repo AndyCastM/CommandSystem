@@ -2,11 +2,12 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import type { Area } from './products.models';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class ProductAreasService {
   private http = inject(HttpClient);
-  private url = 'http://localhost:3000/api/print-areas';
+  private url = API_URL + '/print-areas';
 
   readonly areasSig = signal<Area[]>([]);
   readonly loadingSig = signal(false);

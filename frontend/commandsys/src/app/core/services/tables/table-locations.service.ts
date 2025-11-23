@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, tap, catchError, throwError, shareReplay } from 'rxjs';
+import { API_URL } from '../constants';
 
 export interface TableLocation {
   id_location: number | null;
@@ -11,7 +12,7 @@ export interface TableLocation {
 @Injectable({ providedIn: 'root' })
 export class TableLocationsService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:3000/api/branches/locations';
+  private base = API_URL + '/branches/locations';
 
   loading = signal(false);
   locations = signal<TableLocation[]>([]);

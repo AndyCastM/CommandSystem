@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../constants';
 
 export interface OrderItemOption {
   id_option_value: number;
@@ -30,7 +31,7 @@ export interface CreateOrderPayload {
 })
 export class OrderService {
   private http = inject(HttpClient);
-  private API_URL = 'http://localhost:3000/api/orders';
+  private api_url = API_URL + '/orders';
 
   /**
    * Crear una orden
@@ -40,7 +41,7 @@ export class OrderService {
       console.log('Enviando orden al backend:', payload);
 
       const res = await firstValueFrom(
-        this.http.post<any>(`${this.API_URL}`, payload)
+        this.http.post<any>(`${this.api_url}`, payload)
       );
 
       console.log(' Orden creada:', res);
@@ -55,7 +56,7 @@ export class OrderService {
   async getActiveOrdersByBranch() {
     try {
       return await firstValueFrom(
-        this.http.get<any[]>(`${this.API_URL}/branch/active`)
+        this.http.get<any[]>(`${this.api_url}/branch/active`)
       );
     } catch (error) {
       console.error('Error obteniendo órdenes activas:', error);
@@ -65,19 +66,19 @@ export class OrderService {
 
   markDelivered(id_order_item: number) {
     return firstValueFrom(
-        this.http.patch(`${this.API_URL}/items/${id_order_item}/delivered`, {})
+        this.http.patch(`${this.api_url}/items/${id_order_item}/delivered`, {})
     );
   }
 
   cancelItem(id_order_item: number, reason: string, qty: number) {
     return firstValueFrom(
-        this.http.patch(`${this.API_URL}/items/${id_order_item}/cancel`, { reason })
+        this.http.patch(`${this.api_url}/items/${id_order_item}/cancel`, { reason })
     );
   }
 
   splitItem(id_order_item: number, qty: number) {
     return this.http.post(
-      `${this.API_URL}/item/${id_order_item}/split`,
+      `${this.api_url}/item/${id_order_item}/split`,
       { qty },
       { withCredentials: true }
     );
@@ -85,7 +86,7 @@ export class OrderService {
 
   cancelOrder(id_order: number, reason: string) {
     return firstValueFrom(
-        this.http.patch(`${this.API_URL}/${id_order}/cancel`, { reason })
+        this.http.patch(`${this.api_url}/${id_order}/cancel`, { reason })
     );
   }
   

@@ -14,6 +14,7 @@ import { CapitalizePipe } from '../../shared/pipes/capitalize.pipe';
 })
 export class AdminShellComponent {
   nav = [
+    { icon: 'dashboard', label: 'Dashboard', path: '/admin/dashboard' },
     { icon: 'people', label: 'Usuarios', path: '/admin/usuarios' },
     { icon: 'inventory_2', label: 'Productos', path: '/admin/productos' },
     { icon: 'food_bank', label: 'Combos', path: '/admin/combos' },

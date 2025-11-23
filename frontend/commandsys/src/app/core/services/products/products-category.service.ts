@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import type { Category } from './products.models';
+import { API_URL } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class ProductCategoriesService {
@@ -11,7 +12,7 @@ export class ProductCategoriesService {
 
   private http = inject(HttpClient);
   private areas$ = new BehaviorSubject<Category[] | null>(null);
-  private url = 'http://localhost:3000/api/product-categories'
+  private url = API_URL+'/product-categories';
 
   /** Carga categorias desde el backend */
   fetchCategories() {

@@ -2,6 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject } from 'rxjs';
 import { ToastService } from '../../../shared/UI/toast.service';
+import { API_URL } from '../constants';
 
 export interface TableAlert {
   table: string;
@@ -25,7 +26,7 @@ export class NotificationsService {
   private alerts$ = new BehaviorSubject<TableAlert | null>(null);
   private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
 
-  private apiUrl = 'http://localhost:3000';
+  private apiUrl = API_URL;
   private _events$ = new BehaviorSubject<any>(null);
   public events$ = this._events$.asObservable();
 

@@ -21,6 +21,7 @@ import { AiModule } from './ai/ai.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OrdersModule } from './orders/orders.module';
 import { AlexaModule } from './alexa/alexa.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { AlexaModule } from './alexa/alexa.module';
     BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule],
+    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

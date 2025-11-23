@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject, effect, OnInit } from '@angular/core';
+import { Component, computed, signal, inject, effect, OnInit} from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -21,7 +21,7 @@ import { NgClass } from '@angular/common';
 @Component({
   standalone: true,
   selector: 'app-products-admin',
-  imports: [CommonModule, FormsModule, RouterModule, NgOptimizedImage, MatDialogModule, MatSelect, MatOption, MatIcon, NgClass],
+  imports: [CommonModule, FormsModule, RouterModule, MatDialogModule, MatSelect, MatOption, MatIcon, NgClass],
   templateUrl: './products-admin.component.html',
 })
 export class ProductsAdminComponent implements OnInit{
@@ -132,13 +132,13 @@ export class ProductsAdminComponent implements OnInit{
         const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
         this.thumbMap.set(p, finalUrl);
 
-        //forzamos a Angular a redibujar en el siguiente tick
-        queueMicrotask(() => { this.productsSig.set([...this.productsSig()]); });
+        setTimeout(() => {
+          this.productsSig.set([...this.productsSig()]);
+        }, 0);
       });
 
     return this.placeholderDataUrl;
   }
-
 
   // Manejo de error en <img> (caer a placeholder y evitar loops)
   onImgError(p: CompanyProduct, evt: Event) {

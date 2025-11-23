@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../../../../core/services/constants';
 
 @Injectable({ providedIn: 'root' })
 export class CombosService {
-  private baseUrl = 'http://localhost:3000/api/combos';
+  private baseUrl = API_URL + '/combos';
 
   constructor(private http: HttpClient) {}
 

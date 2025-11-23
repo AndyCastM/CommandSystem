@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_URL } from '../constants';
 
 export interface MenuProduct {
   id_branch_product: number;
@@ -27,7 +28,7 @@ export interface MenuResponse {
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:3000/api/branches/menu'; // Ajusta tu ruta real
+  private baseUrl = API_URL + '/branches/menu'; 
 
   async getBranchMenu(): Promise<MenuResponse> {
     const response = await firstValueFrom(
