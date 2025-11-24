@@ -95,6 +95,7 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
     if (!from || !to) return;
 
     this.loading.set(true);
+    this.loadTopProducts();
 
     this.metricsApi.getDashboard(from, to).subscribe({
       next: (res) => {
@@ -107,6 +108,20 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
         this.toast.error('Error al cargar métricas');
         this.loading.set(false);
       },
+    });
+  }
+
+  // ================== TOP PRODUCTOS ==================
+  topProducts = signal<any[]>([]);
+
+  loadTopProducts() {
+    this.metricsApi.getTopProducts(this.from(), this.to()).subscribe({
+      next: (res) => {
+        this.topProducts.set(res);
+      },
+      error: () => {
+        this.toast.error('Error cargando ranking de productos');
+      }
     });
   }
 

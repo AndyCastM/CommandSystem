@@ -24,4 +24,11 @@ export class MetricsService {
       params,
     });
   }
+
+  getTopProducts(from: string, to: string) {
+    return this.http.get<any[]>(`${this.apiUrl}/top-products`, {
+      params: { from, to }
+    });
+  }
+
 }

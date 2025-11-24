@@ -32,6 +32,8 @@ export class Orders implements OnInit{
 
   async ngOnInit() {
     if (!this.isBrowser) return;  // evita 401 SSR
+    
+    this.notif.connect();  // 
     await this.loadOrders();
     this.notif.onItemReady().subscribe((alert) => {
       if (alert) {

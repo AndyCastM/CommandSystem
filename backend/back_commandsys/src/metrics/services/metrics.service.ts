@@ -13,9 +13,7 @@ export class MetricsService {
       ? `o.id_branch = ${id_branch}`
       : `1 = 1`;
 
-    // =========================================
     //   RAW QUERY: KPIs
-    // =========================================
     const totalsRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         COALESCE(SUM(oi.subtotal), 0) AS total_sales,
@@ -34,9 +32,7 @@ export class MetricsService {
     const totalOrders = Number(totals.total_orders || 0);
     const totalItems = Number(totals.total_items || 0);
 
-    // =========================================
     //   RAW QUERY: Ventas por día
-    // =========================================
     const salesRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         DATE(o.created_at) AS date,
@@ -56,9 +52,8 @@ export class MetricsService {
       total: Number(r.total),
     }));
 
-    // =========================================
+
     //   RAW QUERY: Comandas por día
-    // =========================================
     const ordersRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         DATE(created_at) AS date,
@@ -77,9 +72,7 @@ export class MetricsService {
       count: Number(r.count),
     }));
 
-    // =========================================
-    //   FINAL RESPONSE
-    // =========================================
+
     return {
       total_sales: totalSales,
       total_orders: totalOrders,
@@ -89,4 +82,35 @@ export class MetricsService {
       orders_over_time,
     };
   }
+
+  async getTopProducts(from: string, to: string, id_branch: number | null) {
+    const whereBranch = id_branch
+      ? `oi.id_branch = ${id_branch}`
+      : `1 = 1`;
+
+    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
+      SELECT 
+        cp.name AS product,
+        SUM(oi.quantity) AS total_qty,
+        SUM(oi.subtotal) AS total_sales
+      FROM order_items oi
+      JOIN branch_products bp ON oi.id_branch_product = bp.id_branch_product
+      JOIN company_products cp ON bp.id_company_product = cp.id_company_product
+      JOIN orders o ON o.id_order = oi.id_order
+      WHERE 
+        ${whereBranch}
+        AND o.created_at BETWEEN '${from} 00:00:00' AND '${to} 23:59:59'
+        AND oi.status != 'cancelled'
+      GROUP BY cp.id_company_product
+      ORDER BY total_qty DESC
+      LIMIT 10;
+    `);
+
+    return rows.map(r => ({
+      product: r.product,
+      total_qty: Number(r.total_qty),
+      total_sales: Number(r.total_sales),
+    }));
+  }
+
 }

@@ -26,7 +26,7 @@ export class NotificationsService {
   private alerts$ = new BehaviorSubject<TableAlert | null>(null);
   private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
 
-  private apiUrl = API_URL;
+  private apiUrl = 'http://localhost:3000'; // API_URL CAMBIAR DESPUES
   private _events$ = new BehaviorSubject<any>(null);
   public events$ = this._events$.asObservable();
 

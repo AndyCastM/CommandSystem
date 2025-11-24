@@ -140,6 +140,75 @@
         </div>
       </div>
     </div>
+
+    <!-- PRODUCTOS MÁS VENDIDOS -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow mt-2">
+      <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+        <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center">
+          <mat-icon fontIcon="star" class="!text-[20px] !w-[20px] !h-[20px] !leading-none text-white"></mat-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Productos más vendidos</h2>
+          <p class="text-xs text-slate-500">Top 10 del período seleccionado</p>
+        </div>
+      </div>
+
+      <div *ngIf="topProducts().length === 0" class="text-center py-8">
+        <mat-icon class="!text-5xl text-slate-300 mb-2">shopping_bag</mat-icon>
+        <p class="text-slate-400 text-sm">No hay ventas en este rango</p>
+      </div>
+
+      <div class="space-y-2" *ngIf="topProducts().length > 0">
+        <div
+          *ngFor="let p of topProducts(); let i = index"
+          class="flex items-center justify-between p-4 rounded-lg border transition-all"
+          [ngClass]="{
+            'bg-yellow-50/50 border-yellow-200 hover:bg-yellow-50 hover:border-yellow-300': i === 0,
+            'bg-slate-50/50 border-slate-300 hover:bg-slate-100 hover:border-slate-300': i === 1,
+            'bg-orange-50/50 border-orange-200 hover:bg-orange-50 hover:border-orange-300': i === 2,
+            'bg-white border-slate-200 hover:bg-slate-50': i > 2
+          }"
+        >
+          <div class="flex items-center gap-4 flex-1">
+            <!-- Badge de posición - TODOS REDONDOS -->
+            <div
+              class="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-full shadow-sm"
+              [ngClass]="{
+                'bg-yellow-400 text-white': i === 0,
+                'bg-slate-400 text-white': i === 1,
+                'bg-orange-400 text-white': i === 2,
+                'bg-slate-200 text-slate-700': i > 2
+              }"
+            >
+              {{ i + 1 }}
+            </div>
+
+            <!-- Información del producto -->
+            <div class="flex-1">
+              <p class="font-semibold text-slate-800 mb-1">{{ p.product }}</p>
+              <div class="flex items-center gap-3 text-xs text-slate-600">
+                <span class="flex items-center gap-1">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-sky-600">shopping_cart</mat-icon>
+                  <span class="font-medium">{{ p.total_qty }}</span> vendidos
+                </span>
+                <span class="text-slate-300">•</span>
+                <span class="flex items-center gap-1 font-semibold text-emerald-600">
+                  {{ p.total_sales | currency : 'MXN' : 'symbol' : '1.0-0' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Icono para top 3 -->
+          <mat-icon 
+            *ngIf="i < 3"
+            [class]="i === 0 ? '!text-2xl text-yellow-500' : i === 1 ? '!text-2xl text-slate-400' : '!text-2xl text-orange-500'"
+          >
+            {{ i === 0 ? 'emoji_events' : i === 1 ? 'workspace_premium' : 'military_tech' }}
+          </mat-icon>
+        </div>
+      </div>
+    </div>
 </div>
 
 <style>

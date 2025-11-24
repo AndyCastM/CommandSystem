@@ -417,6 +417,8 @@ export class OrdersService {
       }
     });
 
+    console.log('NOTIF ES:', this.notif);
+
     // Si está listo -> mandar notificación
     if (status === 'ready') {
       this.notif.emitToBranch(
