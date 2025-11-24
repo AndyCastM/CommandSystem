@@ -15,6 +15,7 @@ import { MatOption } from '@angular/material/select';
 import { TableLocationsService } from '../../../core/services/tables/table-locations.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isPlatformBrowser } from '@angular/common';
+import { OrderService } from '../../../core/services/orders/orders.service';
 
 @Component({
   selector: 'app-tables',
@@ -37,6 +38,7 @@ export class Tables implements OnInit, OnDestroy {
   private locationsService = inject(TableLocationsService);
   private dialog = inject(MatDialog);
   private auth = inject(AuthService);
+  private ordersApi = inject(OrderService);
 
   private router = inject(Router);
 
@@ -222,4 +224,28 @@ export class Tables implements OnInit, OnDestroy {
       this.toast.error(err.error?.message || 'Error al liberar la mesa');
     }
   }
+
+  requestPrebill(table: any) {
+    console.log("SESSIONNN:",table.id_session);
+
+    if (!table?.id_session) {
+      this.toast.error('No se pudo identificar la mesa.');
+      return;
+    }
+
+    if (table.status !== 'Ocupada') {
+      this.toast.warning('Solo puedes solicitar pre-cuenta de mesas ocupadas.');
+      return;
+    }
+
+    this.ordersApi.requestPrebill(table.id_session)
+      .then(() => {
+        this.toast.success(`Se solicitó la pre-cuenta de la mesa ${table.name}`);
+      })
+      .catch((err) => {
+        console.error(err);
+        this.toast.error('No se pudo enviar la solicitud a caja.');
+      });
+  }
+
 }

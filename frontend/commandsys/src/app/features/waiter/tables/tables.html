@@ -134,7 +134,8 @@
         <!-- MESA OCUPADA -->
         <div *ngIf="table.status === 'Ocupada'" class="flex flex-col w-full gap-2">
           <button
-            (click)="viewOrder(table)"
+            *ngIf="table.status === 'Ocupada'"
+            (click)="requestPrebill(table)"
             class="w-full bg-white border border-slate-300 text-slate-800 rounded-lg py-1.5 text-sm font-medium hover:bg-slate-100 transition"
           >
             Solicitar pre-cuenta

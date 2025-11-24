@@ -90,4 +90,9 @@ export class OrderService {
     );
   }
   
+  requestPrebill(id_session: number) {
+    return firstValueFrom(
+        this.http.post(`${this.api_url}/request-prebill/${id_session}`, {})
+    );
+  }
 }

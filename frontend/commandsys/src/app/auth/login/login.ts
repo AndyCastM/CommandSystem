@@ -72,6 +72,8 @@ export class Login {
       this.router.navigate(['/superadmin/dashboard']); // Panel Superadmin
     } else if (role === 'Mesero'){
       this.router.navigate(['/mesero/mesas']);  // Panel mesero
+    } else if (role === 'Cajero'){
+      this.router.navigate(['/cajero/caja']);    // Panel cajero
     }
   }
 }

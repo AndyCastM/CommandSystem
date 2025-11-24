@@ -660,4 +660,44 @@ export class OrdersService {
     });
   }
 
+  async requestPrebill(id_session: number, id_user: number) {
+    const session = await this.prisma.table_sessions.findUnique({
+      where: { id_session },
+      include: {
+        tables: true,
+        orders: {
+          where: {
+            status: 'delivered' // solo órdenes entregadas
+          },
+          include: {
+            order_items: true
+          }
+        }
+      }
+    });
+
+    if (!session) throw new NotFoundException('Sesión no encontrada');
+
+    // Sumar total de TODAS las ordenes dentro de la sesión
+    const total = session.orders.reduce((acc, o) => {
+      const t = o.order_items
+        .filter(i => i.status !== 'cancelled')
+        .reduce((s, i) => s + Number(i.subtotal), 0);
+
+      return acc + t;
+    }, 0);
+
+    console.log('PREBILL SOLICITADA Y MANDADA', session, total);
+    // Notificar a la caja (cajero)
+    this.notif.emitToBranch(session.tables.id_branch, 'prebill', {
+      id_session,
+      table: session.tables.number,
+      total,
+      orders: session.orders.map(o => o.id_order),
+      by: id_user,
+    });
+
+    return { ok: true };
+  }
+
 }

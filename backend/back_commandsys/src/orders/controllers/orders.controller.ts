@@ -87,4 +87,10 @@ export class OrdersController {
     return this.ordersService.splitItem(+id_order_item, qty);
   }
   
+  @Post('request-prebill/:id_session')
+  async requestPrebill(@Param('id_session') id_session: number, @CurrentUser() user: any) {
+    const order = await this.ordersService.requestPrebill(+id_session, +user.sub);
+    return { ok: true };
+  }
+
 }

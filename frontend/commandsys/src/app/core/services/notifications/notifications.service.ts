@@ -83,8 +83,15 @@ export class NotificationsService {
       });
     });
 
+    this.socket.on('prebill', (data) => {
+      this.zone.run(() => {
+        console.log('PREBILL RECIBIDO ===>', data);
+        this._events$.next({ type: 'prebill', data });
+      });
+    });
+
   }
-  
+
   /** Observable para alertas de mesa */
   onAlert() {
     return this.alerts$.asObservable();

@@ -22,6 +22,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { OrdersModule } from './orders/orders.module';
 import { AlexaModule } from './alexa/alexa.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { CashModule } from './cash/cash.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { MetricsModule } from './metrics/metrics.module';
     BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule],
+    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule, CashModule, PaymentsModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,
