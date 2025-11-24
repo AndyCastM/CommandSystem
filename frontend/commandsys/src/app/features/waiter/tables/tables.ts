@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, computed, PLATFORM_ID} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
@@ -21,6 +14,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/select';
 import { TableLocationsService } from '../../../core/services/tables/table-locations.service';
 import { AuthService } from '../../../auth/services/auth.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-tables',
@@ -73,10 +67,10 @@ export class Tables implements OnInit, OnDestroy {
     return table.id_user === user.id_user;
   }
 
-  // ===========================
-  // INIT
-  // ===========================
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   async ngOnInit() {
+    if (!this.isBrowser) return;
     this.loading.set(true);
     this.locationsService.loadAll().subscribe();
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -17,6 +17,7 @@ import { ConfirmDialogComponent } from '../../../../../shared/modals/confirm-dia
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { ComboEditDialogComponent } from '../../UI/combo-edit-dialog/combo-edit-dialog';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-admin-combos',
@@ -63,7 +64,10 @@ export class AdminCombos implements OnInit {
     return this.form.get('groups') as FormArray;
   }
 
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   async ngOnInit() {
+    if (!this.isBrowser) return;
     try {
       await Promise.all([this.loadCombos(), this.loadProducts()]);
     } finally {

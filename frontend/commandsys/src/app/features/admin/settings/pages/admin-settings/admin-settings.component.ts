@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, PLATFORM_ID, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { SettingsApi } from '../../../settings/data-access/settings.api';
 import { CompanySettings } from '../../../settings/data-access/settings.models';
 import { ToastService } from '../../../../../shared/UI/toast.service';
 import { CommonModule } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-admin-settings',
@@ -29,7 +30,14 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./admin-settings.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminSettingsComponent {
+export class AdminSettingsComponent implements OnInit {
+
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  async ngOnInit() {
+    if (!this.isBrowser) return;
+    this.api.loadInitial();
+  }
 
   constructor() {
     // Suscribirse reactivamente a cambios en company (signal)
@@ -37,7 +45,7 @@ export class AdminSettingsComponent {
       const c = this.api.company();
       if (c) this.companyForm.patchValue(c, { emitEvent: false });
     });
-    this.api.loadInitial();
+    //this.api.loadInitial();
   }
   
   private fb = inject(FormBuilder);

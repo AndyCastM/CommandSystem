@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Superadmin } from '../data-access/superadmin';
 import { MatIcon } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { CompanyFormComponent } from '../UI/company-form/company-form.component'
 import { ToastService } from '../../../shared/UI/toast.service';
 import { UsersSupportModalComponent } from '../UI/users-support-modal/users-support-modal';
 import { EditCompanyModalComponent } from '../UI/edit-company-modal/edit-company-modal';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +17,7 @@ import { EditCompanyModalComponent } from '../UI/edit-company-modal/edit-company
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   companies = signal<any[]>([]);
   companiesCount = signal(0);
   metrics = signal({ users: 0, active: 0, inactive: 0 });
@@ -27,6 +28,14 @@ export class Dashboard {
   showEditModal = signal(false);
   
   form: FormGroup;
+
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  async ngOnInit() {
+    if (!this.isBrowser) return;
+    await this.loadData();
+    await this.loadMetrics();
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -42,9 +51,6 @@ export class Dashboard {
       adminEmail: ['', [Validators.required, Validators.email]],
       adminPassword: ['', [Validators.required, Validators.minLength(6)]],
     });
-
-    this.loadData();
-    this.loadMetrics();
   }
 
   async loadData() {

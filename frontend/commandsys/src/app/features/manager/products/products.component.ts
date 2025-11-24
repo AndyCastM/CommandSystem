@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject, effect, OnInit } from '@angular/core';
+import { Component, computed, signal, inject, effect, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, NgOptimizedImage, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -11,6 +11,7 @@ import { ProductAreasService } from '../../../core/services/products/products-ar
 import { ToastService } from '../../../shared/UI/toast.service';
 import { take } from 'rxjs';
 import type { BranchProduct } from '../../../core/services/products/products.models';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-branch-products',
@@ -23,7 +24,6 @@ import type { BranchProduct } from '../../../core/services/products/products.mod
     MatSelect,
     MatOption,
     MatIcon,
-    NgOptimizedImage,
     NgClass
   ],
   templateUrl: './products.component.html',
@@ -74,7 +74,10 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  async ngOnInit() {
+    if (!this.isBrowser) return;
     // Carga inicial
     this.branchSrv.loadAll().pipe(take(1)).subscribe();
   }

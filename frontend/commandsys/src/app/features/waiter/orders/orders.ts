@@ -31,7 +31,7 @@ export class Orders implements OnInit{
   isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   async ngOnInit() {
-    if (!this.isBrowser) return;  // ← evita 401 SSR
+    if (!this.isBrowser) return;  // evita 401 SSR
     await this.loadOrders();
     this.notif.onItemReady().subscribe((alert) => {
       if (alert) {

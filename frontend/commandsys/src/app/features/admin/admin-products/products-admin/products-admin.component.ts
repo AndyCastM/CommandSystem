@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject, effect, OnInit} from '@angular/core';
+import { Component, computed, signal, inject, effect, OnInit, PLATFORM_ID} from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -17,6 +17,7 @@ import { ProductAreasService } from '../../../../core/services/products/products
 import { ProductCategoriesService } from '../data-access/products-category.service';
 import { firstValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   standalone: true,
@@ -46,6 +47,8 @@ export class ProductsAdminComponent implements OnInit{
 
   isActive = (p: CompanyProduct) => p?.is_active === 1;
 
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   // Placeholder inline (SVG) para no depender de /assets
   private placeholderDataUrl =
     'data:image/svg+xml;utf8,' +
@@ -74,8 +77,10 @@ export class ProductsAdminComponent implements OnInit{
   }
 
   ngOnInit(){
+    if (!this.isBrowser) return;
+
     // Carga de productos/catálogos
-      this.productSrv.loadAll().pipe(take(1)).subscribe();
+    this.productSrv.loadAll().pipe(take(1)).subscribe();
   }
 
   // Lista filtrada

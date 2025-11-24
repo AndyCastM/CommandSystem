@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,6 +9,7 @@ import { ToastService } from '../../../shared/UI/toast.service';
 import { MatDialog } from '@angular/material/dialog';
 import { LocationFormDialogComponent } from './UI/location-form-dialog/location-form-dialog.component';
 import { TableFormDialogComponent } from './UI/table-form-dialog/table-form-dialog.component';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-tables',
@@ -28,8 +29,11 @@ export class TablesComponent implements OnInit {
 
   locations = this.locSrv.locations;
   tables = this.tblSrv.tables;
+  
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  ngOnInit() {
+  async ngOnInit() {
+    if (!this.isBrowser) return;
     this.locSrv.loadAll().subscribe();
     this.tblSrv.loadAll().subscribe({
       next: (res) => console.log(' Mesas cargadas:', res),

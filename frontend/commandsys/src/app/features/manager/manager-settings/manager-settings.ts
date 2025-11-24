@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { BranchSchedulesApi } from '../../../core/services/branches/branches-schedules.api';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { BranchesApi } from '../../../core/services/branches/branches.api';
+import { isPlatformBrowser } from '@angular/common';
 
 const DAY_MAP = [
   { id: 1, name: 'Lunes' },
@@ -24,7 +25,7 @@ const DAY_MAP = [
   templateUrl: './manager-settings.html',
   styleUrl: './manager-settings.css',
 })
-export class ManagerSettings {
+export class ManagerSettings implements OnInit{
   private fb = inject(FormBuilder);
   private api = inject(BranchSchedulesApi);
   private toast = inject(ToastService);
@@ -43,7 +44,10 @@ export class ManagerSettings {
     { day_of_week: number; name: string; enabled: boolean; open: string; close: string; changed?: boolean }[]
   >([]);
 
+  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   async ngOnInit() {
+    if (!this.isBrowser) return;
     this.form.disable();
     this.loadBranchInfo();
 
