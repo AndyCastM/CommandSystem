@@ -3,9 +3,10 @@ import { UsersPageComponent } from '../../shared/pages/users/pages/users-page.co
 import { ProductsComponent } from './products/products.component';
 import { TablesComponent } from './tables/tables.component';
 import { ManagerSettings } from './manager-settings/manager-settings';
+import { DashboardMetricsComponent } from './dashboard-metrics.component/dashboard-metrics.component';
 
 export const MANAGER_ROUTES: Routes = [
-
+    { path: 'dashboard', component: DashboardMetricsComponent },
     { path: 'usuarios', component: UsersPageComponent },
     { path: 'productos', component: ProductsComponent },
     { path: 'mesas', component: TablesComponent},

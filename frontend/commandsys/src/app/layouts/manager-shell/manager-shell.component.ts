@@ -14,6 +14,7 @@ import { CapitalizePipe } from '../../shared/pipes/capitalize.pipe';
 })
 export class ManagerShellComponent {
   nav = [
+    { icon: 'dashboard', label: 'Dashboard', path: '/gerente/dashboard' },
     { icon: 'people', label: 'Usuarios', path: '/gerente/usuarios' },
     { icon: 'inventory_2', label: 'Productos', path: '/gerente/productos' },
     { icon: 'table_restaurant', label: 'Mesas', path:'/gerente/mesas'},

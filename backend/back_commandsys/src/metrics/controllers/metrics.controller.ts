@@ -13,13 +13,13 @@ export class MetricsController {
   @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
   async getDashboard(@Query() dto: GetDashboardDto, @Req() req) {
     let id_branch = req.user.id_branch;
-
+    let id_company = req.user.id_company;
     // Si es admin corporativo: ve todas las sucursales
     if (req.user.role === 'Admin' || req.user.role === 'Superadmin') {
       id_branch = null; // null = todas
     }
 
-    return this.metricsService.getDashboard(dto, id_branch);
+    return this.metricsService.getDashboard(dto, id_branch, id_company);
   }
 
   @Get('top-products')
@@ -30,7 +30,7 @@ export class MetricsController {
     @CurrentUser() user: any,
   ) {
     let id_branch: number | null = user.role === 'Admin' ? null : user.id_branch;
-    return this.metricsService.getTopProducts(from, to, id_branch);
+    return this.metricsService.getTopProducts(from, to, id_branch, +user.id_company);
   }
 
 }

@@ -6,20 +6,21 @@ import { GetDashboardDto } from '../dto/get-dashboard.dto';
 export class MetricsService {
   constructor(private prisma: PrismaService) {}
 
-  async getDashboard(dto: GetDashboardDto, id_branch: number | null) {
+  async getDashboard(dto: GetDashboardDto, id_branch: number | null, id_company: number) {
     const { from, to } = dto;
 
     const branchWhere = id_branch
       ? `o.id_branch = ${id_branch}`
-      : `1 = 1`;
+      : `b.id_company = ${id_company}`;
 
-    //   RAW QUERY: KPIs
+    // KPIs
     const totalsRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         COALESCE(SUM(oi.subtotal), 0) AS total_sales,
         COUNT(DISTINCT o.id_order) AS total_orders,
         COALESCE(SUM(oi.quantity), 0) AS total_items
       FROM orders o
+      JOIN branches b ON b.id_branch = o.id_branch
       JOIN order_items oi ON oi.id_order = o.id_order
       WHERE 
         ${branchWhere}
@@ -32,12 +33,13 @@ export class MetricsService {
     const totalOrders = Number(totals.total_orders || 0);
     const totalItems = Number(totals.total_items || 0);
 
-    //   RAW QUERY: Ventas por día
+    // Ventas por día
     const salesRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         DATE(o.created_at) AS date,
         COALESCE(SUM(oi.subtotal), 0) AS total
       FROM orders o
+      JOIN branches b ON b.id_branch = o.id_branch
       JOIN order_items oi ON oi.id_order = o.id_order
       WHERE 
         ${branchWhere}
@@ -52,13 +54,13 @@ export class MetricsService {
       total: Number(r.total),
     }));
 
-
-    //   RAW QUERY: Comandas por día
+    // Comandas por día
     const ordersRaw = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
-        DATE(created_at) AS date,
+        DATE(o.created_at) AS date,
         COUNT(*) AS count
       FROM orders o
+      JOIN branches b ON b.id_branch = o.id_branch
       WHERE 
         ${branchWhere}
         AND o.status IN ('ready', 'delivered')
@@ -72,7 +74,6 @@ export class MetricsService {
       count: Number(r.count),
     }));
 
-
     return {
       total_sales: totalSales,
       total_orders: totalOrders,
@@ -83,10 +84,11 @@ export class MetricsService {
     };
   }
 
-  async getTopProducts(from: string, to: string, id_branch: number | null) {
+
+  async getTopProducts(from: string, to: string, id_branch: number | null, id_company: number) {
     const whereBranch = id_branch
-      ? `oi.id_branch = ${id_branch}`
-      : `1 = 1`;
+      ? `o.id_branch = ${id_branch}`
+      : `b.id_company = ${id_company}`;
 
     const rows = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
@@ -97,6 +99,7 @@ export class MetricsService {
       JOIN branch_products bp ON oi.id_branch_product = bp.id_branch_product
       JOIN company_products cp ON bp.id_company_product = cp.id_company_product
       JOIN orders o ON o.id_order = oi.id_order
+      JOIN branches b ON b.id_branch = o.id_branch
       WHERE 
         ${whereBranch}
         AND o.created_at BETWEEN '${from} 00:00:00' AND '${to} 23:59:59'
@@ -112,5 +115,6 @@ export class MetricsService {
       total_sales: Number(r.total_sales),
     }));
   }
+
 
 }
