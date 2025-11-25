@@ -24,6 +24,7 @@ import { AlexaModule } from './alexa/alexa.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { CashModule } from './cash/cash.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PrintModule } from './print/print.module';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { PaymentsModule } from './payments/payments.module';
     BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule, CashModule, PaymentsModule],
+    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule, CashModule, PaymentsModule, PrintModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

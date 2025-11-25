@@ -6,10 +6,15 @@ import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 import { TableSessionsService } from 'src/table_sessions/services/table_sessions.service';
 import { CancelItemDto } from '../dto/cancel-item.dto';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
+import { PrintService } from 'src/print/services/print.service';
+import { buildTicketFormat } from 'src/print/formatters/ticket.formatter';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService, private notif: NotificationsGateway, private tables: TableSessionsService) {}
+  constructor(private prisma: PrismaService, 
+    private notif: NotificationsGateway, 
+    private tables: TableSessionsService,
+    private printService: PrintService) {}
 
   async createOrder(dto: CreateOrderDto, id_branch: number, id_user: number) {
     // --- VALIDACIONES GENERALES ---
@@ -211,7 +216,8 @@ export class OrdersService {
 
     // recalcular total general
     await this.recalcTotal(order.id_order);
-
+    await this.printOrder(order.id_order);
+    
     return {
       message: 'Comanda creada correctamente',
       order: fullOrder
@@ -696,6 +702,95 @@ export class OrdersService {
       orders: session.orders.map(o => o.id_order),
       by: id_user,
     });
+
+    return { ok: true };
+  }
+
+  async printOrder(orderId: number) {
+    // 1) Cargar orden completa
+    const order = await this.prisma.orders.findUnique({
+      where: { id_order: orderId },
+      include: {
+        branches: { include: { companies: true } },
+        users: true,
+        table_sessions: { include: { tables: true } },
+        order_items: {
+          include: {
+            branch_products: {
+              include: {
+                company_products: {
+                  include: { print_areas: true }
+                }
+              }
+            },
+            order_item_options: {
+              include: { product_option_values: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!order) throw new Error("Orden no encontrada");
+
+    // 2) Agrupar items por id_area
+    const itemsByArea = new Map<number, any[]>();
+
+    for (const item of order.order_items) {
+      const areaId = item.branch_products?.company_products?.id_area;
+      if (!areaId) continue;
+
+      if (!itemsByArea.has(areaId)) itemsByArea.set(areaId, []);
+      itemsByArea.get(areaId)!.push(item);
+    }
+
+    // 3) Datos globales
+    const company = order.branches.companies;
+    const mesa = order.table_sessions?.tables?.number ?? "Sin mesa";
+    const mesero = `${order.users?.name ?? ""} ${order.users?.last_name ?? ""}`.trim();
+
+    // 4) Procesar cada área por separado
+    for (const [areaId, items] of itemsByArea.entries()) {
+      
+      // Buscar impresoras asignadas a esta área
+      const stations = await this.prisma.branch_print_stations.findMany({
+        where: {
+          id_branch: order.id_branch,
+          id_area: areaId,
+          is_active: 1
+        }
+      });
+
+      if (!stations.length) continue;
+
+      const areaName = items[0].branch_products.company_products.print_areas.name;
+
+      // 5) Construir payload del ticket
+      const payload = {
+        areaName,
+        orderType: (order.order_type ?? "dine_in") as "dine_in" | "takeout",
+        id_order: order.id_order,
+        mesa,
+        mesero,
+        created_at: new Date().toLocaleString("es-MX"),
+
+        items: items.map(i => ({
+          id_order_item: i.id_order_item,
+          quantity: i.quantity,
+          name: i.branch_products.company_products.name,
+          options: i.order_item_options.map(o => o.product_option_values.name),
+          notes: i.notes ?? undefined
+        }))
+      };
+
+      // 6) Transformar a ticket formateado
+      const text = buildTicketFormat(payload);
+
+      // 7) Enviar a CADA impresora del área
+      stations.forEach(st => {
+        this.printService.sendOrderToPrint(text);
+      });
+    }
 
     return { ok: true };
   }

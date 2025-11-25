@@ -2,7 +2,7 @@ import { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.int
 
 export const CORS : CorsOptions = {
     // Para permitir solicitudes desde el frontend
-    origin : true,
+    origin: ['http://localhost:4200'],   // CAMBIAR LUEGO
     methods: 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS',
     credentials: true,  
     // Permitir las cabeceras necesarias

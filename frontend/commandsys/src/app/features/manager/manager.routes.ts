@@ -4,12 +4,13 @@ import { ProductsComponent } from './products/products.component';
 import { TablesComponent } from './tables/tables.component';
 import { ManagerSettings } from './manager-settings/manager-settings';
 import { DashboardMetricsComponent } from './dashboard-metrics.component/dashboard-metrics.component';
+import { PrinterConfigComponent } from './printer-config/printer-config';
 
 export const MANAGER_ROUTES: Routes = [
     { path: 'dashboard', component: DashboardMetricsComponent },
     { path: 'usuarios', component: UsersPageComponent },
     { path: 'productos', component: ProductsComponent },
     { path: 'mesas', component: TablesComponent},
+    { path: 'impresora', component: PrinterConfigComponent},
     { path: 'configuracion', component: ManagerSettings },
-
 ];
