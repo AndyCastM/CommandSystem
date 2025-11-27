@@ -10,6 +10,7 @@ import { HelpIntentHandler } from './intents/help.handler';
 import { SessionEndedRequestHandler } from './intents/session-ended.handler';
 
 import { OrdersModule } from 'src/orders/orders.module';
+import { HelloWorldIntentHandler } from './intents/hello-world.handler';
 
 @Module({
   imports: [OrdersModule], // para poder usar el servicio
@@ -17,6 +18,7 @@ import { OrdersModule } from 'src/orders/orders.module';
     providers: [
     AlexaSkillFactory,
     LaunchRequestHandler,
+    HelloWorldIntentHandler,
     ChangeCommandStatusIntentHandler,
     ChangeItemStatusIntentHandler,
     FallbackIntentHandler,

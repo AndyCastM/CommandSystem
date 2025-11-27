@@ -15,7 +15,7 @@
           <mat-card-header>
             <mat-card-title>
               <div class="flex items-center gap-2 text-[#283996] mb-2">
-                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]">
+                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]" aria-hidden="true">
                   business
                 </mat-icon>
                 <span class="inline-block align-middle leading-tight font-medium">
@@ -30,22 +30,28 @@
             <!-- fila 1 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium mb-1">Nombre Comercial</label>
+                <label for="company-name" class="block text-sm font-medium mb-1">Nombre Comercial</label>
                 <input
                   type="text"
+                  id="company-name"
+                  name="company-name"
                   [formControl]="companyForm.controls.name"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Nombre comercial de la empresa"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Razón Social</label>
+                <label for="company-legal-name" class="block text-sm font-medium mb-1">Razón Social</label>
                 <input
                   type="text"
+                  id="company-legal-name"
+                  name="company-legal-name"
                   [formControl]="companyForm.controls.legal_name"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Razón social de la empresa"
                 />
               </div>
             </div>
@@ -53,22 +59,34 @@
             <!-- fila 2 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium mb-1 flex items-center"><mat-icon class="mr-1">call</mat-icon>Teléfono Principal</label>
+                <label for="company-phone" class="block text-sm font-medium mb-1 flex items-center">
+                  <mat-icon class="mr-1" aria-hidden="true">call</mat-icon>
+                  Teléfono Principal
+                </label>
                 <input
                   type="tel"
+                  id="company-phone"
+                  name="company-phone"
                   [formControl]="companyForm.controls.phone"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Teléfono principal de la empresa"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1 flex items-center"><mat-icon class="mr-1">mail</mat-icon>Email Corporativo</label>
+                <label for="company-email" class="block text-sm font-medium mb-1 flex items-center">
+                  <mat-icon class="mr-1" aria-hidden="true">mail</mat-icon>
+                  Email Corporativo
+                </label>
                 <input
                   type="email"
+                  id="company-email"
+                  name="company-email"
                   [formControl]="companyForm.controls.email"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Email corporativo de la empresa"
                 />
               </div>
             </div>
@@ -79,22 +97,28 @@
             <!-- fila 3 -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div class="lg:col-span-2">
-                <label class="block text-sm font-medium mb-1">Calle</label>
+                <label for="company-street" class="block text-sm font-medium mb-1">Calle</label>
                 <input
                   type="text"
+                  id="company-street"
+                  name="company-street"
                   [formControl]="companyForm.controls.street"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Calle de la dirección fiscal"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Número Exterior</label>
+                <label for="company-num-ext" class="block text-sm font-medium mb-1">Número Exterior</label>
                 <input
                   type="text"
+                  id="company-num-ext"
+                  name="company-num-ext"
                   [formControl]="companyForm.controls.num_ext"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Número exterior"
                 />
               </div>
             </div>
@@ -102,43 +126,55 @@
             <!-- fila 4 -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <div>
-                <label class="block text-sm font-medium mb-1">Código Postal</label>
+                <label for="company-cp" class="block text-sm font-medium mb-1">Código Postal</label>
                 <input
                   type="text"
+                  id="company-cp"
+                  name="company-cp"
                   maxlength="5"
                   [formControl]="companyForm.controls.cp"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Código postal"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Ciudad</label>
+                <label for="company-city" class="block text-sm font-medium mb-1">Ciudad</label>
                 <input
                   type="text"
+                  id="company-city"
+                  name="company-city"
                   [formControl]="companyForm.controls.city"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Ciudad"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Estado</label>
+                <label for="company-state" class="block text-sm font-medium mb-1">Estado</label>
                 <input
                   type="text"
+                  id="company-state"
+                  name="company-state"
                   [formControl]="companyForm.controls.state"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Estado"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">País</label>
+                <label for="company-country" class="block text-sm font-medium mb-1">País</label>
                 <input
                   type="text"
+                  id="company-country"
+                  name="company-country"
                   [formControl]="companyForm.controls.country"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="País"
                 />
               </div>
             </div>
@@ -147,10 +183,11 @@
               <button
                 type="button"
                 (click)="saveCompany()"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:bg-[#283996] transition
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 transition
                        shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                aria-label="Guardar información de la empresa"
               >
-                <mat-icon>save</mat-icon>
+                <mat-icon aria-hidden="true">save</mat-icon>
                 Guardar Información
               </button>
             </div>
@@ -166,7 +203,7 @@
           <mat-card-header>
             <mat-card-title>
               <div class="flex items-center gap-2 text-[#283996] mb-2">
-                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]">
+                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]" aria-hidden="true">
                   payments
                 </mat-icon>
                 <span class="inline-block align-middle leading-tight font-medium">
@@ -185,27 +222,35 @@
             <!-- fila fiscal -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium mb-1">RFC de la Empresa</label>
+                <label for="company-rfc" class="block text-sm font-medium mb-1">RFC de la Empresa</label>
                 <input
                   type="text"
+                  id="company-rfc"
+                  name="company-rfc"
                   maxlength="13"
                   [formControl]="companyForm.controls.rfc"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="RFC de la empresa"
+                  aria-describedby="rfc-help"
                 />
-                <p class="text-sm text-slate-500 mt-1">Registro Federal de Contribuyentes</p>
+                <p id="rfc-help" class="text-sm text-slate-500 mt-1">Registro Federal de Contribuyentes</p>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Porcentaje de IVA (%)</label>
+                <label for="company-tax" class="block text-sm font-medium mb-1">Porcentaje de IVA (%)</label>
                 <input
                   type="number"
+                  id="company-tax"
+                  name="company-tax"
                   min="0" max="100" step="0.01"
                   [formControl]="companyForm.controls.tax_percentage"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
+                  aria-label="Porcentaje de IVA"
+                  aria-describedby="tax-help"
                 />
-                <p class="text-sm text-slate-500 mt-1">IVA en productos y servicios</p>
+                <p id="tax-help" class="text-sm text-slate-500 mt-1">IVA en productos y servicios</p>
               </div>
             </div>
 
@@ -213,31 +258,37 @@
 
             <!-- ENCABEZADO DEL TICKET -->
             <div>
-              <label class="block text-sm font-medium mb-1">Encabezado del Ticket (opcional)</label>
+              <label for="ticket-header" class="block text-sm font-medium mb-1">Encabezado del Ticket (opcional)</label>
               <textarea
+                id="ticket-header"
+                name="ticket-header"
                 rows="2"
                 [formControl]="companyForm.controls.ticket_header"
                 class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
                       focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                 placeholder="Ejemplo: Gracias por elegirnos ! Vuelve pronto."
+                aria-label="Encabezado del ticket"
               ></textarea>
             </div>
 
             <!-- PIE DEL TICKET -->
             <div>
-              <label class="block text-sm font-medium mb-1">Mensaje al Pie del Ticket (opcional)</label>
+              <label for="ticket-footer" class="block text-sm font-medium mb-1">Mensaje al Pie del Ticket (opcional)</label>
               <textarea
+                id="ticket-footer"
+                name="ticket-footer"
                 rows="2"
                 [formControl]="companyForm.controls.ticket_footer"
                 class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
                       focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
                 placeholder="Ejemplo: Solicita tu factura en www.empresa.com/facturar"
+                aria-label="Mensaje al pie del ticket"
               ></textarea>
             </div>
 
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 class="font-medium text-blue-800 mb-3">Vista Previa del Ticket</h3>
-              <div class="bg-white p-4 rounded border font-mono text-sm">
+              <div class="bg-white p-4 rounded border font-mono text-sm" role="img" aria-label="Vista previa del diseño del ticket">
                 <!-- Encabezado del ticket -->
                 <div *ngIf="company.ticket_header" class="text-center text-xs mb-2">
                   {{ company.ticket_header }}
@@ -265,10 +316,11 @@
               <button
                 type="button"
                 (click)="saveFiscal()"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white  bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:bg-[#283996] transition
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white  bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 transition
                        shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                aria-label="Guardar configuración fiscal"
               >
-                <mat-icon>save</mat-icon>
+                <mat-icon aria-hidden="true">save</mat-icon>
                 Guardar Configuración Fiscal
               </button>
             </div>

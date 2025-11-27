@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SkillBuilders } from 'ask-sdk-core';
 
 import { LaunchRequestHandler } from './intents/launch.handler';
+import { HelloWorldIntentHandler } from './intents/hello-world.handler';
 import { HelpIntentHandler } from './intents/help.handler';
 import { CancelAndStopIntentHandler } from './intents/cancel-stop.handler';
 import { FallbackIntentHandler } from './intents/fallback.handler';
@@ -13,6 +14,7 @@ import { SessionEndedRequestHandler } from './intents/session-ended.handler';
 export class AlexaSkillFactory {
   constructor(
     private readonly launchHandler: LaunchRequestHandler,
+    private readonly helloworldHandler: HelloWorldIntentHandler,
     private readonly helpHandler: HelpIntentHandler,
     private readonly cancelStopHandler: CancelAndStopIntentHandler,
     private readonly fallbackHandler: FallbackIntentHandler,
@@ -25,6 +27,7 @@ export class AlexaSkillFactory {
     return SkillBuilders.custom()
       .addRequestHandlers(
         this.launchHandler,
+        this.helloworldHandler,
         this.changeOrder,
         this.changeItem,
         this.helpHandler,

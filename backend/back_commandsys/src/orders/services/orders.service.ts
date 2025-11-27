@@ -16,6 +16,13 @@ export class OrdersService {
     private tables: TableSessionsService,
     private printService: PrintService) {}
 
+  private getLocalDate(): Date {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local;
+  }
+
+
   async createOrder(dto: CreateOrderDto, id_branch: number, id_user: number) {
     // --- VALIDACIONES GENERALES ---
     if (dto.order_type === 'dine_in' && !dto.id_session) {
@@ -55,6 +62,7 @@ export class OrdersService {
         status: 'pending',
         order_type: dto.order_type,
         customer_name: dto.order_type === 'takeout' ? dto.customer_name : null,
+        created_at: this.getLocalDate(),
       },
     });
 
@@ -162,6 +170,7 @@ export class OrdersService {
             unit_price: unit_price,
             subtotal: unit_price,
             status: 'pending',
+            created_at: this.getLocalDate(),
           }
         });
 
