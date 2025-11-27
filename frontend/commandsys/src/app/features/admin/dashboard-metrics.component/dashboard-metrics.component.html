@@ -7,7 +7,7 @@
         <span>Admin / <span class="text-slate-700 font-medium">Dashboard</span></span>
       </div>
 
-      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-1">
         Métricas de la Empresa
       </h1>
 
@@ -18,50 +18,84 @@
 
     <!-- FILTRO FECHAS -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+
+      <!-- BOTONES PREMIUM -->
+      <div class="flex flex-wrap gap-2 mb-3">
+
+        <button
+          (click)="setRange('day')"
+          class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+        >
+          Hoy
+        </button>
+
+        <button
+          (click)="setRange('week')"
+          class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+        >
+          Últimos 7 días
+        </button>
+
+        <button
+          (click)="setRange('month')"
+          class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+        >
+          Últimos 30 días
+        </button>
+
+        <button
+          (click)="toggleCustom()"
+          class="px-4 py-1.5 text-xs font-medium rounded-lg border border-sky-400 text-sky-600 bg-sky-50 hover:bg-sky-100 transition active:scale-[0.97]"
+        >
+          Personalizado
+        </button>
+
+      </div>
+
+      <!-- RANGO PERSONALIZADO -->
+      <div *ngIf="showCustom" class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 border-t pt-4">
 
         <!-- Desde -->
         <div class="flex flex-col gap-1 flex-1 sm:flex-initial sm:min-w-[140px]">
-          <label for="date-from" class="text-xs font-medium text-slate-600">Desde</label>
+          <label class="text-xs font-medium text-slate-600">Desde</label>
           <input
             type="date"
-            id="date-from"
-            class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all w-full"
             [value]="from()"
+            [min]="minFrom"
+            [max]="to()"
             (change)="onDateChange('from', $any($event.target).value)"
+            class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 w-full transition-all"
           />
         </div>
 
         <!-- Hasta -->
         <div class="flex flex-col gap-1 flex-1 sm:flex-initial sm:min-w-[140px]">
-          <label for="date-to" class="text-xs font-medium text-slate-600">Hasta</label>
+          <label class="text-xs font-medium text-slate-600">Hasta</label>
           <input
             type="date"
-            id="date-to"
-            class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all w-full"
             [value]="to()"
+            [min]="from()"
+            [max]="maxTo"
             (change)="onDateChange('to', $any($event.target).value)"
+            class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 w-full transition-all"
           />
         </div>
 
-        <!-- Botón actualizar -->
+        <!-- Botón aplicar -->
         <button
           (click)="refresh()"
-          class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-sky-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:min-w-[120px]"
-          [disabled]="loading()"
+          class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-sky-700 transition active:scale-[0.97]"
         >
-          <mat-icon [fontIcon]="loading() ? 'hourglass_empty' : 'refresh'"
-            class="!text-[18px] !w-[18px] !h-[18px] animate-target"
-            [class.animate-spin]="loading()">
-          </mat-icon>
-          <span>{{ loading() ? 'Cargando...' : 'Actualizar' }}</span>
+          <mat-icon class="!text-[18px]">refresh</mat-icon>
+          Aplicar
         </button>
 
       </div>
+
     </div>
   </div>
 
-  <!-- KPIs MINIMALISTAS -->
+  <!-- KPIs  -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
 
     <!-- Ventas Totales -->
@@ -230,6 +264,7 @@
 
       </div>
     </div>
+
   </div>
 </div>
 
@@ -240,7 +275,6 @@
   }
   .animate-spin { animation: spin 1s linear infinite; }
 
-  /* Centrado fino para todos los mat-icon dentro del dashboard */
   .dashboard-metrics mat-icon {
     display: flex;
     align-items: center;
@@ -248,7 +282,6 @@
     line-height: 1;
   }
 
-  /* Ajustes suaves por tipo (opcional, pero ayuda) */
   .dashboard-metrics .kpi-icon,
   .dashboard-metrics .chart-icon,
   .dashboard-metrics .top-icon,

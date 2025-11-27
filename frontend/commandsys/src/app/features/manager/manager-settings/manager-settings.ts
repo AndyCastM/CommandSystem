@@ -112,20 +112,62 @@ export class ManagerSettings implements OnInit{
   markDayChanged(day: any, field: 'open' | 'close', value: string) {
     day[field] = value;
     day.changed = true;
+
+    const err = this.validateHours(day.open, day.close);
+    day.error = err;
+
+    if (err) this.toast.error(err);
+  }
+
+  private validateHours(open: string, close: string): string | null {
+    if (!open || !close) return 'Debe ingresar ambas horas.';
+
+    // Formato HH:mm
+    const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!regex.test(open) || !regex.test(close)) {
+      return 'Formato de hora inválido.';
+    }
+
+    // Convertir a minutos
+    const [oh, om] = open.split(':').map(Number);
+    const [ch, cm] = close.split(':').map(Number);
+
+    const openMin = oh * 60 + om;
+    const closeMin = ch * 60 + cm;
+
+    if (closeMin <= openMin) {
+      return 'La hora de cierre debe ser mayor que la de apertura.';
+    }
+
+    if (closeMin - openMin < 30) {
+      return 'El horario debe tener al menos 30 minutos.';
+    }
+
+    return null;
   }
 
   // Actualizar solo un día
   async updateDay(day: any) {
+    const err = this.validateHours(day.open, day.close);
+
+    if (err) {
+      this.toast.error(err);
+      day.error = err;
+      return;
+    }
+
     try {
-      console.log(day);
       await this.api.updateDay({
         day_of_week: day.day_of_week,
         open_time: day.open,
         close_time: day.close,
       });
+
       day.changed = false;
+      day.error = null;
+
       this.toast.success(`Horario de ${day.name} actualizado`);
-    } catch (err) {
+    } catch {
       this.toast.error('Error al actualizar el horario');
     }
   }

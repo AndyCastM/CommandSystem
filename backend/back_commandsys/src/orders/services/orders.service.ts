@@ -406,15 +406,37 @@ export class OrdersService {
     });
   }
 
+  private nowLocal(): Date {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  }
+
   async updateItemStatus(id_order_item: number, status: order_items_status) {
     const validStatuses = ['pending', 'in_preparation', 'ready', 'delivered'];
     if (!validStatuses.includes(status)) {
       throw new BadRequestException('Estado inválido');
     }
 
+    // Timestamp segun el status
+    let timestampField: any = {};
+
+    const now = this.nowLocal();
+
+    if (status === 'in_preparation') {
+      timestampField = { start_time: now };
+    }
+
+    if (status === 'ready') {
+      timestampField = { ready_time: now };
+    }
+
+    if (status === 'delivered') {
+      timestampField = { delivered_time: now };
+    }
+
     const item = await this.prisma.order_items.update({
       where: { id_order_item },
-      data: { status },
+      data: { status, ...timestampField, },
       include: {
         orders: {
           include: {

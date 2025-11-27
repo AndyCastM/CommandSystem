@@ -38,6 +38,15 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
   loading = signal(false);
   metrics = signal<MetricsResponse | null>(null);
 
+  // MÉTRICAS AVANZADAS (solo gerente)
+  avgPrep = signal<number>(0);
+  avgDelivery = signal<number>(0);
+  avgTotal = signal<number>(0);
+
+  areas = signal<any[]>([]);
+  slowest = signal<any[]>([]);
+  fastest = signal<any[]>([]);
+
   from = signal<string>('');
   to = signal<string>('');
 
@@ -201,6 +210,16 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
       next: (res) => {
         this.metrics.set(res);
         this.updateCharts();
+
+        // ======== MÉTRICAS AVANZADAS ========
+        this.avgPrep.set(res.avg_prep_time ?? 0);
+        this.avgDelivery.set(res.avg_delivery_time ?? 0);
+        this.avgTotal.set(res.avg_total_time ?? 0);
+
+        this.areas.set(res.production_areas ?? []);
+        this.slowest.set(res.slowest_products ?? []);
+        this.fastest.set(res.fastest_products ?? []);
+
         this.loading.set(false);
       },
       error: () => {
@@ -314,5 +333,43 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
         this.ordersChart = new Chart(ctx2, config2);
       }
     }
+  }
+
+  exportPDF() {
+    const from = this.from();
+    const to = this.to();
+
+    this.metricsApi.exportPdf(from, to).subscribe({
+      next: (blob) => this.downloadFile(blob, `reporte_${from}_a_${to}.pdf`),
+      error: () => this.toast.error('Error al generar PDF')
+    });
+  }
+
+  exportExcel() {
+    const from = this.from();
+    const to = this.to();
+
+    this.metricsApi.exportExcel(from, to).subscribe({
+      next: (blob) => this.downloadFile(blob, `reporte_${from}_a_${to}.xlsx`),
+      error: () => this.toast.error('Error al generar Excel')
+    });
+  }
+
+  getChartsBase64() {
+    const sales = this.salesChart?.toBase64Image() ?? null;
+    const orders = this.ordersChart?.toBase64Image() ?? null;
+
+    return { sales, orders };
+  }
+
+  private downloadFile(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   }
 }

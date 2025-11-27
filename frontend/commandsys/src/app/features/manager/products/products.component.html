@@ -17,59 +17,57 @@
   <!-- Métricas por área -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
     <ng-container *ngFor="let m of metrics();">
-      <div
-        class="group bg-white rounded-xl border border-slate-200 shadow-sm 
-              hover:shadow-md hover:-translate-y-[2px] transition-all duration-300 
-              p-5 flex flex-col justify-between"
-      >
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 p-5">
+        <!-- Header con icono -->
         <div class="flex items-center gap-3 mb-3">
           <div
-            class="h-8 w-8 flex items-center justify-center rounded-full shrink-0"
+            class="h-10 w-10 flex items-center justify-center rounded-lg shrink-0"
             [ngClass]="branchSrv.getAreaStyle(m.name).color"
           >
             <mat-icon
               [fontIcon]="branchSrv.getAreaStyle(m.name).icon"
-              class="!text-[18px] text-white flex items-center justify-center leading-none"
+              class="!text-[20px] !w-[20px] !h-[20px] !leading-[20px] text-white"
+              style="display: flex; align-items: center; justify-content: center;"
+              aria-hidden="true"
             ></mat-icon>
           </div>
-          <h3 class="md:text-lg text-base font-semibold text-slate-800 truncate">
+          <h3 class="text-base font-semibold text-slate-800 truncate">
             {{ m.name }}
           </h3>
         </div>
 
+        <!-- Body con métricas -->
         <div class="flex items-end justify-between">
           <div>
-            <div class="text-2xl font-bold text-slate-900">
+            <div class="text-2xl font-bold text-slate-900 mb-1">
               {{ m.total }}
             </div>
             <p class="text-sm text-slate-500">
-              <span class="text-emerald-600 font-medium">{{ m.disponibles }}</span>
-              activos ·
-              <span class="text-rose-500 font-medium">{{ m.total - m.disponibles }}</span>
-              inactivos
+              <span class="text-emerald-600 font-medium">{{ m.disponibles }}</span> activos · 
+              <span class="text-slate-400 font-medium">{{ m.total - m.disponibles }}</span> inactivos
             </p>
           </div>
 
-          <div class="relative flex items-center justify-center h-10 w-10 rounded-full bg-slate-100">
-            <svg class="absolute inset-0" viewBox="0 0 36 36">
+          <!-- Indicador circular -->
+          <div class="relative flex items-center justify-center h-12 w-12 rounded-full bg-slate-50">
+            <svg class="absolute inset-0 transform -rotate-90" viewBox="0 0 36 36">
               <circle
-                cx="18" cy="18" r="16"
+                cx="18" cy="18" r="15"
                 class="text-slate-200"
-                stroke-width="3"
+                stroke-width="2.5"
                 fill="none"
                 stroke="currentColor"
               ></circle>
               <circle
-                cx="18" cy="18" r="16"
-                class="text-emerald-500 transition-all duration-700"
-                stroke-width="3"
+                cx="18" cy="18" r="15"
+                class="text-emerald-500"
+                stroke-width="2.5"
                 fill="none"
                 stroke-linecap="round"
-                [attr.stroke-dasharray]="((m.disponibles / m.total) * 100) + ', 100'"
-                transform="rotate(-90 18 18)"
+                [attr.stroke-dasharray]="((m.disponibles / m.total) * 100 * 0.942) + ', 100'"
               ></circle>
             </svg>
-            <span class="text-[11px] font-semibold text-slate-700">
+            <span class="text-xs font-semibold text-slate-700">
               {{ ((m.disponibles / m.total) * 100) | number:'1.0-0' }}%
             </span>
           </div>

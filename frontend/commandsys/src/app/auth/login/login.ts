@@ -65,9 +65,9 @@ export class Login {
     const id_branch = res.user.id_branch;     
     // Ejemplos de destinos
     if (role === 'Admin') {
-      this.router.navigate(['/admin/configuracion']); // Panel admin
+      this.router.navigate(['/admin/dashboard']); // Panel admin
     } else if (role === 'Gerente'){
-      this.router.navigate(['/gerente/usuarios']); // Panel Gerente
+      this.router.navigate(['/gerente/dashboard']); // Panel Gerente
     } else if (role === 'Superadmin'){
       this.router.navigate(['/superadmin/dashboard']); // Panel Superadmin
     } else if (role === 'Mesero'){

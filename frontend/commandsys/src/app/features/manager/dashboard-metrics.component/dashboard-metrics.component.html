@@ -4,11 +4,11 @@
   <div class="flex flex-col gap-4">
     <div>
       <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
-        <span>Admin / <span class="text-slate-700 font-medium">Dashboard</span></span>
+        <span>Gerente / <span class="text-slate-700 font-medium">Dashboard</span></span>
       </div>
 
       <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-1">
-        Métricas de la Empresa
+        Métricas de la Sucursal
       </h1>
 
       <p class="text-sm text-slate-600">
@@ -19,12 +19,13 @@
     <!-- FILTRO FECHAS -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
 
-      <!-- BOTONES PREMIUM -->
+      <!-- BOTONES -->
       <div class="flex flex-wrap gap-2 mb-3">
 
         <button
           (click)="setRange('day')"
           class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+          aria-label="Mostrar datos de hoy"
         >
           Hoy
         </button>
@@ -32,6 +33,7 @@
         <button
           (click)="setRange('week')"
           class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+          aria-label="Mostrar datos de los últimos 7 días"
         >
           Últimos 7 días
         </button>
@@ -39,6 +41,7 @@
         <button
           (click)="setRange('month')"
           class="px-4 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-100 transition active:scale-[0.97]"
+          aria-label="Mostrar datos de los últimos 30 días"
         >
           Últimos 30 días
         </button>
@@ -46,6 +49,7 @@
         <button
           (click)="toggleCustom()"
           class="px-4 py-1.5 text-xs font-medium rounded-lg border border-sky-400 text-sky-600 bg-sky-50 hover:bg-sky-100 transition active:scale-[0.97]"
+          aria-label="Seleccionar rango personalizado"
         >
           Personalizado
         </button>
@@ -56,28 +60,34 @@
       <div *ngIf="showCustom" class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 border-t pt-4">
 
         <!-- Desde -->
-        <div class="flex flex-col gap-1 flex-1 sm:flex-initial sm:min-w-[140px]">
-          <label class="text-xs font-medium text-slate-600">Desde</label>
+        <div class="flex flex-col gap-1 flex-1 sm:min-w-[140px]">
+          <label for="date-from" class="text-xs font-medium text-slate-600">Desde</label>
           <input
             type="date"
+            id="date-from"
+            name="date-from"
             [value]="from()"
             [min]="minFrom"
             [max]="to()"
             (change)="onDateChange('from', $any($event.target).value)"
             class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 w-full transition-all"
+            aria-label="Fecha desde"
           />
         </div>
 
         <!-- Hasta -->
-        <div class="flex flex-col gap-1 flex-1 sm:flex-initial sm:min-w-[140px]">
-          <label class="text-xs font-medium text-slate-600">Hasta</label>
+        <div class="flex flex-col gap-1 flex-1 sm:min-w-[140px]">
+          <label for="date-to" class="text-xs font-medium text-slate-600">Hasta</label>
           <input
             type="date"
+            id="date-to"
+            name="date-to"
             [value]="to()"
             [min]="from()"
             [max]="maxTo"
             (change)="onDateChange('to', $any($event.target).value)"
             class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 w-full transition-all"
+            aria-label="Fecha hasta"
           />
         </div>
 
@@ -85,8 +95,9 @@
         <button
           (click)="refresh()"
           class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-sky-700 transition active:scale-[0.97]"
+          aria-label="Aplicar rango de fechas personalizado"
         >
-          <mat-icon class="!text-[18px]">refresh</mat-icon>
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">refresh</mat-icon>
           Aplicar
         </button>
 
@@ -95,59 +106,185 @@
     </div>
   </div>
 
-  <!-- KPIs MINIMALISTAS -->
+  <!-- EXPORTACIONES -->
+  <div class="flex flex-wrap items-center gap-3 mt-4">
+
+    <!-- Exportar PDF -->
+    <button
+      (click)="exportPDF()"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition active:scale-[0.97]"
+      aria-label="Exportar métricas a PDF"
+    >
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">picture_as_pdf</mat-icon>
+      Exportar PDF
+    </button>
+
+    <!-- Exportar Excel -->
+    <button
+      (click)="exportExcel()"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition active:scale-[0.97]"
+      aria-label="Descargar métricas en Excel"
+    >
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">table_view</mat-icon>
+      Descargar Excel
+    </button>
+
+  </div>
+
+  <!-- KPIs  -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
 
     <!-- Ventas Totales -->
-    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-          <mat-icon class="!text-lg kpi-icon">attach_money</mat-icon>
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-emerald-100 text-emerald-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">attach_money</mat-icon>
         </div>
-        <p class="text-xs text-slate-500 font-medium">Ventas totales</p>
+        <p class="kpi-label">Ventas totales</p>
       </div>
-      <p class="text-2xl font-semibold text-slate-800 leading-tight truncate">
+      <p class="kpi-value">
         {{ metrics()?.total_sales || 0 | currency : 'MXN':'symbol':'1.0-0' }}
       </p>
     </div>
 
     <!-- Comandas -->
-    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
-          <mat-icon class="!text-lg kpi-icon">receipt_long</mat-icon>
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-blue-100 text-blue-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">receipt_long</mat-icon>
         </div>
-        <p class="text-xs text-slate-500 font-medium">Comandas</p>
+        <p class="kpi-label">Comandas</p>
       </div>
-      <p class="text-2xl font-semibold text-slate-800 leading-tight">
-        {{ metrics()?.total_orders || 0 }}
-      </p>
+      <p class="kpi-value">{{ metrics()?.total_orders || 0 }}</p>
     </div>
 
     <!-- Ticket promedio -->
-    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
-          <mat-icon class="!text-lg kpi-icon">point_of_sale</mat-icon>
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-amber-100 text-amber-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">point_of_sale</mat-icon>
         </div>
-        <p class="text-xs text-slate-500 font-medium">Ticket promedio</p>
+        <p class="kpi-label">Ticket promedio</p>
       </div>
-      <p class="text-2xl font-semibold text-slate-800 leading-tight truncate">
+      <p class="kpi-value">
         {{ metrics()?.avg_ticket || 0 | currency : 'MXN':'symbol':'1.0-0' }}
       </p>
     </div>
 
     <!-- Productos vendidos -->
-    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-          <mat-icon class="!text-lg kpi-icon">restaurant</mat-icon>
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-purple-100 text-purple-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">restaurant</mat-icon>
         </div>
-        <p class="text-xs text-slate-500 font-medium">Productos vendidos</p>
+        <p class="kpi-label">Productos vendidos</p>
       </div>
-      <p class="text-2xl font-semibold text-slate-800 leading-tight">
-        {{ metrics()?.total_items || 0 }}
+      <p class="kpi-value">{{ metrics()?.total_items || 0 }}</p>
+    </div>
+
+  </div>
+
+  <!-- KPIs DE TIEMPOS (SOLO GERENTE)  -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-orange-100 text-orange-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">timer</mat-icon>
+        </div>
+        <p class="kpi-label">Prep. promedio</p>
+      </div>
+      <p class="kpi-value">
+        {{ avgPrep() / 60 | number:'1.0-1' }} min
       </p>
+    </div>
+
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-sky-100 text-sky-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">delivery_dining</mat-icon>
+        </div>
+        <p class="kpi-label">Entrega promedio</p>
+      </div>
+      <p class="kpi-value">
+        {{ avgDelivery() / 60 | number:'1.0-1' }} min
+      </p>
+    </div>
+
+    <div class="kpi-card bg-white">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper bg-green-100 text-green-600">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">schedule</mat-icon>
+        </div>
+        <p class="kpi-label">Total promedio</p>
+      </div>
+      <p class="kpi-value">
+        {{ avgTotal() / 60 | number:'1.0-1' }} min
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ÁREAS DE PRODUCCIÓN -->
+  <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm mt-6">
+
+    <h2 class="section-title">Áreas de producción</h2>
+
+    <div *ngIf="areas().length === 0" class="text-center text-slate-400 py-6">
+      No hay datos suficientes en este período
+    </div>
+
+    <div *ngIf="areas().length > 0" class="space-y-3 mt-3">
+
+      <div *ngFor="let a of areas()" class="p-4 rounded-lg border bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        
+        <div class="font-semibold text-slate-800 text-sm sm:text-base">{{ a.area }}</div>
+
+        <div class="flex gap-6 text-xs sm:text-sm mt-2 sm:mt-0 text-slate-600">
+          <div>Items: <span class="font-semibold">{{ a.items }}</span></div>
+          <div>Prep: <span class="font-semibold">{{ a.prep_avg / 60 | number:'1.0-1' }} min</span></div>
+          <div>Entrega: <span class="font-semibold">{{ a.delivery_avg / 60 | number:'1.0-1' }} min</span></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!--  PRODUCTOS MÁS LENTOS / RÁPIDOS  -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+
+    <!-- Lentos -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <h2 class="section-title">Productos más lentos</h2>
+
+      <div *ngIf="slowest().length === 0" class="empty-data">
+        No hay datos suficientes
+      </div>
+
+      <div *ngIf="slowest().length > 0" class="space-y-2 mt-3">
+        <div *ngFor="let s of slowest()" class="slow-fast-card bg-red-50 border-red-200">
+          <div class="font-medium">{{ s.product }}</div>
+          <div class="text-sm text-slate-600">{{ s.avg_seconds / 60 | number:'1.0-1' }} min</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rapidos -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <h2 class="section-title">Productos más rápidos</h2>
+
+      <div *ngIf="fastest().length === 0" class="empty-data">
+        No hay datos suficientes
+      </div>
+
+      <div *ngIf="fastest().length > 0" class="space-y-2 mt-3">
+        <div *ngFor="let f of fastest()" class="slow-fast-card bg-green-50 border-green-200">
+          <div class="font-medium">{{ f.product }}</div>
+          <div class="text-sm text-slate-600">{{ f.avg_seconds / 60 | number:'1.0-1' }} min</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -156,38 +293,24 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mt-6">
 
     <!-- Ventas por Día -->
-    <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200">
-      <div class="flex items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-100">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/90 rounded-xl flex items-center justify-center text-white">
-          <mat-icon class="!text-lg sm:!text-xl chart-icon">trending_up</mat-icon>
-        </div>
-
-        <div class="min-w-0">
-          <h2 class="text-base sm:text-lg font-bold text-slate-800 truncate">Ventas por día</h2>
-          <p class="text-xs text-slate-500">Evolución de ingresos</p>
-        </div>
+    <div class="chart-card bg-white">
+      <div class="chart-header bg-emerald-500">
+        <mat-icon class="text-white !text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">trending_up</mat-icon>
       </div>
 
       <div class="h-64 sm:h-80 relative">
-        <canvas #salesChart></canvas>
+        <canvas #salesChart aria-label="Gráfica de ventas por día"></canvas>
       </div>
     </div>
 
     <!-- Comandas por Día -->
-    <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200">
-      <div class="flex items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-100">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/90 rounded-xl flex items-center justify-center text-white">
-          <mat-icon class="!text-lg sm:!text-xl chart-icon">equalizer</mat-icon>
-        </div>
-
-        <div class="min-w-0">
-          <h2 class="text-base sm:text-lg font-bold text-slate-800 truncate">Comandas por día</h2>
-          <p class="text-xs text-slate-500">Volumen de órdenes</p>
-        </div>
+    <div class="chart-card bg-white">
+      <div class="chart-header bg-blue-500">
+        <mat-icon class="text-white !text-lg !w-[18px] !h-[18px] !leading-[18px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">equalizer</mat-icon>
       </div>
 
       <div class="h-64 sm:h-80 relative">
-        <canvas #ordersChart></canvas>
+        <canvas #ordersChart aria-label="Gráfica de comandas por día"></canvas>
       </div>
     </div>
 
@@ -198,7 +321,7 @@
 
     <div class="flex items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-100">
       <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/90 rounded-xl flex items-center justify-center text-white">
-        <mat-icon fontIcon="star" class="!text-lg sm:!text-xl top-icon"></mat-icon>
+        <mat-icon fontIcon="star" class="!text-lg sm:!text-xl !w-[20px] !h-[20px] !leading-[20px]" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true"></mat-icon>
       </div>
 
       <div class="min-w-0">
@@ -208,29 +331,24 @@
     </div>
 
     <!-- Sin productos -->
-    <div *ngIf="topProducts().length === 0" class="text-center py-8 sm:py-12">
-      <mat-icon class="!text-4xl sm:!text-5xl text-slate-300 mb-2 empty-icon">shopping_bag</mat-icon>
-      <p class="text-slate-400 text-sm">No hay ventas en este rango</p>
+    <div *ngIf="topProducts().length === 0" class="text-center py-8 sm:py-12 text-slate-400">
+      No hay ventas en este rango
     </div>
 
     <!-- Lista -->
     <div class="space-y-2 sm:space-y-3" *ngIf="topProducts().length > 0">
-
       <div *ngFor="let p of topProducts(); let i = index"
         class="flex items-center justify-between p-3 sm:p-4 rounded-xl border bg-white hover:bg-slate-50 transition-all">
 
         <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
 
           <!-- Badge -->
-          <div class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-xs sm:text-sm font-bold rounded-full flex-shrink-0"
-            [ngClass]="{
-              'bg-yellow-400 text-white': i === 0,
-              'bg-slate-400 text-white': i === 1,
-              'bg-orange-400 text-white': i === 2,
-              'bg-slate-200 text-slate-700': i > 2
-            }">
-            {{ i + 1 }}
-          </div>
+          <div class="badge-ranking" [ngClass]="{
+            'bg-yellow-400 text-white': i === 0,
+            'bg-slate-400 text-white': i === 1,
+            'bg-orange-400 text-white': i === 2,
+            'bg-slate-200 text-slate-700': i > 2
+          }" [attr.aria-label]="'Posición ' + (i + 1)">{{ i + 1 }}</div>
 
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-slate-800 mb-1 text-sm sm:text-base truncate">
@@ -239,14 +357,14 @@
 
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-slate-600">
               <span class="flex items-center gap-1">
-                <mat-icon class="!text-[14px] text-sky-600 list-icon">shopping_cart</mat-icon>
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px] !leading-[14px] text-sky-600" style="display: flex; align-items: center; justify-content: center;" aria-hidden="true">shopping_cart</mat-icon>
                 <span class="font-medium">{{ p.total_qty }}</span> vendidos
               </span>
 
               <span class="hidden sm:inline text-slate-300">•</span>
 
               <span class="font-semibold text-emerald-600">
-                {{ p.total_sales | currency : 'MXN':'symbol':'1.0-0' }}
+                {{ p.total_sales | currency:'MXN':'symbol':'1.0-0' }}
               </span>
             </div>
           </div>
@@ -255,10 +373,14 @@
         <!-- Icono ranking -->
         <mat-icon *ngIf="i < 3"
           [ngClass]="{
-            '!text-xl sm:!text-2xl text-yellow-500 top-icon': i === 0,
-            '!text-xl sm:!text-2xl text-slate-400 top-icon': i === 1,
-            '!text-xl sm:!text-2xl text-orange-500 top-icon': i === 2
-          }">
+            '!text-xl sm:!text-2xl text-yellow-500': i === 0,
+            '!text-xl sm:!text-2xl text-slate-400': i === 1,
+            '!text-xl sm:!text-2xl text-orange-500': i === 2
+          }"
+          class="!w-[24px] !h-[24px] sm:!w-[32px] sm:!h-[32px] !leading-[24px] sm:!leading-[32px]"
+          style="display: flex; align-items: center; justify-content: center;"
+          [attr.aria-label]="i === 0 ? 'Primer lugar' : i === 1 ? 'Segundo lugar' : 'Tercer lugar'"
+          aria-hidden="true">
           {{ i === 0 ? 'emoji_events' : i === 1 ? 'workspace_premium' : 'military_tech' }}
         </mat-icon>
 
@@ -266,28 +388,62 @@
     </div>
 
   </div>
+
 </div>
 
 <style>
-  @keyframes spin {
-    from { transform: rotate(0); }
-    to   { transform: rotate(360deg); }
-  }
-  .animate-spin { animation: spin 1s linear infinite; }
-
-  .dashboard-metrics mat-icon {
+  .kpi-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .kpi-header { display: flex; align-items: center; gap: .75rem; }
+  .kpi-icon-wrapper {
+    width: 2.25rem; height: 2.25rem;
+    border-radius: .5rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kpi-label { font-size: .75rem; color: #64748b; font-weight: 500; }
+  .kpi-value { font-size: 1.5rem; font-weight: 600; color: #1e293b; }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: .5rem;
   }
 
-  .dashboard-metrics .kpi-icon,
-  .dashboard-metrics .chart-icon,
-  .dashboard-metrics .top-icon,
-  .dashboard-metrics .list-icon,
-  .dashboard-metrics .empty-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+  .slow-fast-card {
+    padding: .75rem;
+    border: 1px solid;
+    border-radius: .75rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .chart-card { border: 1px solid #e2e8f0; border-radius: .75rem; padding: 1rem; }
+  .chart-header {
+    height: 2.75rem;
+    border-radius: .5rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .badge-ranking {
+    width: 2.25rem; height: 2.25rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: .875rem;
+    flex-shrink: 0;
+  }
+
+  .empty-data {
+    text-align: center;
+    color: #94a3b8;
+    padding: 1.25rem;
   }
 </style>

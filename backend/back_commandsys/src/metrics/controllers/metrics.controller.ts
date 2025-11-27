@@ -1,13 +1,14 @@
-import { Controller, Get, Query, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, Req, BadRequestException, Res, Header, StreamableFile } from '@nestjs/common';
 import { MetricsService } from '../services/metrics.service';
 import { GetDashboardDto } from '../dto/get-dashboard.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { MetricsExportService } from '../services/metrics-export.service';
 
 @Controller('metrics')
 export class MetricsController {
-  constructor(private readonly metricsService: MetricsService) {}
+  constructor(private readonly metricsService: MetricsService, private readonly exportService: MetricsExportService) {}
 
   @Get('dashboard')
   @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
@@ -31,6 +32,32 @@ export class MetricsController {
   ) {
     let id_branch: number | null = user.role === 'Admin' ? null : user.id_branch;
     return this.metricsService.getTopProducts(from, to, id_branch, +user.id_company);
+  }
+
+  @Get('export/pdf')
+  @Header('Content-Type', 'application/pdf')
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="metrics-report.pdf"'
+  )
+  async exportPdf(
+    @Query() dto: GetDashboardDto, @CurrentUser() user: any
+  ): Promise<StreamableFile> {
+    const buffer = await this.exportService.exportPDF(dto, +user.id_branch, +user.id_company);
+    return new StreamableFile(buffer);
+  }
+
+  @Get('export/excel')
+  async downloadExcel(@Query() dto: GetDashboardDto, @CurrentUser() user: any, @Res() res) {
+    const buffer = await this.metricsService.exportExcel(dto, +user.id_branch, +user.id_company);
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename=metricas.xlsx',
+    });
+
+    res.send(buffer);
   }
 
 }

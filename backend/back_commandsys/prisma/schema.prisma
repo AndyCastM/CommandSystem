@@ -64,6 +64,9 @@ model order_items {
   service_order            Int?                       @default(1)
   status                   order_items_status?        @default(pending)
   created_at               DateTime?                  @db.Timestamp(0)
+  start_time               DateTime?                  @db.Timestamp(0)
+  ready_time               DateTime?                  @db.Timestamp(0)
+  delivered_time           DateTime?                  @db.Timestamp(0)
   order_item_cancellations order_item_cancellations[]
   order_item_options       order_item_options[]
   combos                   combos?                    @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
