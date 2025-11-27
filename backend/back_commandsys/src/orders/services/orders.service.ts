@@ -472,7 +472,7 @@ export class OrdersService {
 
     // Si TODOS los items están entregados → cerrar comanda
     const allDelivered = item.orders.order_items.every(
-      (i) => i.status === 'delivered'
+      (i) => i.status === 'delivered' || i.status === 'cancelled'
     );
 
     if (allDelivered) {
