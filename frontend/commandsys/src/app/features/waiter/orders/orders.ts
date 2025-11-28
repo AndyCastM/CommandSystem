@@ -7,6 +7,7 @@ import { NotificationsService } from '../../../core/services/notifications/notif
 import { isPlatformBrowser } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { OrderDetailComponent } from '../UI/order-detail.component/order-detail.component';
+import { OrdersEventsService } from '../../../core/services/orders/orders-event.service';
 
 @Component({
   selector: 'app-orders',
@@ -19,6 +20,7 @@ export class Orders implements OnInit{
   private ordersApi = inject(OrderService);
   private notif = inject(NotificationsService);
   private dialog = inject(MatDialog);
+  private ordersEvents = inject(OrdersEventsService);
 
   loading = signal(false);
   viewMode = signal<'mesa' | 'producto'>('mesa');
@@ -33,13 +35,10 @@ export class Orders implements OnInit{
   async ngOnInit() {
     if (!this.isBrowser) return;  // evita 401 SSR
     
-    this.notif.connect();  // 
     await this.loadOrders();
-    this.notif.onItemReady().subscribe((alert) => {
-      if (alert) {
-        // vuelve a cargar las comandas para actualizar estados
-        this.loadOrders();
-      }
+    this.ordersEvents.refreshOrders$.subscribe(() => {
+      console.log("Refrescando órdenes por evento global…");
+      this.loadOrders();
     });
 
   }

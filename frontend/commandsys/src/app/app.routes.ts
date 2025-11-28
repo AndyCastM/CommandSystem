@@ -21,8 +21,8 @@ export const routes: Routes = [
     },
     {
       path:'mesero',
-      loadComponent:() => import('./layouts/waiter-shell/waiter-shell').then(m => m.WaiterShellComponent),
-      loadChildren: () => import('./features/waiter/waiter.routes').then(m => m.WAITER_ROUTES),
+      loadChildren: () =>
+        import('./features/waiter/waiter.routes').then((m) => m.WAITER_ROUTES),
     },
     {
       path:'cajero',

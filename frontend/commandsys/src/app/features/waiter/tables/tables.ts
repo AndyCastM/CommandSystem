@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal, computed, PLATFORM_ID} from '@angular/core';
+import { Component, OnInit, inject, signal, computed, PLATFORM_ID} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../../shared/UI/toast.service';
@@ -30,7 +30,7 @@ import { OrderService } from '../../../core/services/orders/orders.service';
   templateUrl: './tables.html',
   styleUrl: './tables.css',
 })
-export class Tables implements OnInit, OnDestroy {
+export class Tables implements OnInit {
   private toast = inject(ToastService);
   private notif = inject(NotificationsService);
   private sub?: Subscription;
@@ -87,16 +87,11 @@ export class Tables implements OnInit, OnDestroy {
     }
 
     // Socket
-    this.notif.connect();
+    // this.notif.connect();
 
-    this.sub = this.notif.onAlert().subscribe((alert) => {
-      if (alert) this.lastAlert = alert;
-    });
-  }
-
-  ngOnDestroy() {
-    this.sub?.unsubscribe();
-    this.notif.disconnect();
+    // this.sub = this.notif.onAlert().subscribe((alert) => {
+    //   if (alert) this.lastAlert = alert;
+    // });
   }
 
   // ===========================
