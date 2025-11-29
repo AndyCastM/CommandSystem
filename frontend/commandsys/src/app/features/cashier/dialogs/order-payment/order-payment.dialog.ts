@@ -7,49 +7,101 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-order-payment-dialog',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './order-payment.dialog.html'
+  templateUrl: './order-payment.dialog.html',
 })
 export class OrderPaymentDialog {
-    // Datos que enviamos desde el componente que cobra
-    total!: number;
-    orderId!: number;
+  // Datos que enviamos desde el componente que cobra
+  total!: number;
 
-    // Signals
-    method = signal<'cash' | 'card' | 'transfer'>('cash');
-    amountPaid = signal<number>(0);
-    tip = signal<number>(0);
+  // Puede venir por orden o por sesión
+  orderId?: number;
+  idSession?: number;
+  idOrders?: number[];
+  table?: string;
 
-    // Cambio automático solo si es efectivo
-    change = computed(() =>
-        this.method() === 'cash'
-        ? Math.max(0, Number(this.amountPaid()) - Number(this.total))
-        : 0
-    );
+  // Signals de montos por método
+  cashAmount = signal(0);       // efectivo
+  cardAmount = signal(0);       // tarjeta
+  transferAmount = signal(0);   // transferencia
 
-    constructor(
-        private ref: MatDialogRef<OrderPaymentDialog>,
-        @Inject(MAT_DIALOG_DATA) public data: any
-    ) {
-        this.total = data.total;
-        this.orderId = data.id_order;
-        this.amountPaid.set(data.total); 
-    }   
+  // Total pagado = suma de los 3 métodos
+  totalPaid = computed(() =>
+    (this.cashAmount() || 0) +
+    (this.cardAmount() || 0) +
+    (this.transferAmount() || 0)
+  );
 
-    confirm() {
-        if (this.amountPaid() < this.total && this.method() === 'cash') {
-        alert('El efectivo no cubre el total.');
-        return;
-        }
+  // Restante (si pagaron menos que el total)
+  remaining = computed(() =>
+    Math.max(0, (this.total || 0) - this.totalPaid())
+  );
 
-        this.ref.close({
-        id_order: this.orderId,
-        method: this.method(),
-        amount: this.amountPaid(),
-        tip: this.tip(),
-        });
+  // Cambio (si se pasaron del total)
+  change = computed(() =>
+    Math.max(0, this.totalPaid() - (this.total || 0))
+  );
+
+  constructor(
+    private ref: MatDialogRef<OrderPaymentDialog>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    this.total = data.total;
+    this.orderId = data.id_order;      // si viene por orden
+    this.idSession = data.id_session;  // si viene por sesión
+    this.idOrders = data.id_orders;    // array de órdenes (sesión)
+    this.table = data.table;           // mesa (opcional)
+
+    // Default: que todo vaya a efectivo al abrir el modal
+    this.cashAmount.set(this.total ?? 0);
+  }
+
+  confirm() {
+    // Validaciones básicas
+    if (this.totalPaid() <= 0) {
+      alert('Debes ingresar al menos un monto en algún método de pago.');
+      return;
     }
 
-    cancel() {
-        this.ref.close(null);
+    // Si NO quieres permitir que se pasen del total:
+    if (this.totalPaid() > (this.total || 0)) {
+      alert('La suma de los métodos no puede exceder el total.');
+      return;
     }
+
+    // Si quisieras forzar que paguen el 100%:
+    // if (this.totalPaid() < (this.total || 0)) {
+    //   alert('La suma de los métodos debe cubrir el total.');
+    //   return;
+    // }
+
+    // Construir array de pagos por método
+    const payments: { method: 'cash' | 'card' | 'transfer'; amount: number }[] = [];
+
+    if (this.cashAmount() > 0) {
+      payments.push({ method: 'cash', amount: this.cashAmount() });
+    }
+    if (this.cardAmount() > 0) {
+      payments.push({ method: 'card', amount: this.cardAmount() });
+    }
+    if (this.transferAmount() > 0) {
+      payments.push({ method: 'transfer', amount: this.transferAmount() });
+    }
+
+    this.ref.close({
+      // Para pagos por orden
+      id_order: this.orderId,
+
+      // Para pagos por sesión (mesa)
+      id_session: this.idSession,
+      id_orders: this.idOrders,
+
+      // Desglose por método
+      payments,
+
+    });
+  }
+
+  cancel() {
+    this.ref.close(null);
+  }
 }

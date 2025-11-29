@@ -68,6 +68,13 @@ export class Orders implements OnInit{
             return acc + (base + optionsExtra) * oi.quantity;
           }, 0);
 
+        // Parsear la fecha que viene de la BD como hora local
+        const dateStr = order.created_at.replace(' ', 'T'); // Convertir a formato ISO
+        const orderDate = new Date(dateStr); // JavaScript lo interpreta como UTC
+
+        // Ajustar a hora local agregando el offset
+        const localDate = new Date(orderDate.getTime() + (orderDate.getTimezoneOffset() * 60000));
+
         return {
           id: order.id_order,
 
@@ -78,8 +85,12 @@ export class Orders implements OnInit{
               ? `Para llevar (${order.customer_name})`
               : 'Sin mesa',
 
-          created: new Date(order.created_at).toLocaleTimeString(),
-          time: this.timeSince(order.created_at),
+          created: localDate.toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // Opcional: formato 24 horas
+          }),
+          time: this.timeSince(localDate.toISOString()),
           total,
 
           // ================================

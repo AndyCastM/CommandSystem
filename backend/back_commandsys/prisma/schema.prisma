@@ -453,7 +453,7 @@ model cash_sessions {
   id_cash_session Int        @id @default(autoincrement())
   id_user         Int
   id_branch       Int
-  opened_at       DateTime   @default(now()) @db.Timestamp(0)
+  opened_at       DateTime   @db.Timestamp(0)
   closed_at       DateTime?  @db.Timestamp(0)
   opening_amount  Decimal?   @db.Decimal(10, 0)
   closing_amount  Decimal?   @db.Decimal(10, 0)

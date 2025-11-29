@@ -23,6 +23,6 @@ export class PaymentsController {
   @Get('order/:id_order')
   @Roles(Role.Cajero, Role.Mesero, Role.Gerente)
   getOrderDetails(@Param('id_order') id_order: number) {
-    return this.payments.getOrderDetail(id_order);
+    return this.payments.getOrderDetail(+id_order);
   }
 }

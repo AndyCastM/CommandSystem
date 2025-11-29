@@ -66,9 +66,7 @@ export class OrdersService {
       },
     });
 
-    // ============================================================
     // FUNCIÓN PARA CALCULAR PRECIOS (por item individual)
-    // ============================================================
     const calculateUnitPrice = async (item: OrderItemDto): Promise<number> => {
       let base = 0;
 
@@ -151,9 +149,7 @@ export class OrdersService {
       return base;
     };
 
-    // ============================================================
     //  INSERTAR ITEMS — UNO POR UNO (quantity > 1 = N items)
-    // ============================================================
     for (const item of dto.items) {
       const qty = item.quantity || 1;
 
@@ -198,9 +194,7 @@ export class OrdersService {
       }
     }
 
-    // ============================================================
     //  RETORNAR ORDEN COMPLETA REFRESCADA
-    // ============================================================
     const fullOrder = await this.prisma.orders.findUnique({
       where: { id_order: order.id_order },
       include: {
@@ -238,9 +232,7 @@ export class OrdersService {
     return this.prisma.orders.findUnique({
       where: { id_order: id },
       include: {
-        // ======================
         // ITEMS DE LA ORDEN
-        // ======================
         order_items: {
           include: {
             // Producto normal
@@ -291,14 +283,10 @@ export class OrdersService {
           },
         },
 
-        // ======================
         // PAGOS
-        // ======================
         payments: true,
 
-        // ======================
         // SESIÓN DE MESA (si es dine_in)
-        // ======================
         table_sessions: {
           include: {
             tables: true,
@@ -311,9 +299,7 @@ export class OrdersService {
           },
         },
 
-        // ======================
         // INFO DEL USUARIO QUE CREÓ LA COMANDA
-        // ======================
         users: {
           select: {
             id_user: true,
@@ -509,6 +495,11 @@ export class OrdersService {
       throw new BadRequestException('Este producto ya fue cancelado anteriormente');
     }
 
+    // ya cancelado -> no duplicar auditoría
+    if (item.status === 'ready') {
+      throw new BadRequestException('No puedes cancelar un producto que ya está listo');
+    }
+
     // no se puede cancelar algo entregado
     if (item.status === 'delivered') {
       throw new BadRequestException(
@@ -535,6 +526,7 @@ export class OrdersService {
           id_order_item,
           id_user,
           reason: dto.reason,
+          created_at: this.getLocalDate()
         },
       });
     }

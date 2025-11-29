@@ -2,81 +2,89 @@
 
   <!-- Título -->
   <h2 class="text-2xl font-semibold text-slate-800 mb-4">
-    Pago de la orden #{{ orderId }}
+    <!-- Si viene mesa/sesión, úsala; si no, usa id de orden -->
+    <ng-container *ngIf="table; else ordenTitle">
+      Pago de mesa {{ table }}
+    </ng-container>
+    <ng-template #ordenTitle>
+      Pago de la orden #{{ orderId }}
+    </ng-template>
   </h2>
 
   <!-- Total -->
   <div class="bg-indigo-600 text-white rounded-xl p-4 shadow-md mb-6">
     <div class="text-sm opacity-80">Total a pagar</div>
-    <div class="text-3xl font-bold">${{ total | number:'1.2-2' }}</div>
-  </div>
-
-  <!-- Método de pago -->
-  <div class="mb-5">
-    <label class="block text-sm font-medium text-slate-700 mb-2">Método de pago</label>
-
-    <div class="grid grid-cols-3 gap-3">
-
-      <button
-        (click)="method.set('cash')"
-        [class.bg-indigo-600]="method() === 'cash'"
-        [class.text-white]="method() === 'cash'"
-        class="border border-slate-300 rounded-lg py-2 text-sm font-medium hover:bg-indigo-500 hover:text-white transition">
-        Efectivo
-      </button>
-
-      <button
-        (click)="method.set('card')"
-        [class.bg-indigo-600]="method() === 'card'"
-        [class.text-white]="method() === 'card'"
-        class="border border-slate-300 rounded-lg py-2 text-sm font-medium hover:bg-indigo-500 hover:text-white transition">
-        Tarjeta
-      </button>
-
-      <button
-        (click)="method.set('transfer')"
-        [class.bg-indigo-600]="method() === 'transfer'"
-        [class.text-white]="method() === 'transfer'"
-        class="border border-slate-300 rounded-lg py-2 text-sm font-medium hover:bg-indigo-500 hover:text-white transition">
-        Transferencia
-      </button>
-
+    <div class="text-3xl font-bold">
+      ${{ total | number:'1.2-2' }}
     </div>
   </div>
 
-  <!-- Campos específicos -->
+  <!-- Montos por método -->
   <div class="space-y-4">
 
-    <!-- MONTO RECIBIDO -->
-    <div *ngIf="method() === 'cash'">
-      <label class="block text-sm font-medium text-slate-700 mb-1">Monto recibido</label>
-      <input
-        type="number"
-        min="0"
-        [ngModel]="amountPaid()"
-        (ngModelChange)="amountPaid.set($event)"
-        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-        placeholder="0.00" />
-
-      <!-- Cambio -->
-      <div class="mt-2 text-slate-700" *ngIf="change() > 0">
-        <span class="font-medium">Cambio:</span>
-        <span class="text-green-600 font-semibold">${{ change() | number:'1.2-2' }}</span>
-      </div>
-    </div>
-
-    <!-- PROPINA -->
+    <!-- EFECTIVO -->
     <div>
       <label class="block text-sm font-medium text-slate-700 mb-1">
-        Propina (opcional)
+        Pago en efectivo
       </label>
       <input
         type="number"
         min="0"
-        [ngModel]="tip()"
-        (ngModelChange)="tip.set($event)"
+        step="0.01"
+        [ngModel]="cashAmount()"
+        (ngModelChange)="cashAmount.set(($event) || 0)"
         class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
         placeholder="0.00" />
+    </div>
+
+    <!-- TARJETA -->
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">
+        Pago con tarjeta
+      </label>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        [ngModel]="cardAmount()"
+        (ngModelChange)="cardAmount.set(($event) || 0)"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+        placeholder="0.00" />
+    </div>
+
+    <!-- TRANSFERENCIA -->
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">
+        Pago por transferencia
+      </label>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        [ngModel]="transferAmount()"
+        (ngModelChange)="transferAmount.set(($event) || 0)"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+        placeholder="0.00" />
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="mt-4 text-sm text-slate-700 space-y-1">
+      <p>
+        <span class="font-medium">Total pagado:</span>
+        ${{ totalPaid() | number:'1.2-2' }}
+      </p>
+
+      <p *ngIf="remaining() > 0">
+        <span class="font-medium">Restante:</span>
+        ${{ remaining() | number:'1.2-2' }}
+      </p>
+
+      <p *ngIf="change() > 0">
+        <span class="font-medium">Cambio:</span>
+        <span class="text-green-600 font-semibold">
+          ${{ change() | number:'1.2-2' }}
+        </span>
+      </p>
     </div>
 
   </div>

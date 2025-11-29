@@ -19,7 +19,7 @@ import { NotificationsService } from '../../../core/services/notifications/notif
 // Diálogos
 import { OpenSessionDialog } from '../dialogs/open-session.dialog';
 import { CloseSessionDialog } from '../dialogs/close-session.dialog';
-import {  MatIconModule } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-cash-register',
@@ -28,8 +28,9 @@ import {  MatIconModule } from '@angular/material/icon';
   templateUrl: './cash-register.component.html',
   styleUrl: './cash-register.component.css',
 })
+
+
 export class CashRegisterComponent implements OnInit {
-  
   private cashApi = inject(CashService);
   private paymentsApi = inject(PaymentsService);
   private notif = inject(NotificationsService);
@@ -44,31 +45,63 @@ export class CashRegisterComponent implements OnInit {
   payments = signal<any[]>([]);
   pendingRequests = signal<any[]>([]);
   loading = signal(false);
+  
+  paymentMethodLabel(method: string) {
+    switch (method) {
+      case 'cash':
+        return 'Efectivo';
+      case 'card':
+        return 'Tarjeta';
+      case 'transfer':
+        return 'Transferencia';
+      default:
+        return method;
+    }
+  }
+
+  methodClass(method: string) {
+    switch (method) {
+      case 'cash':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'card':
+        return 'bg-indigo-100 text-indigo-700';
+      case 'transfer':
+        return 'bg-amber-100 text-amber-700';
+      default:
+        return 'bg-slate-100 text-slate-700';
+    }
+  }
 
   // Totales computados
   totals = computed(() => {
     const arr = this.payments();
 
+    const cash = arr
+      .filter((p) => p.method === 'cash')
+      .reduce((acc, p) => acc + Number(p.amount), 0);
+
+    const card = arr
+      .filter((p) => p.method === 'card')
+      .reduce((acc, p) => acc + Number(p.amount), 0);
+
+    const transfer = arr
+      .filter((p) => p.method === 'transfer')
+      .reduce((acc, p) => acc + Number(p.amount), 0);
+
+    const tips = arr.reduce((acc, p) => acc + Number(p.tip ?? 0), 0);
+
+    const sales = cash + card + transfer; //  Ventas totales del turno
+
+    const expectedCash =
+      Number(this.session()?.opening_amount || 0) + cash; 
+
     return {
-      cash: arr
-        .filter((p) => p.method === 'cash')
-        .reduce((acc, p) => acc + Number(p.amount), 0),
-
-      card: arr
-        .filter((p) => p.method === 'card')
-        .reduce((acc, p) => acc + Number(p.amount), 0),
-
-      transfer: arr
-        .filter((p) => p.method === 'transfer')
-        .reduce((acc, p) => acc + Number(p.amount), 0),
-
-      tips: arr.reduce((acc, p) => acc + Number(p.tip ?? 0), 0),
-
-      expected:
-        Number(this.session()?.opening_amount || 0) +
-        arr
-          .filter((p) => p.method === 'cash')
-          .reduce((acc, p) => acc + Number(p.amount), 0),
+      cash,
+      card,
+      transfer,
+      tips,
+      sales,
+      expectedCash,
     };
   });
 
@@ -84,6 +117,7 @@ export class CashRegisterComponent implements OnInit {
     this.notif.events$.subscribe((evt) => {
       if (!evt) return;
       if (evt.type === 'prebill') {
+        // evt.data viene del backend: { id_session, table, total, orders: number[], by }
         this.pendingRequests.update((list) => [...list, evt.data]);
         console.log('NUEVA SOLICITUD DE PRE-CUENTA:', evt.data);
       }
@@ -140,79 +174,122 @@ export class CashRegisterComponent implements OnInit {
     });
   }
 
-  // ======================
   // CERRAR TURNO
-  // ======================
   askClose() {
+    const currentSession = this.session();
+
+    if (!currentSession) {
+      this.toast.error('No hay un turno de caja activo.');
+      return;
+    }
+
+    const totals = this.totals(); //  ya trae cash, card, transfer, sales, expectedCash, etc.
+
     const ref = this.dialog.open(CloseSessionDialog, {
-      width: '420px',
+      width: '380px',
       disableClose: true,
       data: {
-        totals: this.totals(),
+        totals,
       },
     });
 
-    ref.afterClosed().subscribe(async (counted) => {
+    ref.afterClosed().subscribe(async (counted: number | null) => {
+      // Si canceló el diálogo
       if (counted == null) return;
 
-      await this.cashApi.closeSession({ counted_amount: counted });
-      this.toast.success('Turno cerrado correctamente');
+      try {
+        this.loading.set(true);
 
-      this.session.set(null);
-      this.openOpeningModal();
+        // Enviar el cierre al backend
+        await this.cashApi.closeSession({ counted_amount: counted });
+        this.toast.success('Turno cerrado correctamente');
+
+        // Limpiar estado local y refrescar
+        this.session.set(null);
+        this.payments.set([]);
+
+        // Si quieres que inmediatamente abra el modal de apertura del siguiente turno:
+        this.openOpeningModal();
+      } catch (err) {
+        console.error(err);
+        this.toast.error('No se pudo cerrar el turno');
+      } finally {
+        this.loading.set(false);
+      }
     });
   }
 
-  // ======================
-  // PAGO DE UNA ORDEN
-  // ======================
-
-  async openPaymentDialog(id_order: number) {
+  // PAGO POR SESIÓN (MESA)
+  async openSessionPaymentDialog(req: any) {
     try {
       this.loading.set(true);
 
-      // Cargar detalle de la orden
-      const order = await this.paymentsApi.getOrderDetail(id_order);
+      console.log('Abriendo dialogo de pago por sesión:', req);
 
       const ref = this.dialog.open(
-        (await import('../dialogs/order-payment/order-payment.dialog')).OrderPaymentDialog,
+        (await import('../dialogs/order-payment/order-payment.dialog'))
+          .OrderPaymentDialog,
         {
           width: '460px',
           data: {
-            id_order,
-            total: order.total,
+            id_session: req.id_session,
+            id_orders: req.orders, // array de comandas de esa sesión
+            total: req.total,
+            table: req.table,
           },
         }
       );
 
       ref.afterClosed().subscribe(async (result) => {
         if (!result) return;
-        await this.processPayment(result);
+        await this.processSessionPayment(result);
       });
     } catch (err) {
       console.error(err);
-      this.toast.error('No se pudo cargar la orden');
+      this.toast.error('No se pudo cargar la sesión');
     } finally {
       this.loading.set(false);
     }
   }
 
-  async processPayment(result: any) {
+  async processSessionPayment(result: any) {
     try {
       this.loading.set(true);
 
-      await this.paymentsApi.createPayment({
-        id_order: result.id_order,
-        method: result.method,
-        amount: result.amount,
-        tip: result.tip,
-      });
+      const payments = result.payments as {
+        method: 'cash' | 'card' | 'transfer';
+        amount: number;
+      }[];
+
+      if (!payments || payments.length === 0) {
+        this.toast.error('No se recibió información de pagos');
+        return;
+      }
+
+      // Base del payload: por sesión (id_orders) o por orden (id_order)
+      const basePayload: any = result.id_orders && result.id_orders.length
+        ? { id_orders: result.id_orders }  // pago por sesión
+        : { id_order: result.id_order };   // fallback por orden
+
+      // Tip SOLO la mandamos en el primer pago para no duplicarla
+      let tipPending = result.tip ?? 0;
+
+      for (let i = 0; i < payments.length; i++) {
+        const p = payments[i];
+
+        await this.paymentsApi.createPayment({
+          ...basePayload,
+          method: p.method,
+          amount: p.amount,
+          tip: i === 0 ? tipPending : 0, // solo en el primero
+        });
+      }
 
       this.toast.success('Pago registrado');
 
-      // Quitar la solicitud atendida
+      // Quitar la solicitud atendida por sesión
       this.pendingRequests.update((list) =>
-        list.filter((x) => x.id_order !== result.id_order)
+        list.filter((x) => x.id_session !== result.id_session)
       );
 
       await this.refreshData();
@@ -223,4 +300,5 @@ export class CashRegisterComponent implements OnInit {
       this.loading.set(false);
     }
   }
+
 }

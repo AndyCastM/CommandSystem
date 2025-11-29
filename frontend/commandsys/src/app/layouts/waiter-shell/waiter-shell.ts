@@ -47,13 +47,13 @@ export class WaiterShellComponent implements OnInit {
 
   }
 
-  constructor() {
-    console.log("🔥 SHELL CREADO");
-  }
+  // constructor() {
+  //   console.log("SHELL CREADO");
+  // }
 
-  ngOnDestroy() {
-    console.log("💀 SHELL DESTRUIDO");
-  }
+  // ngOnDestroy() {
+  //   console.log("SHELL DESTRUIDO");
+  // }
 
   private auth = inject(AuthService);
   currentUser = computed(() => this.auth.currentUser());

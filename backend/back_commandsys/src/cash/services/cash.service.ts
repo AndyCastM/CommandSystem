@@ -16,6 +16,12 @@ export class CashService {
     });
   }
 
+  private getLocalDate(): Date {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local;
+  }
+  
   // Abrir turno
   async openSession(id_user: number, id_branch: number, amount: number, notes?: string) {
     const active = await this.getActiveSession(id_user, id_branch);
@@ -25,6 +31,7 @@ export class CashService {
       data: {
         id_user,
         id_branch,
+        opened_at: this.getLocalDate(),
         opening_amount: amount,
         notes,
       }
@@ -53,7 +60,7 @@ export class CashService {
     return this.prisma.cash_sessions.update({
       where: { id_cash_session: session.id_cash_session },
       data: {
-        closed_at: new Date(),
+        closed_at: this.getLocalDate(),
         closing_amount: counted_amount,
         notes,
         is_closed: true
