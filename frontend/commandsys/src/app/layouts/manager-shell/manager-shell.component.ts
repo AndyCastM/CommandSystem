@@ -19,6 +19,7 @@ export class ManagerShellComponent {
     { icon: 'inventory_2', label: 'Productos', path: '/gerente/productos' },
     { icon: 'table_restaurant', label: 'Mesas', path:'/gerente/mesas'},
     { icon: 'print', label: 'Impresora', path: '/gerente/impresora'},
+    { icon: 'cancel', label: 'Log cancelaciones', path: '/gerente/cancelaciones'},
     { icon: 'settings', label: 'Configuración', path: '/gerente/configuracion' },
   ];
 

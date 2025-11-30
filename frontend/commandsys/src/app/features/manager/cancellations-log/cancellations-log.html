@@ -1,0 +1,278 @@
+<div class="max-w-6xl mx-auto flex flex-col">
+
+  <!-- HEADER -->
+  <div class="flex flex-col gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
+        <span>
+          Gerente /
+          <span class="text-slate-700 font-medium">Cancelaciones</span>
+        </span>
+      </div>
+
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-1">
+        Cancelaciones de Ítems
+      </h1>
+
+      <p class="text-sm text-slate-600">
+        Registro de productos cancelados, usuarios responsables y motivos.
+      </p>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="flex flex-col gap-4">
+
+        <!-- Primera fila: Fechas y usuario -->
+        <div class="flex flex-wrap gap-3">
+          <!-- Desde -->
+          <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
+            <label class="text-xs font-medium text-slate-600">Desde</label>
+            <input
+              type="date"
+              [(ngModel)]="filters.from"
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 w-full transition-all"
+            />
+          </div>
+
+          <!-- Hasta -->
+          <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
+            <label class="text-xs font-medium text-slate-600">Hasta</label>
+            <input
+              type="date"
+              [(ngModel)]="filters.to"
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 w-full transition-all"
+            />
+          </div>
+
+          <!-- ID Usuario -->
+          <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
+            <label class="text-xs font-medium text-slate-600">ID Usuario (opcional)</label>
+            <input
+              type="number"
+              min="1"
+              [(ngModel)]="filters.id_user"
+              placeholder="Ej. 3"
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 w-full transition-all"
+            />
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-2 items-end">
+            <button
+              (click)="loadLogs()"
+              class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 transition active:scale-[0.97]"
+            >
+              Buscar
+            </button>
+            <button
+              (click)="resetFilters()"
+              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition active:scale-[0.97]"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Segunda fila: Búsqueda rápida -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-slate-600">Búsqueda rápida</label>
+          <div class="relative">
+            <mat-icon class="!text-base text-slate-400 absolute left-3 top-1/2 -translate-y-1/2">
+              search
+            </mat-icon>
+            <input
+              type="text"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              placeholder="Producto, mesero, mesa, motivo, folio..."
+              class="border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 focus:border-sky-400 w-full transition-all"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADO / ERRORES -->
+  <div
+    *ngIf="loading()"
+    class="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4 flex items-center gap-3"
+  >
+    <div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <span class="text-sm text-blue-700 font-medium">
+      Cargando cancelaciones...
+    </span>
+  </div>
+
+  <div
+    *ngIf="error() && !loading()"
+    class="bg-red-50 border border-red-200 rounded-xl p-4 mt-4 flex items-center gap-3"
+  >
+    <mat-icon class="!text-xl text-red-500">error_outline</mat-icon>
+    <p class="text-sm text-red-700 font-medium">
+      {{ error() }}
+    </p>
+  </div>
+
+  <!-- RESUMEN -->
+  <div
+    *ngIf="!loading() && !error()"
+    class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4"
+  >
+    <!-- Total registros -->
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]">
+            list_alt
+          </mat-icon>
+        </div>
+        <div>
+          <p class="text-xs text-slate-600 font-medium">Total registros</p>
+          <p class="text-xl font-bold text-slate-800">
+            {{ filteredLogs().length }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total items cancelados -->
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
+          <mat-icon class="!text-lg !w-[18px] !h-[18px] !leading-[18px]">
+            cancel
+          </mat-icon>
+        </div>
+        <div>
+          <p class="text-xs text-slate-600 font-medium">Items cancelados</p>
+          <p class="text-xl font-bold text-slate-800">
+            {{ totalItemsCancelled() }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA CON SCROLL -->
+  <div
+    *ngIf="!loading() && !error() && filteredLogs().length > 0"
+    class="bg-white border border-slate-200 rounded-xl shadow-sm mt-4 overflow-hidden"
+  >
+    <!-- wrapper con scroll -->
+    <div class="overflow-x-auto max-h-[480px]">
+      <table class="w-full min-w-[920px] text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+          <tr>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Fecha
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Producto
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Cant.
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Mesa
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Tipo orden
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Usuario
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              Motivo
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              #Orden
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr
+            *ngFor="let log of filteredLogs()"
+            class="hover:bg-slate-50 transition-colors"
+          >
+            <td class="px-4 py-3 text-sm text-slate-800 whitespace-nowrap">
+              {{ log.cancelled_at | date: 'short' }}
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-800 font-medium">
+              <div class="flex flex-col">
+                <span>{{ log.product_name }}</span>
+              </div>
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-800">
+              <span class="inline-flex items-center justify-center w-8 h-8 bg-slate-100 rounded-lg font-semibold">
+                {{ log.quantity }}
+              </span>
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-600">
+              {{ log.table_name || '—' }}
+            </td>
+
+            <td class="px-4 py-3 text-sm">
+                <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium"
+                    [ngClass]="{
+                    'bg-emerald-100 text-emerald-700': log.order_type === 'dine_in',
+                    'bg-amber-100 text-amber-700': log.order_type === 'takeout',
+                    'bg-slate-100 text-slate-500': !log.order_type || (log.order_type !== 'dine_in' && log.order_type !== 'takeout')
+                    }"
+                >
+                    {{ orderTypeLabel(log.order_type) }}
+                </span>
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-800">
+              {{ log.user_name }}
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-600 max-w-xs">
+              <span class="line-clamp-2">
+                {{ log.reason || '—' }}
+              </span>
+            </td>
+
+            <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+              <span
+                *ngIf="log.order_folio; else idOrden"
+                class="font-mono text-xs bg-slate-100 px-2 py-1 rounded"
+              >
+                {{ log.order_folio }}
+              </span>
+              <ng-template #idOrden>
+                <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                  #{{ log.id_order }}
+                </span>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SIN RESULTADOS -->
+  <div
+    *ngIf="!loading() && !error() && filteredLogs().length === 0"
+    class="bg-white border border-slate-200 rounded-xl p-8 mt-4 text-center"
+  >
+    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <mat-icon class="!text-3xl !w-[32px] !h-[32px] text-slate-400">
+        search_off
+      </mat-icon>
+    </div>
+    <p class="text-slate-600 font-medium">
+      No hay cancelaciones en el rango seleccionado
+    </p>
+    <p class="text-sm text-slate-400 mt-1">
+      Ajusta el rango de fechas o los filtros para ver más resultados.
+    </p>
+  </div>
+</div>

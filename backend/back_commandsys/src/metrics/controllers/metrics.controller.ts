@@ -5,6 +5,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { MetricsExportService } from '../services/metrics-export.service';
+import { GetCancellationsDto } from '../dto/get-cancellations.dto';
 
 @Controller('metrics')
 export class MetricsController {
@@ -32,6 +33,11 @@ export class MetricsController {
   ) {
     let id_branch: number | null = user.role === 'Admin' ? null : user.id_branch;
     return this.metricsService.getTopProducts(from, to, id_branch, +user.id_company);
+  }
+
+  @Get('cancellations')
+  async getCancellations(@Query() dto: GetCancellationsDto, @CurrentUser() user: any) {
+    return this.metricsService.getCancellationsLog(dto, +user.id_branch, +user.id_company);
   }
 
   @Get('export/pdf')

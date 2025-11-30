@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { GetDashboardDto } from '../dto/get-dashboard.dto';
 import * as PdfPrinter from 'pdfmake';
 import * as fonts from 'pdfmake/build/vfs_fonts';
+import { GetCancellationsDto } from '../dto/get-cancellations.dto';
 
 @Injectable()
 export class MetricsService {
@@ -318,5 +319,71 @@ export class MetricsService {
     const buffer = await wb.xlsx.writeBuffer();
     return buffer;
   }
+
+  async getCancellationsLog(
+    dto: GetCancellationsDto,
+    id_branch: number | null,
+    id_company: number,
+  ) {
+    const { from, to, id_user } = dto;
+
+    const branchWhere = id_branch
+      ? `o.id_branch = ${id_branch}`
+      : `b.id_company = ${id_company}`;
+
+    const userFilter = id_user
+      ? `AND oc.id_user = ${Number(id_user)}`
+      : '';
+
+    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
+      SELECT 
+        oc.id                          AS id_cancellation,
+        oc.created_at                  AS cancelled_at,
+        oc.reason                      AS reason,
+        u.name                         AS user_name,
+        u.last_name                    AS user_last_name,
+        oi.quantity                    AS quantity,
+        cp.name                        AS product_name,
+        o.id_order                     AS id_order,
+        t.number                       AS table_name,
+        o.order_type                   AS order_type   -- si existe en tu esquema
+      FROM order_item_cancellations oc
+      JOIN order_items oi 
+        ON oc.id_order_item = oi.id_order_item
+      JOIN orders o 
+        ON oi.id_order = o.id_order
+      JOIN branches b 
+        ON b.id_branch = o.id_branch
+      JOIN branch_products bp 
+        ON oi.id_branch_product = bp.id_branch_product
+      JOIN company_products cp 
+        ON bp.id_company_product = cp.id_company_product
+      JOIN users u 
+        ON oc.id_user = u.id_user
+      LEFT JOIN table_sessions ts 
+        ON o.id_session = ts.id_session
+      LEFT JOIN tables t
+        ON ts.id_table = t.id_table
+      WHERE 
+        ${branchWhere}
+        AND DATE(oc.created_at) BETWEEN '${from}' AND '${to}'
+        ${userFilter}
+      ORDER BY oc.created_at DESC;
+    `);
+
+    return rows.map(r => ({
+      id_cancellation: r.id_cancellation,
+      cancelled_at: r.cancelled_at,
+      reason: r.reason,
+      user_name: `${r.user_name} ${r.last_name ?? ''}`.trim(),
+      quantity: Number(r.quantity),
+      product_name: r.product_name,
+      id_order: r.id_order,
+      order_folio: r.order_folio,
+      table_name: r.table_name,    // ahora sí viene de tables
+      order_type: r.order_type,
+    }));
+  }
+
 
 }

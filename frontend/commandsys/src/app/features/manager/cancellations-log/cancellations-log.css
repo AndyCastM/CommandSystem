@@ -1,0 +1,124 @@
+.cancellations-log-container {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cancellations-log-container h2 {
+  margin: 0;
+}
+
+.filters-card {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filter-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.filter-field input {
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.35rem;
+  border: 1px solid #ccc;
+  min-width: 150px;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-actions button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.35rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.filter-actions button:hover {
+  opacity: 0.9;
+}
+
+.filter-actions button:first-child {
+  background-color: #2563eb;
+  color: white;
+}
+
+.filter-actions button.secondary {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.status {
+  font-size: 0.9rem;
+}
+
+.status-loading {
+  color: #2563eb;
+}
+
+.status-error {
+  color: #b91c1c;
+}
+
+.status-empty {
+  color: #6b7280;
+}
+
+.summary {
+  font-size: 0.85rem;
+  display: flex;
+  gap: 1.5rem;
+  color: #4b5563;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+thead {
+  background-color: #f3f4f6;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}

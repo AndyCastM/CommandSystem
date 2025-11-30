@@ -38,6 +38,25 @@ export interface MetricsResponse {
   }[];
 }
 
+export interface CancellationLog {
+  id_cancellation: number;
+  cancelled_at: string;
+  reason: string | null;
+  user_name: string;
+  quantity: number;
+  product_name: string;
+  id_order: number;
+  order_folio: string | null;
+  table_name: string | null;
+  order_type: string | null;
+}
+
+export interface CancellationFilters {
+  from: string;      // 'YYYY-MM-DD'
+  to: string;        // 'YYYY-MM-DD'
+  id_user?: string; 
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetricsService {
   private http = inject(HttpClient);
@@ -71,4 +90,18 @@ export class MetricsService {
     });
   }
 
+  getCancellations(filters: CancellationFilters): Observable<CancellationLog[]> {
+    let params = new HttpParams()
+      .set('from', filters.from)
+      .set('to', filters.to);
+
+    if (filters.id_user) {
+      params = params.set('id_user', filters.id_user);
+    }
+
+    return this.http.get<CancellationLog[]>(
+      `${this.apiUrl}/cancellations`,
+      { params },
+    );
+  }
 }
