@@ -143,86 +143,113 @@ export class CompanyProductsService {
       updated,
     );
   }
-  async updateProduct(id_company_product: number, dto: UpdateCompanyProductDto, id_company: number) {
 
-    // Validaciones básicas
-    await this.validators.validateCompanyExists(id_company);
+  async updateProduct(
+  id_company_product: number,
+  dto: UpdateCompanyProductDto,
+  id_company: number,
+) {
+  // Validaciones básicas
+  await this.validators.validateCompanyExists(id_company);
+  console.log("ACTUALIZACION RECIBIDA: ", dto);
+  const existingProduct = await this.prisma.company_products.findFirst({
+    where: { id_company_product, id_company },
+  });
+  if (!existingProduct) {
+    throw new NotFoundException('Producto no encontrado.');
+  }
 
-    // Buscar producto
-    const existingProduct = await this.prisma.company_products.findFirst({
-      where: { id_company_product, id_company },
-    });
-    if (!existingProduct) {
-      throw new NotFoundException('Producto no encontrado.');
-    }
-
-    // Verificar duplicado si cambia el nombre o categoría
-    if (
-      dto.name &&
-      (dto.name.trim() !== existingProduct.name ||
-        dto.id_category !== existingProduct.id_category)
-    ) {
-      if (dto.id_category === undefined) {
-        throw new BadRequestException('La categoría del producto es requerida para validar duplicados.');
-      }
-      await this.validators.validateDuplicateProduct(
-        dto.name,
-        dto.id_category,
-        id_company,
+  // Verificar duplicado si cambia el nombre o categoría
+  if (
+    dto.name &&
+    (dto.name.trim() !== existingProduct.name ||
+      dto.id_category !== existingProduct.id_category)
+  ) {
+    if (dto.id_category === undefined) {
+      throw new BadRequestException(
+        'La categoría del producto es requerida para validar duplicados.',
       );
     }
+    await this.validators.validateDuplicateProduct(
+      dto.name,
+      dto.id_category,
+      id_company,
+    );
+  }
 
-    return this.prisma.$transaction(async (tx) => {
-      // Actualizar producto principal
-      const updated = await tx.company_products.update({
-        where: { id_company_product },
-        data: {
-          name: dto.name?.trim() ?? existingProduct.name,
-          description: dto.description ?? existingProduct.description,
-          base_price: Number(dto.base_price ?? existingProduct.base_price),
-          id_category: dto.id_category ?? existingProduct.id_category,
-          id_area: dto.id_area ?? existingProduct.id_area,
-        },
-      });
+  return this.prisma.$transaction(async (tx) => {
+    // 1) Actualizar producto principal
+    const updated = await tx.company_products.update({
+      where: { id_company_product },
+      data: {
+        name: dto.name?.trim() ?? existingProduct.name,
+        description: dto.description ?? existingProduct.description,
+        base_price: Number(dto.base_price ?? existingProduct.base_price),
+        id_category: dto.id_category ?? existingProduct.id_category,
+        id_area: dto.id_area ?? existingProduct.id_area,
+      },
+    });
 
-      // Opcional: actualizar opciones, valores o tiers
-      if (dto.options?.length) {
-        for (const opt of dto.options) {
-          const existingOpt = await tx.product_options.findFirst({
-            where: {
-              id_company_product,
-              name: opt.name.trim(),
+    // 2) Opciones (tu lógica tal cual la tenías)
+    if (dto.options?.length) {
+      for (const opt of dto.options) {
+        const existingOpt = await tx.product_options.findFirst({
+          where: {
+            id_company_product,
+            name: opt.name.trim(),
+          },
+        });
+
+        if (existingOpt) {
+          await tx.product_options.update({
+            where: { id_option: existingOpt.id_option },
+            data: {
+              is_required: opt.is_required ?? existingOpt.is_required,
+              multi_select: opt.multi_select ?? existingOpt.multi_select,
+              max_selection: opt.max_selection ?? existingOpt.max_selection,
             },
           });
-
-          if (existingOpt) {
-            await tx.product_options.update({
-              where: { id_option: existingOpt.id_option },
-              data: {
-                is_required: opt.is_required ?? existingOpt.is_required,
-                multi_select: opt.multi_select ?? existingOpt.multi_select,
-                max_selection: opt.max_selection ?? existingOpt.max_selection,
-              },
-            });
-          } else {
-            // Nueva opción
-            await tx.product_options.create({
-              data: {
-                id_company_product,
-                name: opt.name.trim(),
-                is_required: opt.is_required === 1 ? 1 : 0,
-                multi_select: opt.multi_select === 1 ? 1 : 0,
-                max_selection: opt.max_selection ?? 1,
-              },
-            });
-          }
+        } else {
+          await tx.product_options.create({
+            data: {
+              id_company_product,
+              name: opt.name.trim(),
+              is_required: opt.is_required === 1 ? 1 : 0,
+              multi_select: opt.multi_select === 1 ? 1 : 0,
+              max_selection: opt.max_selection ?? 1,
+            },
+          });
         }
       }
+    }
 
-      return formatResponse(
-        `Producto "${updated.name}" actualizado correctamente.`,
-        updated,
-      );
+    // 3) Volver a leer con relaciones + imagen para mandar mismo DTO que el listado
+    const prod = await tx.company_products.findUnique({
+      where: { id_company_product: updated.id_company_product },
+      include: {
+        product_categories: true,
+        print_areas: true,
+        company_product_images: true,
+      },
+    });
+
+    const formatted = {
+      id_company_product: prod!.id_company_product,
+      name: prod!.name,
+      category: prod!.product_categories?.name ?? null,
+      area: prod!.print_areas?.name ?? null,
+      id_category: prod!.id_category,
+      id_area: prod!.id_area,
+      base_price: Number(prod!.base_price),
+      preparation_time: prod!.preparation_time,
+      is_active: prod!.is_active,
+      image_url: prod!.company_product_images?.[0]?.image_url ?? null,
+    };
+
+    return formatResponse(
+      `Producto "${formatted.name}" actualizado correctamente.`,
+      formatted,
+    );
   });
 }
 
@@ -338,6 +365,61 @@ async getProductDetail(id_branch_product: number) {
   return formatResponse(`Detalle del producto ${prod.name}`, formatted);
 }
 
+async getCompanyProductDetail(id_company_product: number) {
+  const prod = await this.prisma.company_products.findUnique({
+    where: { id_company_product },
+    include: {
+      product_categories: true,
+      print_areas: true,
+      company_product_images: true,
+      product_options: {
+        include: {
+          product_option_values: true,
+          product_option_tiers: true,
+        },
+      },
+    },
+  });
+
+  if (!prod) {
+    throw new NotFoundException('Producto no encontrado.');
+  }
+
+  const formatted = {
+    id_company_product: prod.id_company_product,
+    id_category: prod.id_category,
+    id_area: prod.id_area,
+    name: prod.name,
+    description: prod.description,
+    base_price: Number(prod.base_price),
+    image_url: prod.company_product_images?.[0]?.image_url || null,
+    is_active: prod.is_active,
+    category_name: prod.product_categories?.name,
+    area_name: prod.print_areas?.name,
+    options: prod.product_options.map(o => ({
+      id_option: o.id_option,
+      name: o.name,
+      is_required: o.is_required === 1,
+      multi_select: o.multi_select === 1,
+      max_selection: o.max_selection,
+      values: o.product_option_values
+      .filter(v => v.is_active === true)
+      .map(v => ({
+        id_value: v.id_option_value,
+        name: v.name,
+        extra_price: Number(v.extra_price),
+        is_active: v.is_active,
+      })),
+      tiers: o.product_option_tiers.map(t => ({
+        id_tier: t.id_tier,
+        selection_count: t.selection_count,
+        extra_price: Number(t.extra_price),
+      })),
+    })),
+  };
+
+  return formatResponse(`Detalle del producto ${prod.name}`, formatted);
+}
 
 async getCompanyProducts(
   id_company: number,
@@ -355,21 +437,25 @@ async getCompanyProducts(
     include: {
       product_categories: true,
       print_areas: true,
+      company_product_images: true, //  importante
     },
     orderBy: { id_category: 'asc' },
   });
 
-  return formatResponse('Lista de productos', products.map(p => ({
+  const formatted = products.map((p) => ({
     id_company_product: p.id_company_product,
     name: p.name,
-    category: p.product_categories?.name,
-    area: p.print_areas?.name,
+    category: p.product_categories?.name ?? null,
+    area: p.print_areas?.name ?? null,
     id_category: p.id_category,
     id_area: p.id_area,
     base_price: Number(p.base_price),
     preparation_time: p.preparation_time,
     is_active: p.is_active,
-  })));
+    image_url: p.company_product_images?.[0]?.image_url ?? null, //  primera imagen
+  }));
+
+  return formatResponse('Lista de productos', formatted);
 }
 
 async getBranchProducts(

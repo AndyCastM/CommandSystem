@@ -1,7 +1,21 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { forkJoin, of, switchMap, tap, map, shareReplay, take, mergeMap, toArray, catchError, throwError } from 'rxjs';
-import { Observable, firstValueFrom } from 'rxjs';
+import {
+  forkJoin,
+  of,
+  switchMap,
+  tap,
+  map,
+  shareReplay,
+  take,
+  mergeMap,
+  toArray,
+  catchError,
+  throwError,
+  Observable,
+  firstValueFrom,
+} from 'rxjs';
+
 import { ProductAreasService } from './products-area.service';
 import { ProductCategoriesService } from './products-category.service';
 
@@ -24,26 +38,26 @@ import { API_URL } from '../constants';
 export class ProductService {
   private http = inject(HttpClient);
   private base = API_URL;
-  
+
   loadingSig = signal<boolean>(false);
   productsSig = signal<CompanyProduct[]>([]);
-  
+
   private normalizeActive(v: any): 0 | 1 {
     return (v === 1 || v === '1' || v === true) ? 1 : 0;
   }
-  
+
   /** Cache: id_product -> url primera imagen */
   private imagesCache = new Map<number, string>();
   /** In-flight: id_product -> observable compartido para evitar duplicar requests */
   private imagesInFlight = new Map<number, Observable<string | null>>();
 
-  // Catálogos (por si los usas en el diálogo)
+  // Catálogos
   categoriesSig = signal<Category[]>([]);
   areasSig = signal<Area[]>([]);
   private categoriesLoaded = false;
   private areasLoaded = false;
 
-  // Helper Cloudinary (para cuando uses imágenes reales)
+  // Helper Cloudinary
   cld(url?: string, t = 'f_auto,q_auto,c_fill,w_200,h_150') {
     return url ? url.replace('/upload/', `/upload/${t}/`) : '';
   }
@@ -79,16 +93,14 @@ export class ProductService {
       shareReplay(1)
     );
 
-    return req$; 
+    return req$;
   }
 
-
   // === SUBIR IMAGEN LIGADA A PRODUCTO ===
-  // Usa 'file' porque tu FileInterceptor('file') lo espera con ese nombre
   uploadImageForProduct(id_company_product: number, file: File) {
     const fd = new FormData();
-    fd.append('file', file); //  clave correcta
-    const url = `${this.base}/company-products/${id_company_product}/upload`; // usa :id
+    fd.append('file', file);
+    const url = `${this.base}/company-products/${id_company_product}/upload`;
     return this.http.post<any>(url, fd);
   }
 
@@ -103,7 +115,6 @@ export class ProductService {
           return of(created);
         }
 
-        // luego subir imagen
         return this.uploadImageForProduct(created.id_company_product, imageFile).pipe(
           map(uploadRes => {
             const updated = (uploadRes?.product ?? uploadRes) as CompanyProduct || created;
@@ -123,40 +134,58 @@ export class ProductService {
     );
   }
 
+  // 🔥 AQUÍ ES DONDE CAMBIA LA MAGIA
   update(id_company_product: number, patch: UpdateCompanyProductDto, imageFile?: File) {
     const url = `${this.base}/company-products/${id_company_product}`;
 
-    return this.http.patch<CompanyProduct>(url, patch).pipe(
+    return this.http.patch<{ data: CompanyProduct }>(url, patch).pipe(
+      // el back ahora manda { statusCode, message, data, timestamp }
+      map(res => res.data),
       switchMap(updated => {
         if (!imageFile) {
-          this.productsSig.set(this.productsSig().map(p => p.id_company_product === id_company_product ? updated : p));
+          // updated YA trae category, area, image_url, etc.
+          this.productsSig.update(list =>
+            list.map(p =>
+              p.id_company_product === id_company_product ? updated : p
+            )
+          );
           return of(updated);
         }
+
+        // Si además se sube nueva imagen:
         return this.uploadImageForProduct(id_company_product, imageFile).pipe(
           map(uploadRes => {
             const merged = (uploadRes?.product ?? uploadRes) as CompanyProduct || updated;
-            this.productsSig.set(this.productsSig().map(p => p.id_company_product === id_company_product ? merged : p));
+
+            this.productsSig.update(list =>
+              list.map(p =>
+                p.id_company_product === id_company_product ? merged : p
+              )
+            );
+
             return merged;
           })
         );
       })
-    ).subscribe();
+    ).subscribe(); // lo sigues llamando como "fire and forget" desde el componente
   }
 
   remove(id_company_product: number) {
     const url = `${this.base}/company-products/${id_company_product}`;
     return this.http.delete(url).pipe(
-      tap(() => this.productsSig.set(this.productsSig().filter(p => p.id_company_product !== id_company_product)))
+      tap(() =>
+        this.productsSig.set(
+          this.productsSig().filter(p => p.id_company_product !== id_company_product)
+        )
+      )
     ).subscribe();
   }
 
   setActive(id_company_product: number, active: boolean) {
-    // si tu endpoint es este (como mostraste):
     const url = `${this.base}/company-products/company/${id_company_product}/toggle`;
-    // si tu backend realmente usa PATCH /api/company-products/:id con body { is_active }, cambia esa URL
     const body = { is_active: active ? 1 : 0 };
 
-    // Optimista: actualiza en memoria primero (merge)
+    // update optimista
     this.productsSig.update(list =>
       list.map(p => p.id_company_product === id_company_product
         ? { ...p, is_active: body.is_active }
@@ -164,23 +193,14 @@ export class ProductService {
       )
     );
 
-    return this.http.patch<CompanyProduct | Partial<CompanyProduct>>(url, body).pipe(
-      tap(res => {
-        // normaliza y mergea con el existente
-        this.productsSig.update(list =>
-          list.map(p => {
-            if (p.id_company_product !== id_company_product) return p;
-            const next = { ...p, ...res } as CompanyProduct;
-            next.is_active = this.normalizeActive((res as any)?.is_active ?? p.is_active);
-            return next;
-          })
-        );
-      }),
+    return this.http.patch(url, body).pipe(
+      // si quieres, aquí podrías leer res.data, pero como ya hicimos
+      // el cambio optimista, con que no truene nos damos por servidos
       catchError(err => {
-        // revertir optimista
+        // revertir si falla
         this.productsSig.update(list =>
           list.map(p => p.id_company_product === id_company_product
-            ? { ...p, is_active: this.normalizeActive(!active) } // vuelve al estado previo
+            ? { ...p, is_active: this.normalizeActive(!active) }
             : p
           )
         );
@@ -194,30 +214,23 @@ export class ProductService {
     return await firstValueFrom(this.http.get<{ data: ProductDetail }>(url));
   }
 
+  getCompanyProductDetail(id_company_product: number) {
+    const url = `${this.base}/company-products/detail/${id_company_product}`;
+    return this.http.get<{ data: ProductDetail }>(url);
+  }
+
   // === OBTENER IMÁGENES DE UN PRODUCTO ===
-  // Tu controller expone GET /api/company-products/:id_product/images
   getProductImages(id_company_product: number) {
-    const url = `${this.base}/company-products/${id_company_product}/images`; // usa :id_product
+    const url = `${this.base}/company-products/${id_company_product}/images`;
     return this.http.get<ProductImagesResponse | ProductImage[]>(url).pipe(
-      // Soporta dos formatos: { images: [...] } o directamente [...]
-      map(res => {
-        const images = Array.isArray(res) ? res : (res?.images ?? []);
-        return images;
-      })
+      map(res => Array.isArray(res) ? res : (res?.images ?? []))
     );
   }
 
-    /**
-   * Devuelve la URL de miniatura para un product id:
-   * - Si está en cache: regresa sin pedir a la red.
-   * - Si no, dispara getProductImages(id) UNA sola vez (compartida) y cachea la primera.
-   */
   getThumbUrl$(id_company_product: number): Observable<string | null> {
-    // cache
     const cached = this.imagesCache.get(id_company_product);
     if (cached) return of(cached);
 
-    // in-flight (evita duplicar)
     const inFlight = this.imagesInFlight.get(id_company_product);
     if (inFlight) return inFlight;
 
@@ -225,23 +238,17 @@ export class ProductService {
       map((list: ProductImage[]) => {
         const first = list?.[0]?.image_url ?? null;
         if (first) this.imagesCache.set(id_company_product, first);
-        // limpia el inFlight cuando termina (éxito o null)
         this.imagesInFlight.delete(id_company_product);
         return first;
       }),
-      shareReplay(1) // comparte a múltiples suscriptores
+      shareReplay(1)
     );
 
     this.imagesInFlight.set(id_company_product, req$);
     return req$;
   }
 
-  /**
-   * Prefetch para un conjunto de productos visibles con límite de concurrencia.
-   * Útil al cambiar filtro/paginación.
-   */
   warmImagesFor(products: CompanyProduct[], concurrency = 4) {
-    // filtra los que no estén en cache ni inFlight
     const pending = products
       .map(p => p.id_company_product)
       .filter(id =>
@@ -251,13 +258,11 @@ export class ProductService {
 
     if (!pending.length) return;
 
-    // dispara N en paralelo (mergeMap concurrency)
     of(...pending).pipe(
       mergeMap(id => this.getThumbUrl$(id).pipe(take(1)), concurrency),
-      toArray() // consume
-    ).subscribe({ error: () => {/* swallow */} });
+      toArray()
+    ).subscribe({ error: () => {/* ignore */} });
   }
-
 
   get categoriesCached(): Category[] | null { return this.categoriesLoaded ? this.categoriesSig() : null; }
   get areasCached(): Area[] | null { return this.areasLoaded ? this.areasSig() : null; }
@@ -265,7 +270,6 @@ export class ProductService {
   getAreaStyle(areaName: string) {
     const n = (areaName || '').toLowerCase();
 
-    // Cocina o preparación
     if (n.includes('cocina')) {
       return {
         color: 'bg-amber-400',
@@ -275,7 +279,6 @@ export class ProductService {
       };
     }
 
-    // Bebidas o cafetería
     if (n.includes('bebida') || n.includes('café') || n.includes('barista')) {
       return {
         color: 'bg-cyan-400',
@@ -285,7 +288,6 @@ export class ProductService {
       };
     }
 
-    // Bar o tragos
     if (n.includes('bar') || n.includes('tragos')) {
       return {
         color: 'bg-emerald-400',
@@ -295,7 +297,6 @@ export class ProductService {
       };
     }
 
-    // Postres o repostería
     if (n.includes('postre') || n.includes('repostería') || n.includes('panadería')) {
       return {
         color: 'bg-pink-400',
@@ -305,7 +306,6 @@ export class ProductService {
       };
     }
 
-    // Fallback neutro
     return {
       color: 'bg-slate-400',
       textColor: 'text-slate-700',
@@ -313,5 +313,4 @@ export class ProductService {
       icon: 'storefront',
     };
   }
-
 }

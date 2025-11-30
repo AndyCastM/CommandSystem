@@ -1,8 +1,8 @@
 import { Component, Inject, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  FormBuilder, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, FormArray, FormGroup,
-  FormControl
+  FormBuilder, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors,
+  FormArray, FormGroup, FormControl
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +13,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { ProductService } from '../../../../../core/services/products/products.service';
-import type { CompanyProduct, CreateCompanyProductDto, Category, Area } from '../../../../../core/services/products/products.models';
+import type {
+  CompanyProduct,
+  CreateCompanyProductDto,
+  Category,
+  Area,
+  ProductDetail,                
+} from '../../../../../core/services/products/products.models';
 import { CustomizationFormComponent } from '../customization-form/customization-form.component';
 import { ProductAreasService } from '../../../../../core/services/products/products-area.service';
 import { ProductCategoriesService } from '../../../../../core/services/products/products-category.service';
@@ -93,6 +99,7 @@ export class ProductDialogComponent {
     const v = (data?.value ?? {}) as CompanyProduct;
     this.editing.set(data?.mode === 'edit');
 
+    // Patch básico
     this.form.patchValue({
       name: v.name ?? '',
       base_price: v.base_price ?? 0,
@@ -108,7 +115,7 @@ export class ProductDialogComponent {
 
     this.areasSrv.fetchAreas().subscribe({
       next: () => {
-        this.cdr.detectChanges(); 
+        this.cdr.detectChanges();
       },
       error: () => {
         this.loadingAreas.set(false);
@@ -116,8 +123,7 @@ export class ProductDialogComponent {
       }
     });
 
-
-
+    // Cargar imagen en edición (solo imágenes ligadas, lo puedes dejar o quitar si usas image_url del detail)
     if (this.editing() && v?.id_company_product) {
       this.productSrv.getProductImages(v.id_company_product).subscribe(list => {
         const first = list?.[0]?.image_url ?? null;
@@ -125,15 +131,65 @@ export class ProductDialogComponent {
       });
     }
 
+    // Cargar detalle COMPLETO (con opciones) cuando estamos editando
+    if (this.editing() && v?.id_company_product) {
+      this.productSrv.getCompanyProductDetail(v.id_company_product).subscribe({
+        next: (res) => {
+          const detail: ProductDetail = res.data;
+
+          // Patch de categoría / área si hace falta
+          this.form.patchValue({
+            id_category: v.id_category ?? detail.id_category ?? null,
+            id_area: v.id_area ?? detail.id_area ?? null,
+            description: detail.description,
+          }, { emitEvent: false });
+
+          // Imagen desde el detail si no hay preview todavía
+          if (detail.image_url && !this.imagePreview()) {
+            this.imagePreview.set(detail.image_url);
+          }
+
+          // Opciones -> abrir panel derecho si existen
+          if (detail.options && detail.options.length > 0) {
+            this.loadOptionsFromDetail(detail);
+            this.form.controls.is_customizable.setValue(true, { emitEvent: false });
+          }
+
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error cargando detalle de producto con opciones:', err);
+        }
+      });
+    }
+
     this.form.controls.id_category.addValidators([Validators.required]);
     this.form.controls.id_area.addValidators([Validators.required]);
 
+    // 1) Sincronizar disabled de los selects con las signals de loading (SIN usar [disabled] en template)
+    effect(() => {
+      const loadingCats = this.loadingCategories();
+      const loadingAreas = this.loadingAreas();
+
+      if (loadingCats) {
+        this.form.controls.id_category.disable({ emitEvent: false });
+      } else {
+        this.form.controls.id_category.enable({ emitEvent: false });
+      }
+
+      if (loadingAreas) {
+        this.form.controls.id_area.disable({ emitEvent: false });
+      } else {
+        this.form.controls.id_area.enable({ emitEvent: false });
+      }
+    });
+
+    // 2) Animación ancho dialog según is_customizable
     effect(() => {
       const custom = this.form.controls.is_customizable.value;
       const dialog = document.querySelector('.mat-mdc-dialog-surface');
       if (!dialog) return;
 
-      // animación de ancho
       if (custom) {
         dialog.classList.add('transition-all', 'duration-300');
       } else {
@@ -141,7 +197,7 @@ export class ProductDialogComponent {
       }
     });
 
-    // === Cargar selección de categoría/área una vez listas ===
+    // 3) Cargar selección de categoría/área una vez listas
     effect(() => {
       const catsReady = !this.loadingCategories();
       const areasReady = !this.loadingAreas();
@@ -164,6 +220,7 @@ export class ProductDialogComponent {
     const val = (ctrl.value ?? '') as string;
     return val.trim().length ? null : { onlySpaces: true };
   }
+
   showError(name: keyof typeof this.form.controls, err: string) {
     const c = this.form.get(String(name));
     return !!c && (c.touched || c.dirty) && c.hasError(err);
@@ -171,6 +228,7 @@ export class ProductDialogComponent {
 
   // ======= Imagen =======
   triggerFilePick() { document.getElementById('image-upload')?.click(); }
+
   onFileSelected(evt: Event) {
     const input = evt.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -190,6 +248,7 @@ export class ProductDialogComponent {
     reader.onload = () => this.imagePreview.set(reader.result as string);
     reader.readAsDataURL(file);
   }
+
   clearImage() {
     this.imagePreview.set(null);
     this.form.patchValue({ image_url: '', file: null });
@@ -198,6 +257,46 @@ export class ProductDialogComponent {
   }
 
   // ======= Opciones =======
+
+  /** Llena el FormArray `options` a partir del ProductDetail (detail de la API) */
+  private loadOptionsFromDetail(detail: ProductDetail) {
+    const opts = detail.options ?? [];
+    if (!opts.length) return;
+
+    this.options.clear();
+
+    for (const o of opts) {
+      const valuesFA = this.fb.array<FormGroup>(
+        (o.values ?? []).map(val =>
+          this.fb.group({
+            name: [val.name ?? ''],
+            extra_price: [val.extra_price ?? 0],
+          })
+        )
+      );
+
+      const tiersFA = this.fb.array<FormGroup>(
+        (o.tiers ?? []).map(t =>
+          this.fb.group({
+            selection_count: [t.selection_count ?? 1],
+            extra_price: [t.extra_price ?? 0],
+          })
+        )
+      );
+
+      const optionGroup = this.fb.group({
+        name: [o.name ?? ''],
+        is_required: [o.is_required ? 1 : 0],
+        multi_select: [o.multi_select ? 1 : 0],
+        max_selection: [o.max_selection ?? 1],
+        values: valuesFA,
+        tiers: tiersFA,
+      });
+
+      this.options.push(optionGroup);
+    }
+  }
+
   addOption() {
     const option = this.fb.group({
       name: [''],
@@ -209,6 +308,7 @@ export class ProductDialogComponent {
     });
     this.options.push(option);
   }
+
   removeOption(i: number) { this.options.removeAt(i); }
 
   addValue(optIdx: number) {
@@ -248,20 +348,22 @@ export class ProductDialogComponent {
       base_price: Number(raw.base_price ?? 0),
       image_url: raw.image_url ?? '',
       preparation_time: raw.preparation_time != null ? Number(raw.preparation_time) : undefined,
-      options: raw.is_customizable ? raw.options.map(o => ({
-        name: o['name'],
-        is_required: o['is_required'] ? 1 : 0,
-        multi_select: o['multi_select'] ? 1 : 0,
-        max_selection: Number(o['max_selection'] ?? 1),
-        tiers: o['tiers'].map((t: { selection_count: any; extra_price: any; }) => ({
-          selection_count: Number(t.selection_count),
-          extra_price: Number(t.extra_price ?? 0)
-        })),
-        values: o['values'].map((v: { name: any; extra_price: any; }) => ({
-          name: v.name,
-          extra_price: Number(v.extra_price ?? 0)
-        }))
-      })) : []
+      options: raw.is_customizable
+        ? raw.options.map(o => ({
+            name: o['name'],
+            is_required: o['is_required'] ? 1 : 0,
+            multi_select: o['multi_select'] ? 1 : 0,
+            max_selection: Number(o['max_selection'] ?? 1),
+            tiers: o['tiers'].map((t: { selection_count: any; extra_price: any; }) => ({
+              selection_count: Number(t.selection_count),
+              extra_price: Number(t.extra_price ?? 0)
+            })),
+            values: o['values'].map((v: { name: any; extra_price: any; }) => ({
+              name: v.name,
+              extra_price: Number(v.extra_price ?? 0)
+            }))
+          }))
+        : []
     };
 
     const file = raw.file as File | null;
@@ -278,5 +380,4 @@ export class ProductDialogComponent {
   getArray(group: FormGroup, name: string): FormArray<FormGroup> {
     return group.get(name) as FormArray<FormGroup>;
   }
-  
 }

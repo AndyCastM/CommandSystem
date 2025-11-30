@@ -37,6 +37,12 @@ export class CompanyProductsController {
     return this.companyProductsService.getProductDetail(+id_branch_product);
   }
 
+  @Get('detail/:id_company_product')
+  @Roles(Role.Admin, Role.Gerente)
+  async getCompanyProductDetail(@Param('id_company_product') id_company_product: string){
+    return this.companyProductsService.getCompanyProductDetail(+id_company_product);
+  }
+
   @Post()
   @Roles(Role.Admin)
   create(

@@ -35,7 +35,7 @@ export class CompanyImagesService {
     const uploadResult = await this.cloudinaryService.uploadFile(file, productName);
 
     // Generar descripción con IA
-    const description_ai = await this.aiService.generateDescription(productName, categoryName);
+    //const description_ai = await this.aiService.generateDescription(productName, categoryName);
     //const description_ai = "Descripción generada por IA"; // Placeholder
 
     // Guardar en BD
@@ -44,7 +44,6 @@ export class CompanyImagesService {
         id_company_product: id_product,
         image_url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
-        description_ai,
       },
     });
 

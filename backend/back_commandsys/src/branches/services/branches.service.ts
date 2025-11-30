@@ -192,11 +192,13 @@ export class BranchesService {
           is_required: opt.is_required === 1,
           multi_select: opt.multi_select === 1,
           max_selection: opt.max_selection,
-          values: opt.product_option_values.map((val) => ({
-            id_value: val.id_option_value,
-            name: val.name,
-            extra_price: Number(val.extra_price),
-            is_active: val.is_active,
+          values: opt.product_option_values
+          .filter(v => v.is_active === true)
+          .map(v => ({
+            id_value: v.id_option_value,
+            name: v.name,
+            extra_price: Number(v.extra_price),
+            is_active: v.is_active,
           })),
           tiers: opt.product_option_tiers.map((tier) => ({
             id_tier: tier.id_tier,

@@ -109,23 +109,42 @@ export interface ProductImagesResponse {
 // Obtener detalle de un producto 
 export interface ProductDetail {
   id_company_product: number;
+  id_category: number;
+  id_area: number;
+
   name: string;
   description?: string;
   base_price: number;
-  image_url?: string;
+
+  image_url?: string | null;
+  is_active: number | boolean; // el back manda 1
+
   category_name?: string;
   area_name?: string;
-  options: {
-    id_option: number;
-    name: string;
-    is_required: boolean;
-    multi_select: boolean;
-    max_selection: number;
-    values: {
-      id_value: number;
-      name: string;
-      extra_price: number;
-      is_active: boolean;
-    }[];
-  }[];
+
+  options: ProductDetailOption[];
+}
+
+export interface ProductDetailOption {
+  id_option: number;
+  name: string;
+  is_required: boolean;    // 👈 en el JSON viene true/false
+  multi_select: boolean;   // 👈 igual
+  max_selection: number;
+
+  values: ProductDetailOptionValue[];
+  tiers: ProductDetailOptionTier[];
+}
+
+export interface ProductDetailOptionValue {
+  id_value: number;
+  name: string;
+  extra_price: number;
+  is_active: boolean;
+}
+
+export interface ProductDetailOptionTier {
+  id_tier: number;
+  selection_count: number;
+  extra_price: number;
 }

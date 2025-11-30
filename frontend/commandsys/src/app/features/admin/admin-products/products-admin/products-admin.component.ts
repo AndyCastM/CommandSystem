@@ -180,6 +180,7 @@ export class ProductsAdminComponent implements OnInit{
   }
 
   openEdit(p: CompanyProduct) {
+    //console.log('Mandando el producto a editar: ', p);
     this.dialog.open(ProductDialogComponent, {
       data: { mode: 'edit', value: p },
       panelClass: 'rounded-2xl',
