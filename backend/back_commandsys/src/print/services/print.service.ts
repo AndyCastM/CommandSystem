@@ -14,6 +14,22 @@ export class PrintService {
     });
   }
 
+  sendTicketToBranch(branchId: number, content: string) {
+    this.gateway.sendToBranch(branchId, {
+      content,
+      timestamp: Date.now(),
+    });
+  }
+  
+  // sendRawTicketToBranch(branchId: number, content: string) {
+  //   const payload = {
+  //     content,
+  //     timestamp: Date.now(),
+  //   };
+
+  //   this.gateway.emitTicketToBranch(branchId, payload);
+  // }
+
   // Un ticket de prueba
   test() {
     this.sendOrderToPrint("TEST PRINT\nDesde backend hosteado \n");

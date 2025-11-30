@@ -1017,10 +1017,8 @@ export class OrdersService {
       // 6) Transformar a ticket formateado
       const text = buildTicketFormat(payload);
 
-      // 7) Enviar a CADA impresora del área
-      stations.forEach(st => {
-        this.printService.sendOrderToPrint(text);
-      });
+      // 7) Enviar SOLO a la sucursal correcta
+      this.printService.sendTicketToBranch(order.id_branch, text);
     }
 
     return { ok: true };

@@ -36,6 +36,8 @@ export class MetricsService {
         ${branchWhere}
         AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
         AND oi.status != 'cancelled'
+        AND o.status = 'delivered'              -- solo comandas completadas
+        AND o.payment_status = 'paid'           -- solo comandas pagadas
     `);
 
     const totals = totalsRaw[0] || {};
@@ -57,6 +59,8 @@ export class MetricsService {
         ${branchWhere}
         AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
         AND oi.status != 'cancelled'
+        AND o.status = 'delivered'
+        AND o.payment_status = 'paid'
       GROUP BY DATE(o.created_at)
       ORDER BY date ASC
     `);
@@ -77,7 +81,8 @@ export class MetricsService {
       JOIN branches b ON b.id_branch = o.id_branch
       WHERE 
         ${branchWhere}
-        AND o.status IN ('ready','delivered')
+        AND o.status = 'delivered'
+        AND o.payment_status = 'paid'
         AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
       GROUP BY DATE(o.created_at)
       ORDER BY date ASC
@@ -120,6 +125,8 @@ export class MetricsService {
           AND oi.start_time IS NOT NULL
           AND oi.ready_time IS NOT NULL
           AND oi.delivered_time IS NOT NULL
+          AND o.status = 'delivered'
+          AND o.payment_status = 'paid'
           AND DATE(o.created_at) BETWEEN '${from}' AND '${to}';
       `);
 
@@ -150,6 +157,8 @@ export class MetricsService {
           AND oi.start_time IS NOT NULL
           AND oi.ready_time IS NOT NULL
           AND oi.delivered_time IS NOT NULL
+          AND o.status = 'delivered'
+          AND o.payment_status = 'paid'
           AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
         GROUP BY pa.id_area
         ORDER BY area ASC;
@@ -177,9 +186,12 @@ export class MetricsService {
         JOIN branches b ON b.id_branch = o.id_branch
         WHERE 
           ${branchWhere}
+          AND oi.status = 'delivered'
           AND oi.start_time IS NOT NULL
           AND oi.ready_time IS NOT NULL
           AND oi.delivered_time IS NOT NULL
+          AND o.status = 'delivered'
+          AND o.payment_status = 'paid'
           AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
         GROUP BY cp.id_company_product
         HAVING items >= 3
@@ -208,9 +220,12 @@ export class MetricsService {
         JOIN branches b ON b.id_branch = o.id_branch
         WHERE 
           ${branchWhere}
+          AND oi.status = 'delivered'
           AND oi.start_time IS NOT NULL
           AND oi.ready_time IS NOT NULL
           AND oi.delivered_time IS NOT NULL
+          AND o.status = 'delivered'
+          AND o.payment_status = 'paid'
           AND DATE(o.created_at) BETWEEN '${from}' AND '${to}'
         GROUP BY cp.id_company_product
         HAVING items >= 3
@@ -256,6 +271,8 @@ export class MetricsService {
         ${whereBranch}
         AND o.created_at BETWEEN '${from} 00:00:00' AND '${to} 23:59:59'
         AND oi.status != 'cancelled'
+        AND o.status = 'delivered'
+        AND o.payment_status = 'paid'
       GROUP BY cp.id_company_product
       ORDER BY total_qty DESC
       LIMIT 10;
