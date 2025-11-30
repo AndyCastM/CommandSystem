@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto z-0">
+<div class="max-w-6xl mx-auto">
   <div class="flex flex-col lg:flex-row lg:gap-6">
 
     <!-- IZQUIERDA: MENÚ -->
@@ -34,7 +34,6 @@
           [panelClass]="'filter-panel'"
           class="!w-44 border border-slate-300 rounded-lg px-3 py-2 text-sm"
         >
-
           <!-- SOLO dine_in cuando está bloqueado -->
           <mat-option *ngIf="isDineInLocked" value="dine_in">
             🍽️ Mesa
@@ -45,7 +44,6 @@
             <mat-option value="dine_in">🍽️ Mesa</mat-option>
             <mat-option value="takeout">🛍️ Para llevar</mat-option>
           </ng-container>
-
         </mat-select>
       </div>
       
@@ -105,8 +103,10 @@
 
     </div>
 
-    <!-- DERECHA: COMANDA (Desktop/Tablet) -->
-    <div *ngIf="isAdding" class="hidden lg:block lg:w-96 sticky top-4 h-fit">
+    <!-- ========================================
+         PREVIEW DE DESKTOP - SOLO VISIBLE EN lg+
+         ======================================== -->
+    <div *ngIf="isAdding" class="hidden lg:block lg:w-96 lg:sticky lg:top-4 lg:h-fit">
       <app-order-preview
         [cart]="$any(cart)"
         [totalAmount]="totalAmount"
@@ -119,20 +119,23 @@
 
   </div>
 
-  <!-- DRAWER MÓVIL (< lg) -->
+  <!-- ========================================
+       MODAL MÓVIL - SOLO VISIBLE ANTES DE lg
+       ======================================== -->
   <div *ngIf="isAdding" class="lg:hidden">
 
-    <!-- Botón flotante -->
+    <!-- Botón flotante - solo visible cuando modal está cerrado -->
     <button
-      (click)="drawerOpen = !drawerOpen"
+      *ngIf="!drawerOpen"
+      (click)="drawerOpen = true"
       class="fixed bottom-6 right-6 bg-sky-600 text-white rounded-full shadow-2xl 
-             w-16 h-16 flex items-center justify-center z-[9999] hover:bg-sky-700 
+             w-16 h-16 flex items-center justify-center z-50 hover:bg-sky-700 
              transition-all active:scale-95"
     >
       <div class="relative">
-        <mat-icon class="!text-2xl">{{ drawerOpen ? 'close' : 'shopping_cart' }}</mat-icon>
+        <mat-icon class="!text-2xl">shopping_cart</mat-icon>
         <span 
-          *ngIf="cart().size > 0 && !drawerOpen"
+          *ngIf="cart().size > 0"
           class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold 
                  w-5 h-5 rounded-full flex items-center justify-center"
         >
@@ -141,67 +144,58 @@
       </div>
     </button>
 
-    <!-- Overlay -->
+    <!-- Overlay oscuro -->
     <div
       *ngIf="drawerOpen"
       (click)="drawerOpen = false"
-      class="fixed inset-0 bg-black/50 z-[9998] animate-fade-in"
+      class="fixed inset-0 bg-black/60 z-[100] transition-opacity duration-300"
     ></div>
 
-    <!-- Drawer -->
+    <!-- Modal centrado -->
     <div
-      class="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl 
-             z-[9999] transition-transform duration-300 ease-out overflow-hidden
-             translate-y-full"
-      [class.translate-y-0]="drawerOpen"
-      style="max-height: 80vh;"
+      *ngIf="drawerOpen"
+      class="fixed inset-0 z-[101] flex items-center justify-center p-4"
     >
-      <!-- Handle -->
-      <div class="flex justify-center pt-3 pb-2 bg-slate-50">
-        <div class="w-12 h-1.5 bg-slate-300 rounded-full"></div>
-      </div>
-
-      <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-3 bg-white 
-                  border-b border-slate-200 sticky top-0 z-10">
-        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <mat-icon class="text-sky-600">receipt_long</mat-icon>
-          Tu Comanda
-        </h2>
-        <button
-          (click)="drawerOpen = false"
-          class="text-slate-400 hover:text-slate-600 p-1 -mr-1"
-        >
-          <mat-icon>expand_more</mat-icon>
-        </button>
-      </div>
-
-      <!-- Contenido -->
-      <div class="overflow-y-auto" style="max-height: calc(80vh - 80px);">
-        <div class="px-5 py-4">
-          <app-order-preview
-            [cart]="$any(cart)"
-            [totalAmount]="totalAmount"
-            [updateQuantity]="$any(updateQuantity)"
-            [removeFromCart]="$any(removeFromCart)"
-            [confirmOrder]="confirmOrder.bind(this)"
-            [isAdding]="isAdding"
-          ></app-order-preview>
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] 
+               flex flex-col transform transition-all duration-300 overflow-hidden"
+        [class.scale-95]="!drawerOpen"
+        [class.opacity-0]="!drawerOpen"
+        [class.scale-100]="drawerOpen"
+        [class.opacity-100]="drawerOpen"
+        (click)="$event.stopPropagation()"
+      >
+        
+        <!-- Header del modal con botón cerrar -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <mat-icon class="text-sky-600 !text-xl">receipt_long</mat-icon>
+            <span>Tu Comanda</span>
+          </h2>
+          <button
+            (click)="drawerOpen = false"
+            class="text-slate-400 hover:text-slate-700 p-2 -mr-2 rounded-full hover:bg-slate-200 transition"
+          >
+            <mat-icon class="!text-xl">close</mat-icon>
+          </button>
         </div>
-      </div>
 
+        <!-- Contenido scrolleable -->
+        <div class="flex-1 overflow-y-auto overflow-x-hidden">
+          <div class="p-5">
+            <app-order-preview-movil
+              [cart]="$any(cart)"
+              [totalAmount]="totalAmount"
+              [updateQuantity]="$any(updateQuantity)"
+              [removeFromCart]="$any(removeFromCart)"
+              [confirmOrder]="confirmOrder.bind(this)"
+              [isAdding]="isAdding"
+            ></app-order-preview-movil>
+          </div>
+        </div>
+
+      </div>
     </div>
+
   </div>
 </div>
-
-
-<!-- Animación -->
-<style>
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .animate-fade-in {
-    animation: fade-in 0.2s ease-out;
-  }
-</style>

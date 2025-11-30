@@ -154,13 +154,16 @@ export class TablesService {
   /**
    * Obtiene los estados de ocupacion de las sesiones de las mesas
    */
+  /**
+ * Obtiene los estados de ocupación de las sesiones de las mesas
+ */
   async getTablesWithStatus(id_branch: number) {
     const tables = await this.prisma.tables.findMany({
-      where: { id_branch },
+      where: { id_branch, is_active: 1 },
       include: {
         table_locations: true,
         table_sessions: {
-          where: { status: { in: ['open', 'occupied'] } },
+          where: { status: { in: ['open', 'occupied', 'paid', 'pending_payment'] } }, // Incluir 'paid'
           select: {
             id_session: true,
             id_user: true,
@@ -181,24 +184,29 @@ export class TablesService {
         seats: t.capacity,
         location: t.table_locations.name,
 
-        //  status real
+        // Establece el estado real de la mesa
         status: session
           ? session.status === 'open'
             ? 'Abierta'
-            : 'Ocupada'
-          : 'Disponible',
+            : session.status === 'occupied'
+            ? 'Ocupada'
+            : session.status === 'paid'
+            ? 'Pagada'  // Nuevo estado "Pagada"
+            : 'Pendiente de pago' // Estado pendiente de pago
+          : 'Disponible',  // Si no hay sesión activa, está disponible
 
-        // dueño de la mesa
+        // Dueño de la mesa
         id_user: session?.id_user ?? null,
 
-        // sesión activa
+        // ID de la sesión activa
         id_session: session?.id_session ?? null,
 
-        // apertura de sesión
+        // Apertura de la sesión
         opened_at: session?.opened_at ?? null,
       };
     });
   }
+
 
 
 }

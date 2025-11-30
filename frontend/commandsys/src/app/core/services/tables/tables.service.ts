@@ -110,4 +110,12 @@ export class TablesService {
     );
   }
 
+  async releaseEmptyTable(id_table: number){
+    return await firstValueFrom(
+      this.http.patch<any>(
+        `${this.base.replace('/tables', '/table-sessions')}/close-empty/${id_table}`,
+        { withCredetianls: true}
+      )
+    );
+  }
 }

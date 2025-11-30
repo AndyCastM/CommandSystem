@@ -1,0 +1,170 @@
+<div class="p-4 md:p-5 w-full max-w-lg">
+
+  <!-- HEADER -->
+  <div class="flex items-start justify-between mb-4">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-slate-400">
+        Mesa {{ data.table }}
+      </p>
+      <h2 class="text-xl font-semibold text-slate-800">
+        Consumo de la mesa
+      </h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Resumen de productos, estados y total acumulado
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="close()"
+      class="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
+    >
+      <mat-icon fontIcon="close" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+    </button>
+  </div>
+
+  <!-- CARDS RESUMEN -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+
+    <!-- Total cuenta -->
+    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] uppercase tracking-wide text-slate-400">Total cuenta</span>
+        <mat-icon fontIcon="receipt_long" class="!text-[16px] text-slate-400"></mat-icon>
+      </div>
+      <p class="text-lg font-semibold text-slate-900">
+        {{ data.total | currency:'MXN':'symbol':'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Total entregado -->
+    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] uppercase tracking-wide text-emerald-600">Entregado</span>
+        <mat-icon fontIcon="check_circle" class="!text-[16px] text-emerald-600"></mat-icon>
+      </div>
+      <p class="text-lg font-semibold text-emerald-800">
+        {{ data.deliveredTotal | currency:'MXN':'symbol':'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Pendientes -->
+    <div
+      class="rounded-xl border p-3 shadow-sm"
+      [ngClass]="hasPending ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'"
+    >
+      <div class="flex items-center justify-between mb-1">
+        <span
+          class="text-[11px] uppercase tracking-wide"
+          [ngClass]="hasPending ? 'text-amber-700' : 'text-slate-500'"
+        >
+          Pendientes
+        </span>
+        <mat-icon
+          [fontIcon]="hasPending ? 'warning' : 'done_all'"
+          class="!text-[16px]"
+          [ngClass]="hasPending ? 'text-amber-600' : 'text-emerald-500'"
+        ></mat-icon>
+      </div>
+      <p
+        class="text-lg font-semibold"
+        [ngClass]="hasPending ? 'text-amber-800' : 'text-emerald-700'"
+      >
+        {{ data.pendingCount }}
+      </p>
+    </div>
+  </div>
+
+  <!-- ALERTA SI HAY PENDIENTES -->
+  <div
+    *ngIf="hasPending"
+    class="flex items-start gap-2 mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+  >
+    <mat-icon
+      fontIcon="info"
+      class="!text-[18px] !w-[18px] !h-[18px] text-amber-600 mt-[1px]"
+    ></mat-icon>
+    <div class="text-xs text-amber-800">
+      <p class="font-medium">Aún hay productos sin entregar.</p>
+      <p>
+        No deberías solicitar la pre-cuenta hasta que todos los productos estén entregados
+        o cancelados.
+      </p>
+    </div>
+  </div>
+
+  <!-- LISTA DE PRODUCTOS -->
+  <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+      <div class="flex items-center gap-2">
+        <mat-icon fontIcon="restaurant" class="!text-[18px] text-slate-500"></mat-icon>
+        <span class="text-sm font-medium text-slate-700">
+          Productos de la mesa
+        </span>
+      </div>
+      <span class="text-[11px] text-slate-400">
+        {{ data.items.length }} ítem(s)
+      </span>
+    </div>
+
+    <!-- SCROLL BODY -->
+    <div class="max-h-72 overflow-y-auto">
+      <table class="min-w-full text-xs">
+        <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-400">
+          <tr>
+            <th class="text-left py-2 px-3">Producto</th>
+            <th class="text-left py-2 px-3">Estado</th>
+            <th class="text-right py-2 px-3">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let item of data.items"
+            class="border-b border-slate-100 last:border-b-0"
+          >
+            <td class="py-2 px-3">
+              <div class="flex flex-col">
+                <span class="text-[13px] font-medium text-slate-800">
+                  {{ item.product_name }}
+                </span>
+                <span class="text-[11px] text-slate-400">
+                  #{{ item.id_order }} · {{ formatTime(item.created_at) }}
+                </span>
+              </div>
+            </td>
+            <td class="py-2 px-3">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                [ngClass]="statusBadgeClass(item.status)"
+              >
+                {{ statusLabel(item.status) }}
+              </span>
+            </td>
+            <td class="py-2 px-3 text-right">
+              <span class="text-[13px] font-semibold text-slate-800">
+                {{ item.subtotal | currency:'MXN':'symbol':'1.2-2' }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="data.items.length === 0">
+            <td colspan="3" class="py-4 px-3 text-center text-[12px] text-slate-400">
+              Aún no hay productos registrados en esta mesa.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="mt-4 flex justify-end">
+    <button
+      type="button"
+      (click)="close()"
+      class="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
+    >
+      Cerrar
+    </button>
+  </div>
+</div>

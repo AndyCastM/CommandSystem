@@ -28,8 +28,6 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './cash-register.component.html',
   styleUrl: './cash-register.component.css',
 })
-
-
 export class CashRegisterComponent implements OnInit {
   private cashApi = inject(CashService);
   private paymentsApi = inject(PaymentsService);
@@ -45,7 +43,11 @@ export class CashRegisterComponent implements OnInit {
   payments = signal<any[]>([]);
   pendingRequests = signal<any[]>([]);
   loading = signal(false);
-  
+
+  // ======================
+  // LABELS Y ESTILOS
+  // ======================
+
   paymentMethodLabel(method: string) {
     switch (method) {
       case 'cash':
@@ -93,7 +95,7 @@ export class CashRegisterComponent implements OnInit {
     const sales = cash + card + transfer; //  Ventas totales del turno
 
     const expectedCash =
-      Number(this.session()?.opening_amount || 0) + cash; 
+      Number(this.session()?.opening_amount || 0) + cash;
 
     return {
       cash,
@@ -113,13 +115,15 @@ export class CashRegisterComponent implements OnInit {
 
     this.notif.connect();
 
-    // Escuchar solicitudes de pre-cuenta
+    // Escuchar solicitudes de cuenta (prebill)
     this.notif.events$.subscribe((evt) => {
       if (!evt) return;
       if (evt.type === 'prebill') {
-        // evt.data viene del backend: { id_session, table, total, orders: number[], by }
+        // evt.data puede venir como:
+        // mesas:  { type?: 'table', id_session, table, total, orders: number[], waiter_name?, ... }
+        // takeout:{ type: 'takeout', id_order, customer_name, total, waiter_name?, ... }
         this.pendingRequests.update((list) => [...list, evt.data]);
-        console.log('NUEVA SOLICITUD DE PRE-CUENTA:', evt.data);
+        console.log('NUEVA SOLICITUD DE CUENTA:', evt.data);
       }
     });
 
@@ -156,8 +160,10 @@ export class CashRegisterComponent implements OnInit {
   }
 
   // ======================
-  // ABRIR TURNO
+  // APERTURA / CIERRE
   // ======================
+
+  // ABRIR TURNO
   openOpeningModal() {
     const ref = this.dialog.open(OpenSessionDialog, {
       width: '420px',
@@ -183,7 +189,7 @@ export class CashRegisterComponent implements OnInit {
       return;
     }
 
-    const totals = this.totals(); //  ya trae cash, card, transfer, sales, expectedCash, etc.
+    const totals = this.totals();
 
     const ref = this.dialog.open(CloseSessionDialog, {
       width: '380px',
@@ -194,21 +200,17 @@ export class CashRegisterComponent implements OnInit {
     });
 
     ref.afterClosed().subscribe(async (counted: number | null) => {
-      // Si canceló el diálogo
       if (counted == null) return;
 
       try {
         this.loading.set(true);
 
-        // Enviar el cierre al backend
         await this.cashApi.closeSession({ counted_amount: counted });
         this.toast.success('Turno cerrado correctamente');
 
-        // Limpiar estado local y refrescar
         this.session.set(null);
         this.payments.set([]);
 
-        // Si quieres que inmediatamente abra el modal de apertura del siguiente turno:
         this.openOpeningModal();
       } catch (err) {
         console.error(err);
@@ -219,30 +221,56 @@ export class CashRegisterComponent implements OnInit {
     });
   }
 
-  // PAGO POR SESIÓN (MESA)
+  // ======================
+  // MANEJO DE CUENTAS SOLICITADAS
+  // ======================
+
+  /**
+   * Handler general del botón en "Cuentas solicitadas"
+   * Decide si es mesa (table) o para llevar (takeout)
+   */
+  onRequestClick(req: any) {
+    const type = req.type ?? 'table';
+
+    if (type === 'takeout') {
+      this.openTakeoutPaymentDialog(req);
+    } else {
+      this.openSessionPaymentDialog(req);
+    }
+  }
+
+  // -------- PAGO POR SESIÓN (MESAS) --------
   async openSessionPaymentDialog(req: any) {
     try {
       this.loading.set(true);
 
       console.log('Abriendo dialogo de pago por sesión:', req);
 
-      const ref = this.dialog.open(
-        (await import('../dialogs/order-payment/order-payment.dialog'))
-          .OrderPaymentDialog,
-        {
-          width: '460px',
-          data: {
-            id_session: req.id_session,
-            id_orders: req.orders, // array de comandas de esa sesión
-            total: req.total,
-            table: req.table,
-          },
-        }
-      );
+      const dialogModule = await import('../dialogs/order-payment/order-payment.dialog');
+
+      const ref = this.dialog.open(dialogModule.OrderPaymentDialog, {
+        width: '460px',
+        data: {
+          id_session: req.id_session,
+          id_orders: req.orders, // array de comandas de esa sesión
+          total: req.total,
+          table: req.table,
+          type: 'table',
+        },
+      });
 
       ref.afterClosed().subscribe(async (result) => {
         if (!result) return;
-        await this.processSessionPayment(result);
+
+        // Reinyectamos los IDs y tipo para que processSessionPayment tenga todo
+        const payloadConIds = {
+          ...result,
+          id_session: req.id_session,
+          id_orders: req.orders,
+          type: 'table',
+        };
+
+        await this.processSessionPayment(payloadConIds);
       });
     } catch (err) {
       console.error(err);
@@ -252,6 +280,45 @@ export class CashRegisterComponent implements OnInit {
     }
   }
 
+  // -------- PAGO POR ORDEN ÚNICA (TAKEOUT) --------
+  async openTakeoutPaymentDialog(req: any) {
+    try {
+      this.loading.set(true);
+
+      console.log('Abriendo dialogo de pago para llevar:', req);
+
+      const dialogModule = await import('../dialogs/order-payment/order-payment.dialog');
+
+      const ref = this.dialog.open(dialogModule.OrderPaymentDialog, {
+        width: '460px',
+        data: {
+          id_order: req.id_order,
+          total: req.total,
+          customer_name: req.customer_name,
+          type: 'takeout',
+        },
+      });
+
+      ref.afterClosed().subscribe(async (result) => {
+        if (!result) return;
+
+        const payloadConIds = {
+          ...result,
+          id_order: req.id_order,
+          type: 'takeout',
+        };
+
+        await this.processSessionPayment(payloadConIds);
+      });
+    } catch (err) {
+      console.error(err);
+      this.toast.error('No se pudo cargar la orden');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  // -------- PROCESAR PAGO (MESA O TAKEOUT) --------
   async processSessionPayment(result: any) {
     try {
       this.loading.set(true);
@@ -267,11 +334,11 @@ export class CashRegisterComponent implements OnInit {
       }
 
       // Base del payload: por sesión (id_orders) o por orden (id_order)
-      const basePayload: any = result.id_orders && result.id_orders.length
-        ? { id_orders: result.id_orders }  // pago por sesión
-        : { id_order: result.id_order };   // fallback por orden
+      const basePayload: any =
+        result.id_orders && result.id_orders.length
+          ? { id_orders: result.id_orders } // pago por sesión (mesa)
+          : { id_order: result.id_order };   // pago por orden única (takeout)
 
-      // Tip SOLO la mandamos en el primer pago para no duplicarla
       let tipPending = result.tip ?? 0;
 
       for (let i = 0; i < payments.length; i++) {
@@ -281,16 +348,22 @@ export class CashRegisterComponent implements OnInit {
           ...basePayload,
           method: p.method,
           amount: p.amount,
-          tip: i === 0 ? tipPending : 0, // solo en el primero
+          tip: i === 0 ? tipPending : 0, // solo la primera vez
         });
       }
 
       this.toast.success('Pago registrado');
 
-      // Quitar la solicitud atendida por sesión
-      this.pendingRequests.update((list) =>
-        list.filter((x) => x.id_session !== result.id_session)
-      );
+      // Quitar la solicitud atendida según el tipo
+      this.pendingRequests.update((list) => {
+        // mesa: filtramos por id_session
+        if (result.id_orders && result.id_orders.length) {
+          return list.filter((x) => x.id_session !== result.id_session);
+        }
+
+        // takeout: filtramos por id_order
+        return list.filter((x) => x.id_order !== result.id_order);
+      });
 
       await this.refreshData();
     } catch (err) {
@@ -300,5 +373,4 @@ export class CashRegisterComponent implements OnInit {
       this.loading.set(false);
     }
   }
-
 }

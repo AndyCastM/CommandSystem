@@ -23,7 +23,41 @@ export interface CreateOrderPayload {
   order_type: 'dine_in' | 'takeout' ;
   id_session?: number | null;
   customer_name?: string | null;
+  notes?:  string | null;
   items: OrderItem[];
+}
+
+// ========== TIPOS NUEVOS PARA SUMMARY ==========
+
+export type OrderItemStatus =
+  | 'pending'
+  | 'in_preparation'
+  | 'ready'
+  | 'delivered'
+  | 'cancelled';
+
+export interface SessionSummaryItem {
+  id_order_item: number;
+  id_order: number;
+  status: OrderItemStatus;
+  subtotal: number;
+  created_at?: string | Date | null;
+  product_name: string;
+}
+
+export interface SessionSummary {
+  id_session: number;
+  table: string;
+  total: number;
+  deliveredTotal: number;
+  pendingCount: number;
+  canRequestPrebill: boolean;
+  items: SessionSummaryItem[];
+}
+
+export interface PrebillResponse {
+  ok: boolean;
+  total: number;
 }
 
 @Injectable({
@@ -94,5 +128,17 @@ export class OrderService {
     return firstValueFrom(
         this.http.post(`${this.api_url}/request-prebill/${id_session}`, {})
     );
+  }
+
+  requestTakeoutPrebill(id_order: number){
+    return firstValueFrom(
+        this.http.post(`${this.api_url}/takeout-prebill/${id_order}`, {})
+    );
+  } 
+
+  getSessionSummary(id_session: number){
+    return firstValueFrom(
+      this.http.get<SessionSummary>(`${this.api_url}/summary/${id_session}`, {withCredentials: true}), 
+    )
   }
 }

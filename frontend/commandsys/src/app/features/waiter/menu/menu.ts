@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal , PLATFORM_ID} from '@angular/core';
+import { Component, OnInit, inject, signal, PLATFORM_ID, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -11,11 +11,12 @@ import { MatOption, MatSelect } from '@angular/material/select';
 import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm/order-confirm.modal';
 import { OrderService, CreateOrderPayload } from '../../../core/services/orders/orders.service';
 import { isPlatformBrowser } from '@angular/common';
+import { OrderPreviewMovilComponent } from '../order-preview-movil/order-preview-movil.component';
 
 @Component({
   selector: 'app-menu-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule, OrderPreviewComponent, MatSelect, MatOption],
+  imports: [CommonModule, MatIconModule, OrderPreviewComponent, MatSelect, MatOption, OrderPreviewMovilComponent],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
@@ -43,6 +44,10 @@ export class Menu implements OnInit {
   cart = signal<Map<string, any>>(new Map());
   selectedArea: any = {};
   drawerOpen = false;
+
+  // ViewChild para acceder al componente móvil y desktop
+  @ViewChild(OrderPreviewMovilComponent) orderPreviewMovil?: OrderPreviewMovilComponent;
+  @ViewChild(OrderPreviewComponent) orderPreviewDesktop?: OrderPreviewComponent;
 
   ngOnInit() {
     let state: any = null;
@@ -291,10 +296,17 @@ export class Menu implements OnInit {
           };
         });
 
+        //  Obtener notas generales desde el componente que esté activo
+        const generalNotes = 
+          this.orderPreviewMovil?.generalNotes || 
+          this.orderPreviewDesktop?.generalNotes || 
+          null;
+          
         // --- PAYLOAD FINAL ---
         const payload: CreateOrderPayload = {
           order_type: this.orderType!,
           id_session: this.orderType === 'dine_in' ? this.id_session : null,
+          notes: generalNotes, // ← Aquí van las notas generales
           customer_name: this.orderType === 'takeout' ? result.customer_name : null,
           items,
         };

@@ -10,50 +10,61 @@
     </p>
   </div>
 
-  <!-- ============================
-       PRE-CUENTAS SOLICITADAS
-  ============================= -->
-  <div *ngIf="pendingRequests().length > 0"
-       class="rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+<!-- ============================
+     CUENTAS SOLICITADAS
+============================= -->
+<div
+  *ngIf="pendingRequests().length > 0"
+  class="rounded-xl bg-white border border-slate-200 p-5 shadow-sm"
+>
+  <h3 class="text-lg font-semibold mb-4 text-slate-800 flex items-center gap-2">
+    <mat-icon class="text-indigo-600">receipt_long</mat-icon>
+    Cuentas solicitadas
+  </h3>
 
-    <h3 class="text-lg font-semibold mb-4 text-slate-800 flex items-center gap-2">
-      <mat-icon class="text-indigo-600">receipt_long</mat-icon>
-      Pre-cuentas solicitadas
-    </h3>
-
-    <div class="space-y-3">
-
-      <div *ngFor="let req of pendingRequests()"
-           class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer">
-
-        <div>
-          <p class="font-semibold text-slate-800">
+  <div class="space-y-3">
+    <div
+      *ngFor="let req of pendingRequests()"
+      class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
+    >
+      <div>
+        <!-- LABEL PRINCIPAL: MESA o PARA LLEVAR -->
+        <p class="font-semibold text-slate-800">
+          <ng-container *ngIf="req.type === 'takeout'; else mesaLabel">
+            Para llevar · {{ req.customer || 'Cliente sin nombre' }}
+          </ng-container>
+          <ng-template #mesaLabel>
             Mesa {{ req.table }}
-          </p>
+          </ng-template>
+        </p>
 
-          <p class="text-sm text-slate-600">
-            Total estimado:
-            <span class="font-medium">
-              ${{ req.total | number:'1.2-2' }}
-            </span>
-          </p>
+        <!-- TOTAL -->
+        <p class="text-sm text-slate-600">
+          Total:
+          <span class="font-medium">
+            ${{ req.total | number: '1.2-2' }}
+          </span>
+        </p>
 
-          <p class="text-xs text-slate-500 mt-1">
-            Órdenes: {{ req.orders.join(', ') }}
-          </p>
-        </div>
-
-        <button
-          class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
-          (click)="openSessionPaymentDialog(req)"
+        <!-- SOLO MESAS: mostrar órdenes -->
+        <p
+          class="text-xs text-slate-500 mt-1"
+          *ngIf="req.orders?.length"
         >
-          Cobrar mesa
-        </button>
-
+          Órdenes: {{ req.orders.join(', ') }}
+        </p>
       </div>
 
+      <!-- BOTÓN: cambia texto y handler según tipo -->
+      <button
+        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
+        (click)="onRequestClick(req)"
+      >
+        {{ req.type === 'takeout' ? 'Cobrar' : 'Cobrar mesa' }}
+      </button>
     </div>
   </div>
+</div>
 
   <!-- SI NO HAY SESIÓN ACTIVA, NO MOSTRAR EL CONTENIDO (abrimos modal desde TS) -->
   <ng-container *ngIf="session() as s">

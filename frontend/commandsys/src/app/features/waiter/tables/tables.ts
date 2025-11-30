@@ -16,6 +16,7 @@ import { TableLocationsService } from '../../../core/services/tables/table-locat
 import { AuthService } from '../../../auth/services/auth.service';
 import { isPlatformBrowser } from '@angular/common';
 import { OrderService } from '../../../core/services/orders/orders.service';
+import { SessionSummary } from '../UI/session-summary/session-summary';
 
 @Component({
   selector: 'app-tables',
@@ -64,8 +65,8 @@ export class Tables implements OnInit {
     const user = typeof maybe === 'function' ? (maybe as any)() : maybe;
 
     if (!user) return false;
-    console.log(table);
-    console.log('Comparando mesa usuario:', table.id_user, 'con usuario actual:', user.id_user);
+    //console.log(table);
+    //console.log('Comparando mesa usuario:', table.id_user, 'con usuario actual:', user.id_user);
     return table.id_user === user.id_user;
   }
 
@@ -220,8 +221,8 @@ export class Tables implements OnInit {
     }
   }
 
-  requestPrebill(table: any) {
-    console.log("SESSIONNN:",table.id_session);
+  async requestPrebill(table: any) {
+    console.log("SESSIONNN:", table.id_session);
 
     if (!table?.id_session) {
       this.toast.error('No se pudo identificar la mesa.');
@@ -233,14 +234,42 @@ export class Tables implements OnInit {
       return;
     }
 
-    this.ordersApi.requestPrebill(table.id_session)
-      .then(() => {
-        this.toast.success(`Se solicitó la pre-cuenta de la mesa ${table.name}`);
-      })
-      .catch((err) => {
-        console.error(err);
-        this.toast.error('No se pudo enviar la solicitud a caja.');
-      });
+    try {
+      // Verificar el resumen de la sesión (mesa)
+      const summary = await this.ordersApi.getSessionSummary(table.id_session);
+
+      // Si la mesa tiene productos pendientes, no se puede solicitar la pre-cuenta
+      if (!summary.canRequestPrebill) {
+        this.toast.warning(`Aún hay ${summary.pendingCount} producto(s) sin entregar.`);
+        return;
+      }
+
+      // Si todo está bien, solicitamos la pre-cuenta
+      await this.ordersApi.requestPrebill(table.id_session);
+      this.toast.success(`Se solicitó la pre-cuenta de la mesa ${table.name}`);
+    } catch (err) {
+      console.error(err);
+      this.toast.error('No se pudo enviar la solicitud a caja.');
+    }
   }
+
+  // Método para ver el consumo de la mesa
+  async viewSessionSummary(table: any) {
+    try {
+      // Llamar al servicio para obtener el resumen de la mesa
+      const summary = await this.ordersApi.getSessionSummary(table.id_session);
+
+      // Abrir el diálogo con los detalles
+      this.dialog.open(SessionSummary, {
+        width: '480px',
+        data: summary, // Pasa el resumen de la mesa
+      });
+    } catch (err) {
+      console.error(err);
+      this.toast.error('No se pudo cargar el resumen de la mesa');
+    }
+  }
+
+
 
 }

@@ -96,7 +96,7 @@ export class PaymentsService {
     if (newPending <= 0) {
       await this.prisma.orders.update({
         where: { id_order },
-        data: { status: 'paid' }, 
+        data: { payment_status: 'paid' }, 
       });
     }
 
@@ -204,7 +204,7 @@ export class PaymentsService {
         if (p.markPaid) {
           await tx.orders.update({
             where: { id_order: p.id_order },
-            data: { status: 'paid' },
+            data: { payment_status: 'paid' },
           });
         }
       }

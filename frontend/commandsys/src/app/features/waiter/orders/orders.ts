@@ -71,7 +71,8 @@ export class Orders implements OnInit{
         // Parsear la fecha que viene de la BD como hora local
         const dateStr = order.created_at.replace(' ', 'T'); // Convertir a formato ISO
         const orderDate = new Date(dateStr); // JavaScript lo interpreta como UTC
-
+        const orderType = order.order_type;
+        //console.log(orderType);
         // Ajustar a hora local agregando el offset
         const localDate = new Date(orderDate.getTime() + (orderDate.getTimezoneOffset() * 60000));
 
@@ -91,6 +92,7 @@ export class Orders implements OnInit{
             hour12: false // Opcional: formato 24 horas
           }),
           time: this.timeSince(localDate.toISOString()),
+          type: orderType,
           total,
 
           // ================================
@@ -216,13 +218,32 @@ export class Orders implements OnInit{
 
   openOrderModal(order: any) {
     const dialogRef = this.dialog.open(OrderDetailComponent, {
-      width: '480px',
+      width: '90vw',        // 90% del viewport en móvil
+      maxWidth: '480px',    // Máximo 480px en pantallas grandes
       data: { order }
     });
 
     dialogRef.afterClosed().subscribe(() => {
       this.loadOrders();
     });
+  }
+
+  async requestPrebill(order: any) {
+    console.log("ID DE LA ORDEN:", order.id);
+
+    if (!order?.id) {
+      this.toast.error('No se pudo identificar la orden.');
+      return;
+    }
+
+    try {
+      // solicitamos la pre-cuenta
+      await this.ordersApi.requestTakeoutPrebill(order.id);
+      this.toast.success(`Se solicitó la cuenta de la orden #${order.id}`);
+    } catch (err) {
+      console.error(err);
+      this.toast.error('No se pudo enviar la solicitud a caja.');
+    }
   }
 
 }

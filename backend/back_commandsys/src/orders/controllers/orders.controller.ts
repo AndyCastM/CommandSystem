@@ -93,4 +93,16 @@ export class OrdersController {
     return { ok: true };
   }
 
+  @Post('takeout-prebill/:id_order')
+  async requestTakeoutPrebill(
+    @Param('id_order') id_order: number,
+    @CurrentUser() user: any
+  ) {
+    return this.ordersService.requestTakeoutPrebill(+id_order, +user.sub);
+  }
+
+  @Get('summary/:id_session')
+  async getSessionSummary(@Param('id_session') id_session: number, @CurrentUser() user: any) {
+    return this.ordersService.getSessionSummary(+id_session);
+  }
 }

@@ -16,9 +16,7 @@
   </div>
 
   <!-- Filtros -->
-  <div
-    class="flex flex-wrap gap-3 mb-8 bg-white border border-slate-200 rounded-xl p-4 shadow-sm items-center"
-  >
+  <div class="flex flex-wrap gap-3 mb-8 bg-white border border-slate-200 rounded-xl p-4 shadow-sm items-center">
     <div class="flex items-center gap-2">
       <mat-icon fontIcon="filter_alt" class="text-slate-400"></mat-icon>
       <span class="text-slate-600 font-medium text-sm">Filtros</span>
@@ -37,6 +35,8 @@
           <mat-option value="Disponible">Disponible</mat-option>
           <mat-option value="Abierta">Abierta</mat-option>
           <mat-option value="Ocupada">Ocupada</mat-option>
+          <mat-option value="Pendiente de pago">Pendiente de pago</mat-option>
+          <mat-option value="Pagada">Pagada</mat-option>
         </mat-select>
       </div>
 
@@ -58,9 +58,7 @@
   </div>
 
   <!-- Grid de mesas -->
-  <div
-    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-  >
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
     <div
       *ngFor="let table of filteredTables()"
       class="rounded-2xl shadow-md border p-5 bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
@@ -69,7 +67,11 @@
         'border-yellow-200 bg-yellow-50/60': table.status === 'Abierta' && isMyTable(table),
         'border-yellow-100 bg-yellow-50/20': table.status === 'Abierta' && !isMyTable(table),
         'border-red-200 bg-red-50/60': table.status === 'Ocupada' && isMyTable(table),
-        'border-red-100 bg-red-50/20': table.status === 'Ocupada' && !isMyTable(table)
+        'border-red-100 bg-red-50/20': table.status === 'Ocupada' && !isMyTable(table),
+        'border-indigo-200 bg-indigo-50/60': table.status === 'Pendiente de pago' && isMyTable(table),
+        'border-indigo-100 bg-indigo-50/20': table.status === 'Pendiente de pago' && !isMyTable(table),
+        'border-emerald-200 bg-emerald-50/60': table.status === 'Pagada' && isMyTable(table),
+        'border-emerald-100 bg-emerald-50/20': table.status === 'Pagada' && !isMyTable(table)
       }"
     >
       <div class="flex justify-between items-center mb-3">
@@ -81,7 +83,9 @@
           [ngClass]="{
             'bg-green-100 text-green-700': table.status === 'Disponible',
             'bg-yellow-100 text-yellow-700': table.status === 'Abierta',
-            'bg-red-100 text-red-700': table.status === 'Ocupada'
+            'bg-red-100 text-red-700': table.status === 'Ocupada',
+            'bg-indigo-100 text-indigo-700': table.status === 'Pendiente de pago',
+            'bg-emerald-100 text-emerald-700': table.status === 'Pagada'
           }"
         >
           {{ table.status }}
@@ -103,13 +107,12 @@
       </div>
 
       <!-- Botones -->
-      <div class="flex flex-wrap gap-2">
-
+      <div class="flex flex-col gap-2">
         <!-- MESA DISPONIBLE -->
         <button
           *ngIf="table.status === 'Disponible'"
           (click)="openTable(table)"
-          class="flex-1 bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg py-1.5 text-sm font-medium hover:bg-emerald-200 transition"
+          class="w-full bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg py-2 text-sm font-medium hover:bg-emerald-200 transition"
         >
           + Abrir Mesa
         </button>
@@ -118,7 +121,7 @@
         <button
           *ngIf="table.status === 'Abierta' && isMyTable(table)"
           (click)="takeOrder(table)"
-          class="flex-1 bg-yellow-400 text-yellow-900 rounded-lg py-1.5 text-sm font-medium hover:bg-yellow-500 transition"
+          class="w-full bg-yellow-400 text-yellow-900 rounded-lg py-2 text-sm font-medium hover:bg-yellow-500 transition"
         >
           + Tomar Comanda
         </button>
@@ -126,59 +129,101 @@
         <button
           *ngIf="table.status === 'Abierta' && !isMyTable(table)"
           disabled
-          class="flex-1 bg-yellow-200 text-yellow-400 rounded-lg py-1.5 text-sm font-medium cursor-not-allowed"
+          class="w-full bg-yellow-200 text-yellow-400 rounded-lg py-2 text-sm font-medium cursor-not-allowed"
         >
           Mesa abierta por otro mesero
         </button>
 
-        <!-- MESA OCUPADA -->
-        <div *ngIf="table.status === 'Ocupada'" class="flex flex-col w-full gap-2">
+        <!-- MESA OCUPADA, PENDIENTE DE PAGO, O PAGADA -->
+        <ng-container *ngIf="table.status === 'Ocupada' || table.status === 'Pendiente de pago' || table.status === 'Pagada'">
+          <!-- VER CONSUMO -->
           <button
-            *ngIf="table.status === 'Ocupada'"
-            (click)="requestPrebill(table)"
-            class="w-full bg-white border border-slate-300 text-slate-800 rounded-lg py-1.5 text-sm font-medium hover:bg-slate-100 transition"
+            (click)="viewSessionSummary(table)"
+            class="w-full bg-white border border-slate-300 text-slate-800 rounded-lg py-2 text-sm font-medium hover:bg-slate-50 transition flex items-center justify-center gap-2"
           >
-            Ver subtotal de mesa
+            <mat-icon fontIcon="receipt_long" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+            <span>Ver consumo</span>
           </button>
 
-          <div class="flex gap-2">
+          <!-- SOLICITAR CUENTA (solo si está OCUPADA y es mi mesa) -->
+          <button
+            *ngIf="table.status === 'Ocupada' && isMyTable(table)"
+            (click)="requestPrebill(table)"
+            class="w-full bg-emerald-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2"
+          >
+            <mat-icon fontIcon="request_quote" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+            <span>Solicitar cuenta</span>
+          </button>
 
-            <!-- AGREGAR (solo dueño) -->
-            <button
-              *ngIf="isMyTable(table)"
-              (click)="retakeOrder(table)"
-              class="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-red-600 transition"
-            >
-              + Agregar
-            </button>
-
-            <button
-              *ngIf="!isMyTable(table)"
-              disabled
-              class="flex-1 bg-red-200 text-red-400 rounded-lg py-1.5 text-sm font-medium cursor-not-allowed"
-            >
-              Mesa de otro mesero
-            </button>
-
-            <!-- LIBERAR (solo dueño) -->
-            <button
-              *ngIf="isMyTable(table)"
-              (click)="releaseTable(table)"
-              class="flex-1 bg-red-700 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-red-800 transition"
-            >
-              Liberar
-            </button>
-
-            <button
-              *ngIf="!isMyTable(table)"
-              disabled
-              class="flex-1 bg-red-300 text-red-400 rounded-lg py-1.5 text-sm font-medium cursor-not-allowed"
-            >
-              No disponible
-            </button>
-
+          <!-- INDICADOR CUENTA SOLICITADA (pendiente de pago) -->
+          <div
+            *ngIf="table.status === 'Pendiente de pago' && isMyTable(table)"
+            class="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-2"
+          >
+            <mat-icon fontIcon="schedule" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+            <span>Esperando pago</span>
           </div>
-        </div>
+
+          <!-- INDICADOR PAGADA -->
+          <div
+            *ngIf="table.status === 'Pagada' && isMyTable(table)"
+            class="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-2"
+          >
+            <mat-icon fontIcon="check_circle" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+            <span>Mesa pagada</span>
+          </div>
+
+          <!-- ACCIONES DE AGREGAR / LIBERAR -->
+          <div class="grid grid-cols-2 gap-2">
+            <!-- AGREGAR (solo cuando OCUPADA) -->
+            <ng-container *ngIf="table.status === 'Ocupada'">
+              <button
+                *ngIf="isMyTable(table)"
+                (click)="retakeOrder(table)"
+                class="bg-red-500 text-white rounded-lg py-2 text-sm font-medium hover:bg-red-600 transition flex items-center justify-center gap-1.5"
+              >
+                <mat-icon fontIcon="add" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+                <span>Agregar</span>
+              </button>
+
+              <button
+                *ngIf="!isMyTable(table)"
+                disabled
+                class="bg-red-100 text-red-300 rounded-lg py-2 text-sm font-medium cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                <mat-icon fontIcon="block" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+                <span>Bloqueado</span>
+              </button>
+            </ng-container>
+
+            <!-- LIBERAR (disponible cuando OCUPADA o PAGADA) -->
+            <button
+              *ngIf="(table.status === 'Ocupada' || table.status === 'Pagada') && isMyTable(table)"
+              (click)="releaseTable(table)"
+              [ngClass]="{
+                'col-span-2': table.status === 'Pagada',
+                'col-span-1': table.status === 'Ocupada'
+              }"
+              class="bg-slate-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center gap-1.5"
+            >
+              <mat-icon fontIcon="lock_open" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+              <span>Liberar mesa</span>
+            </button>
+
+            <button
+              *ngIf="(table.status === 'Ocupada' || table.status === 'Pagada') && !isMyTable(table)"
+              disabled
+              [ngClass]="{
+                'col-span-2': table.status === 'Pagada',
+                'col-span-1': table.status === 'Ocupada'
+              }"
+              class="bg-slate-100 text-slate-300 rounded-lg py-2 text-sm font-medium cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              <mat-icon fontIcon="lock" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+              <span>Bloqueado</span>
+            </button>
+          </div>
+        </ng-container>
       </div>
     </div>
   </div>

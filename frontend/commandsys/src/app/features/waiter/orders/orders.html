@@ -64,83 +64,77 @@
     <!-- =================== VISTA POR MESA =================== -->
     <div *ngIf="viewMode() === 'mesa'">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          *ngFor="let order of orders()"
-          class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
-        >
-          <div class="flex justify-between items-start mb-2">
-            <h2 class="font-semibold text-slate-800">{{ order.table }}</h2>
-            <span class="font-semibold text-slate-700">
-              {{ formatTotal(order) }}
-            </span>
-          </div>
+        <!-- Comanda por Mesa -->
+        <div *ngFor="let order of orders()">
+          <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+            <div class="flex justify-between items-start mb-2">
+              <h2 class="font-semibold text-slate-800">{{ order.table }}</h2>
+              <span class="font-semibold text-slate-700">
+                {{ formatTotal(order) }}
+              </span>
+            </div>
 
-          <p class="text-xs text-slate-400 mb-3">
-            Comanda #{{ order.id }} • {{ order.time }} •
-            {{ order.products.length }} productos
-          </p>
+            <!-- Detalles de la comanda -->
+            <p class="text-xs text-slate-400 mb-3">
+              Comanda #{{ order.id }} • {{ order.time }} •
+              {{ order.products.length }} productos
+            </p>
 
-          <ul class="text-sm text-slate-700 space-y-2 mb-3">
-            <li *ngFor="let p of order.products">
-              <div class="flex justify-between items-start gap-2">
-                <span class="flex-1 truncate">
-                  {{ p.name }} <small class="text-slate-500">x{{ p.qty }}</small>
-                </span>
-                <span class="text-slate-600 text-xs font-medium whitespace-nowrap">
-                  {{ p.subtotal | currency }}
-                </span>
-              </div>
-
-              <div *ngIf="p.options?.length" class="ml-4 mt-1 space-y-0.5">
-                <div
-                  *ngFor="let opt of p.options"
-                  class="text-[11px] text-slate-500 flex items-center gap-1"
-                >
-                  <span class="w-1 h-1 rounded-full bg-slate-400"></span>
-                  <span>{{ opt.name }}</span>
-                  <span
-                    *ngIf="opt.extra > 0"
-                    class="text-slate-600"
-                    >(+{{ opt.extra | currency }})</span
-                  >
+            <ul class="text-sm text-slate-700 space-y-2 mb-3">
+              <li *ngFor="let p of order.products">
+                <div class="flex justify-between items-start gap-2">
+                  <span class="flex-1 truncate">
+                    {{ p.name }} <small class="text-slate-500">x{{ p.qty }}</small>
+                  </span>
+                  <span class="text-slate-600 text-xs font-medium whitespace-nowrap">
+                    {{ p.subtotal | currency }}
+                  </span>
                 </div>
-              </div>
-            </li>
-          </ul>
+              </li>
+            </ul>
 
-          <div class="flex flex-wrap gap-2 mb-3">
-            <span
-              *ngFor="let p of order.products"
-              class="px-2 py-1 rounded-full text-xs font-medium"
-              [ngClass]="{
-                'bg-yellow-100 text-yellow-700': p.status === 'preparando',
-                'bg-green-100 text-green-700': p.status === 'listo',
-                'bg-red-100 text-red-700': p.status === 'pendiente',
-                'bg-slate-100 text-slate-600': p.status === 'entregado',
-                'bg-red-300 text-red-900 border border-red-400': p.status === 'cancelado'
-              }"
+            <!-- Estado de los productos -->
+            <div class="flex flex-wrap gap-2 mb-3">
+              <span
+                *ngFor="let p of order.products"
+                class="px-2 py-1 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-yellow-100 text-yellow-700': p.status === 'preparando',
+                  'bg-green-100 text-green-700': p.status === 'listo',
+                  'bg-red-100 text-red-700': p.status === 'pendiente',
+                  'bg-slate-100 text-slate-600': p.status === 'entregado',
+                  'bg-red-300 text-red-900 border border-red-400': p.status === 'cancelado'
+                }"
+              >
+                {{ p.status }}
+              </span>
+            </div>
+
+            <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
+              <mat-icon fontIcon="access_time" class="!text-[14px] !w-[14px] !h-[14px]"></mat-icon>
+              <span>Creada: {{ order.created }}</span>
+            </p>
+
+            <!-- Botón para ver la comanda -->
+            <button
+              class="w-full bg-sky-600 hover:bg-sky-700 text-white text-sm py-2 rounded-md flex items-center justify-center gap-2"
+              (click)="openOrderModal(order)"
             >
-              {{ p.status }}
-            </span>
+              <mat-icon fontIcon="receipt_long"></mat-icon>
+              Ver Comanda 
+            </button>
+
+            <!-- Botón de "Solicitar Cuenta" solo para las comandas para llevar -->
+            <button 
+              *ngIf="order.type === 'takeout'"  
+              (click)="requestPrebill(order)" 
+              class="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 rounded-md mt-4"
+            >
+              Solicitar Cuenta
+            </button>
           </div>
-
-          <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
-            <mat-icon
-              fontIcon="access_time"
-              class="!text-[14px] !w-[14px] !h-[14px]"
-            ></mat-icon>
-            <span>Creada: {{ order.created }}</span>
-          </p>
-
-          <!-- ========== BOTÓN PARA ABRIR EL MODAL ========== -->
-          <button
-            class="w-full bg-sky-600 hover:bg-sky-700 text-white text-sm py-2 rounded-md flex items-center justify-center gap-2"
-            (click)="openOrderModal(order)"
-          >
-            <mat-icon fontIcon="receipt_long"></mat-icon>
-            Ver Comanda
-          </button>
         </div>
+
       </div>
     </div>
 

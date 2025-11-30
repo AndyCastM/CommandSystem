@@ -39,5 +39,39 @@ export class TableSessionsController {
   ){
     return this.tableSessionsService.markOccupiedByTable(+id_table, +user.sub);
   }
+
+  // CERRAR SESIÓN VACÍA
+  // (caso: abrí mesa, se cambiaron, no hubo consumo)
+  @Patch('close-empty/:id_table')
+  async closeEmptySession(
+    @Param('id_table') id_table: string,
+    @CurrentUser() user: any
+  ) {
+    return this.tableSessionsService.closeEmptySession(+id_table, +user.sub);
+  }
+
+  // MARCAR COMO PENDING_PAYMENT
+  // (se llama  desde requestPrebill)
+  @Patch('pending-payment/:id_session')
+  async markPendingPayment(
+    @Param('id_session') id_session: string,
+    @CurrentUser() user: any
+  ) {
+    return this.tableSessionsService.markPendingPayment(+id_session, +user.sub);
+  }
+
+  // REANUDAR DESPUÉS DE PEDIR LA CUENTA
+  // (cliente se arrepiente y sigue pidiendo)
+  // ===========================
+  @Patch('resume/:id_session')
+  async resumeFromPendingPayment(
+    @Param('id_session') id_session: string,
+    @CurrentUser() user: any
+  ) {
+    return this.tableSessionsService.resumeFromPendingPayment(
+      +id_session,
+      +user.sub,
+    );
+  }
 }
 

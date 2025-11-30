@@ -695,39 +695,172 @@ export class OrdersService {
       include: {
         tables: true,
         orders: {
-          where: {
-            status: 'delivered' // solo órdenes entregadas
-          },
           include: {
-            order_items: true
-          }
-        }
-      }
+            order_items: true,
+          },
+        },
+      },
     });
 
     if (!session) throw new NotFoundException('Sesión no encontrada');
 
-    // Sumar total de TODAS las ordenes dentro de la sesión
+    // 1) Validar que no haya productos sin entregar
+    const hasPendingItems = session.orders.some((o) =>
+      o.order_items.some(
+        (i) =>
+          i.status !== 'delivered' && // no entregado
+          i.status !== 'cancelled'    // y no cancelado
+      ),
+    );
+
+    if (hasPendingItems) {
+      throw new BadRequestException(
+        'Aún hay productos sin entregar en la mesa. No puedes solicitar la pre-cuenta.',
+      );
+    }
+
+    // 2) Calcular total SOLO con items no cancelados
     const total = session.orders.reduce((acc, o) => {
       const t = o.order_items
-        .filter(i => i.status !== 'cancelled')
+        .filter((i) => i.status !== 'cancelled')
         .reduce((s, i) => s + Number(i.subtotal), 0);
 
       return acc + t;
     }, 0);
 
-    console.log('PREBILL SOLICITADA Y MANDADA', session, total);
-    // Notificar a la caja (cajero)
+    // 3) marcar la sesión como pending_payment
+    await this.prisma.table_sessions.update({
+      where: { id_session },
+      data: { status: 'pending_payment' },
+    });
+
+    console.log("PREBILL MANDADA: ", id_session, total);
+    // 4) Notificar a caja
     this.notif.emitToBranch(session.tables.id_branch, 'prebill', {
       id_session,
       table: session.tables.number,
       total,
-      orders: session.orders.map(o => o.id_order),
+      orders: session.orders.map((o) => o.id_order),
       by: id_user,
     });
 
-    return { ok: true };
+    return { ok: true, total };
   }
+
+  async requestTakeoutPrebill(id_order: number, id_user: number) {
+    const order = await this.prisma.orders.findUnique({
+      where: { id_order },
+      include: {
+        order_items: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Orden no encontrada');
+    }
+
+    // 1) Validar que no haya productos sin entregar
+    const hasPendingItems = order.order_items.some(
+      (i) =>
+        i.status !== 'delivered' && // no entregado
+        i.status !== 'cancelled',   // y no cancelado
+    );
+
+    if (order.payment_status === 'pending_payment' || order.payment_status === 'paid') {
+      return { ok: true, alreadyRequested: true };
+    }
+    // EN LOS QUE SON PARA LLEVAR SI PUEDES SOLICITAR LA CUENTA DESDE ANTES
+    // if (hasPendingItems) {
+    //   throw new BadRequestException(
+    //     'Aún hay productos sin entregar en esta orden. No puedes solicitar la pre-cuenta.',
+    //   );
+    // }
+
+    // 2) Calcular total SOLO con items no cancelados
+    const total = order.order_items
+      .filter((i) => i.status !== 'cancelled')
+      .reduce((sum, i) => sum + Number(i.subtotal), 0);
+
+    // 3) Marcar la orden como pending_payment
+    await this.prisma.orders.update({
+      where: { id_order },
+      data: { payment_status: 'pending_payment' },
+    });
+
+    // 4) Notificar a caja
+    this.notif.emitToBranch(order.id_branch, 'prebill', {
+      type: 'takeout',
+      id_order,
+      // nombre del cliente:
+      customer: order.customer_name,
+      total,
+      by: id_user,
+    });
+
+    console.log('PREBILL TAKEOUT MANDADA: ', id_order, total);
+
+    return { ok: true, total };
+  }
+
+  async getSessionSummary(id_session: number) {
+    const session = await this.prisma.table_sessions.findUnique({
+      where: { id_session },
+      include: {
+        tables: true,
+        orders: {
+          include: {
+            order_items: {
+              include: {
+                branch_products: {
+                  include: {
+                    company_products: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    const allItems = session.orders.flatMap((o) =>
+      o.order_items.map((i) => ({
+        id_order_item: i.id_order_item,
+        id_order: i.id_order,
+        status: i.status,
+        subtotal: Number(i.subtotal || 0),
+        created_at: i.created_at,
+        product_name: i.branch_products?.company_products?.name ?? 'Producto',
+      })),
+    );
+
+    const nonCancelled = allItems.filter((i) => i.status !== 'cancelled');
+
+    const total = nonCancelled.reduce((acc, i) => acc + i.subtotal, 0);
+
+    const pendingItems = nonCancelled.filter(
+      (i) => i.status !== 'delivered',
+    );
+
+    const deliveredTotal = nonCancelled
+      .filter((i) => i.status === 'delivered')
+      .reduce((acc, i) => acc + i.subtotal, 0);
+
+    return {
+      id_session,
+      table: session.tables.number,
+      total,               // total de la cuenta (sin cancelados)
+      deliveredTotal,      // lo que ya está entregado
+      pendingCount: pendingItems.length,
+      canRequestPrebill: pendingItems.length === 0,
+      items: nonCancelled, // para listar qué han pedido
+    };
+  }
+
 
   async printOrder(orderId: number) {
     // 1) Cargar orden completa

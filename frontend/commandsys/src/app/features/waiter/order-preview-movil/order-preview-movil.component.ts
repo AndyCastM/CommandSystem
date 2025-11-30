@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-order-preview',
+  selector: 'app-order-preview-movil',
   standalone: true,
   imports: [CommonModule, MatIconModule, FormsModule],
-  templateUrl: './app-order-preview.html'
+  templateUrl: './order-preview-movil.html'
 })
-export class OrderPreviewComponent {
+export class OrderPreviewMovilComponent {
   @Input() cart!: Signal<Map<number, any>>;
   @Input() totalAmount!: () => number;
   @Input() updateQuantity!: (id: number, change: number) => void;
@@ -17,12 +17,12 @@ export class OrderPreviewComponent {
   @Input() confirmOrder!: () => void;
   @Input() isAdding = false;
 
+  generalNotes: string = '';
+
   getOptionNames(opt: any): string {
     if (!opt?.values || opt.values.length === 0) return '';
     return opt.values.map((v: any) => v.name).join(', ');
   }
-
-  generalNotes: string = '';
 
 //   getOptionNames(opt: any): string {
 //   if (!opt?.values?.length) return '';
@@ -60,7 +60,7 @@ export class OrderPreviewComponent {
     return (base + extras) * item.quantity;
   }
 
-  getGeneralNotes(): string {
-    return this.generalNotes;
-  }
+    getGeneralNotes(): string {
+        return this.generalNotes;
+    }
 }
