@@ -127,16 +127,17 @@ model roles {
 }
 
 model table_sessions {
-  id_session Int                    @id @default(autoincrement())
-  id_table   Int
-  id_user    Int
-  guests     Int?
-  status     table_sessions_status? @default(open)
-  opened_at  DateTime?              @db.Timestamp(0)
-  closed_at  DateTime?              @db.Timestamp(0)
-  orders     orders[]
-  tables     tables                 @relation(fields: [id_table], references: [id_table], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_1")
-  users      users                  @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_2")
+  id_session     Int                            @id @default(autoincrement())
+  id_table       Int
+  id_user        Int
+  guests         Int?
+  status         table_sessions_status?         @default(open)
+  payment_status table_sessions_payment_status?
+  opened_at      DateTime?                      @db.Timestamp(0)
+  closed_at      DateTime?                      @db.Timestamp(0)
+  orders         orders[]
+  tables         tables                         @relation(fields: [id_table], references: [id_table], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_1")
+  users          users                          @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "table_sessions_ibfk_2")
 
   @@index([id_table], map: "id_table")
   @@index([id_user], map: "id_user")
@@ -508,6 +509,11 @@ enum orders_status {
 
 enum orders_payment_status {
   unpaid
+  pending_payment
+  paid
+}
+
+enum table_sessions_payment_status {
   pending_payment
   paid
 }

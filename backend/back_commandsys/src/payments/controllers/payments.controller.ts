@@ -25,4 +25,9 @@ export class PaymentsController {
   getOrderDetails(@Param('id_order') id_order: number) {
     return this.payments.getOrderDetail(+id_order);
   }
+
+  @Get('pending-prebills')
+  async getPendingPrebills(@CurrentUser() user: any) {
+    return this.payments.getPendingPrebills(+user.id_branch);
+  }
 }

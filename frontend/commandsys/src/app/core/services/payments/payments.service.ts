@@ -17,4 +17,9 @@ export class PaymentsService {
     getOrderDetail(id_order: number) {
         return this.http.get<any>(`${API_URL}/payments/order/${id_order}`).toPromise();
     }
+
+    getPendingPrebills() {
+    return this.http.get<any[]>(`${API_URL}/payments/pending-prebills`).toPromise();
+    }
+
 }

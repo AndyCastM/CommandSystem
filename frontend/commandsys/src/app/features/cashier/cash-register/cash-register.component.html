@@ -24,45 +24,53 @@
 
   <div class="space-y-3">
     <div
-      *ngFor="let req of pendingRequests()"
-      class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
+  *ngFor="let req of pendingRequests()"
+  class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
+>
+  <div>
+    <!-- LABEL PRINCIPAL: MESA o PARA LLEVAR -->
+    <p class="font-semibold text-slate-800">
+      <ng-container *ngIf="req.type === 'takeout'; else mesaLabel">
+        Para llevar · {{ req.customer || 'Cliente sin nombre' }}
+      </ng-container>
+      <ng-template #mesaLabel>
+        Mesa {{ req.table }}
+      </ng-template>
+    </p>
+
+    <!-- TOTAL -->
+    <p class="text-sm text-slate-600">
+      Total:
+      <span class="font-medium">
+        ${{ req.total | number: '1.2-2' }}
+      </span>
+    </p>
+
+    <!-- SOLO MESAS: mostrar órdenes -->
+    <p
+      class="text-xs text-slate-500 mt-1"
+      *ngIf="req.orders?.length"
     >
-      <div>
-        <!-- LABEL PRINCIPAL: MESA o PARA LLEVAR -->
-        <p class="font-semibold text-slate-800">
-          <ng-container *ngIf="req.type === 'takeout'; else mesaLabel">
-            Para llevar · {{ req.customer || 'Cliente sin nombre' }}
-          </ng-container>
-          <ng-template #mesaLabel>
-            Mesa {{ req.table }}
-          </ng-template>
-        </p>
+      Órdenes: {{ req.orders.join(', ') }}
+    </p>
 
-        <!-- TOTAL -->
-        <p class="text-sm text-slate-600">
-          Total:
-          <span class="font-medium">
-            ${{ req.total | number: '1.2-2' }}
-          </span>
-        </p>
+    <!--  NUEVO: mesero que solicitó -->
+    <p class="text-xs text-slate-500 mt-1">
+      Solicitada por:
+      <span class="font-semibold text-slate-700">
+        {{ req.by_user_name || ('Usuario #' + req.by) }}
+      </span>
+    </p>
+  </div>
 
-        <!-- SOLO MESAS: mostrar órdenes -->
-        <p
-          class="text-xs text-slate-500 mt-1"
-          *ngIf="req.orders?.length"
-        >
-          Órdenes: {{ req.orders.join(', ') }}
-        </p>
-      </div>
-
-      <!-- BOTÓN: cambia texto y handler según tipo -->
-      <button
-        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
-        (click)="onRequestClick(req)"
-      >
-        {{ req.type === 'takeout' ? 'Cobrar' : 'Cobrar mesa' }}
-      </button>
-    </div>
+  <!-- BOTÓN -->
+  <button
+    class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
+    (click)="onRequestClick(req)"
+  >
+    {{ req.type === 'takeout' ? 'Cobrar' : 'Cobrar mesa' }}
+  </button>
+</div>
   </div>
 </div>
 
@@ -76,7 +84,7 @@
       <div>
         <h2 class="text-xl font-semibold mb-1">Turno de caja abierto</h2>
         <p class="text-sm opacity-80">
-          Apertura: {{ s.opened_at | date:'short' }}
+          Apertura: {{ s.formattedOpenedAt}}
         </p>
       </div>
 

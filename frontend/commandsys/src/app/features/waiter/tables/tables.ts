@@ -244,6 +244,10 @@ export class Tables implements OnInit {
         return;
       }
 
+      if (summary.items.length === 0){
+        this.toast.warning('La sesion no tiene ninguna comanda activa');
+        return;
+      }
       // Si todo está bien, solicitamos la pre-cuenta
       await this.ordersApi.requestPrebill(table.id_session);
       this.toast.success(`Se solicitó la pre-cuenta de la mesa ${table.name}`);

@@ -429,7 +429,8 @@ export class OrdersService {
             table_sessions: {
               include: { tables: true }
             },
-            order_items: true
+            order_items: true,
+            users: true,
           }
         },
         branch_products: {
@@ -440,16 +441,19 @@ export class OrdersService {
       }
     });
 
-    console.log('NOTIF ES:', this.notif);
+    //console.log('NOTIF ES:', this.notif);
 
     // Si está listo -> mandar notificación
     if (status === 'ready') {
-      this.notif.emitToBranch(
-        item.orders.id_branch,
+      const waiterId = item.orders.id_user!; // mesero dueño de la comanda
+      console.log('Se mando la comanda al mesero: ', waiterId);
+      this.notif.emitToUser(
+        waiterId,
         'order:item-ready',
         {
           order: item.orders.id_order,
           table: item.orders.table_sessions?.tables?.number ?? null,
+          id_user: waiterId,
           product: item.branch_products!.company_products.name,
           qty: item.quantity,
         }
@@ -468,8 +472,8 @@ export class OrdersService {
       });
 
       // Notificar a los meseros (para refrescar lista)
-      this.notif.emitToBranch(
-        item.orders.id_branch,
+      this.notif.emitToUser(
+        item.orders.id_user!,
         'order:delivered',
         { id_order: item.id_order }
       );
@@ -594,6 +598,16 @@ export class OrdersService {
       );
     }
 
+     // si hay algún delivered, bloquear
+    const hasReady = order.order_items.some(
+      (i) => i.status === 'ready',
+    );
+    if (hasReady) {
+      throw new BadRequestException(
+        'No se puede cancelar completamente una comanda con productos listos',
+      );
+    }
+
     // 1) marcar todos los items como cancelados
     await this.prisma.order_items.updateMany({
       where: { id_order },
@@ -704,6 +718,20 @@ export class OrdersService {
 
     if (!session) throw new NotFoundException('Sesión no encontrada');
 
+    // 0) Validar que no tenga ya cuenta solicitada / pagada
+    const hasLockedPayments = session.orders.some((o) =>
+      o.status !== 'cancelled' && (
+        o.payment_status === 'pending_payment' ||
+        o.payment_status === 'paid'
+      )
+    );
+
+    if (hasLockedPayments) {
+      throw new BadRequestException(
+        'Esta mesa ya tiene una cuenta solicitada o pagada.',
+      );
+    }
+
     // 1) Validar que no haya productos sin entregar
     const hasPendingItems = session.orders.some((o) =>
       o.order_items.some(
@@ -728,21 +756,35 @@ export class OrdersService {
       return acc + t;
     }, 0);
 
-    // 3) marcar la sesión como pending_payment
+    // // 3) marcar la sesión como pending_payment
     await this.prisma.table_sessions.update({
-      where: { id_session },
-      data: { status: 'pending_payment' },
+       where: { id_session },
+       data: { status: 'pending_payment' },
     });
 
     console.log("PREBILL MANDADA: ", id_session, total);
+    // Buscar mesero que hizo la petición
+    const waiter = await this.prisma.users.findUnique({
+      where: { id_user },
+      select: { name: true, last_name: true },
+    });
+
+    const by_user_name = waiter
+    ? `${waiter.name} ${waiter.last_name ?? ''}`.trim()
+    : `Usuario #${id_user}`;
+
     // 4) Notificar a caja
-    this.notif.emitToBranch(session.tables.id_branch, 'prebill', {
+        // 4) Notificar SOLO al cajero (o a sucursal si no hay turno)
+    await this.notifyCashierPrebill(session.tables.id_branch, {
+      type: 'table',
       id_session,
       table: session.tables.number,
       total,
       orders: session.orders.map((o) => o.id_order),
-      by: id_user,
+      by: id_user, // mesero que la solicitó
+      by_user_name,
     });
+
 
     return { ok: true, total };
   }
@@ -787,19 +829,52 @@ export class OrdersService {
       data: { payment_status: 'pending_payment' },
     });
 
-    // 4) Notificar a caja
-    this.notif.emitToBranch(order.id_branch, 'prebill', {
+    // Buscar mesero que hizo la petición
+    const waiter = await this.prisma.users.findUnique({
+      where: { id_user },
+      select: { name: true, last_name: true },
+    });
+
+    const by_user_name = waiter
+    ? `${waiter.name} ${waiter.last_name ?? ''}`.trim()
+    : `Usuario #${id_user}`;
+
+    // 4) Notificar SOLO al cajero (o sucursal como fallback)
+    await this.notifyCashierPrebill(order.id_branch, {
       type: 'takeout',
       id_order,
-      // nombre del cliente:
       customer: order.customer_name,
       total,
-      by: id_user,
+      by: id_user, // mesero que la solicitó
+      by_user_name,
     });
 
     console.log('PREBILL TAKEOUT MANDADA: ', id_order, total);
 
     return { ok: true, total };
+  }
+
+  private async notifyCashierPrebill(id_branch: number, payload: any) {
+    // Buscar turno de caja abierto en esa sucursal
+    const cash = await this.prisma.cash_sessions.findFirst({
+      where: {
+        id_branch,
+        is_closed: false,
+      },
+      orderBy: { opened_at: 'desc' }, // por si acaso hay más de uno
+    });
+
+    if (cash) {
+      console.log(
+        `Enviando PREBILL solo al cajero ${cash.id_user} en sucursal ${id_branch}`,
+      );
+      this.notif.emitToUser(cash.id_user, 'prebill', payload);
+    } else {
+      console.log(
+        `No hay turno de caja abierto en sucursal ${id_branch}, enviando PREBILL a toda la sucursal`,
+      );
+      this.notif.emitToBranch(id_branch, 'prebill', payload);
+    }
   }
 
   async getSessionSummary(id_session: number) {

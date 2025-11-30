@@ -9,7 +9,7 @@ import { formatResponse } from 'src/common/helpers/response.helper';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 
-const ACTIVE_STATUSES = ['open', 'occupied', 'pending_payment'] as const;
+const ACTIVE_STATUSES = ['open', 'occupied', 'pending_payment', 'paid'] as const;
 
 @Injectable()
 export class TableSessionsService {
@@ -139,7 +139,7 @@ export class TableSessionsService {
     const session = await this.prisma.table_sessions.findFirst({
       where: {
         id_table,
-        status: { in: ['open', 'occupied', 'pending_payment'] },
+        status: { in: ['open', 'occupied', 'pending_payment', 'paid'] },
       },
     });
 
@@ -159,7 +159,9 @@ export class TableSessionsService {
 
     console.log("Órdenes asociadas a la sesión:", orders);
 
-    const unpaidOrders = orders.filter(o => o.payment_status !== 'paid');
+    const unpaidOrders = orders.filter(
+      o => o.status !== 'cancelled' && o.payment_status !== 'paid'
+    );
 
     if (unpaidOrders.length > 0) {
       console.log("Órdenes no pagadas:", unpaidOrders);

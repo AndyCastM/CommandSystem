@@ -108,6 +108,55 @@ export class CashRegisterComponent implements OnInit {
   });
 
   // ======================
+  // FORMATEO DE FECHAS
+  // ======================
+  
+  // ======================
+// FORMATEO DE FECHAS
+// ======================
+
+  // ======================
+// FORMATEO DE FECHAS
+// ======================
+
+formatDateTime(dateInput: string | Date): { date: string; time: string; full: string } {
+  let localDate: Date;
+  
+  // Si ya es un objeto Date, usarlo directamente
+  if (dateInput instanceof Date) {
+    localDate = dateInput;
+  } else {
+    // Si es string, parsearlo
+    const dateStr = dateInput.replace(' ', 'T');
+    const date = new Date(dateStr);
+    // Ajustar a hora local
+    localDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+  }
+  
+  return {
+    date: localDate.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }),
+    time: localDate.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }),
+    full: localDate.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }) + ' ' + localDate.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  };
+}
+
+  // ======================
   // INIT
   // ======================
   async ngOnInit() {
@@ -135,6 +184,7 @@ export class CashRegisterComponent implements OnInit {
     }
 
     await this.loadPayments();
+    await this.loadPendingPrebillsFromApi();
   }
 
   // ======================
@@ -142,7 +192,19 @@ export class CashRegisterComponent implements OnInit {
   // ======================
 
   async loadSession() {
-    this.session.set(await this.cashApi.getActiveSession());
+    const sessionData = await this.cashApi.getActiveSession();
+    
+    if (sessionData) {
+      // Formatear la fecha de apertura
+      const formatted = this.formatDateTime(sessionData.opened_at);
+      
+      this.session.set({
+        ...sessionData,
+        formattedOpenedAt: formatted.full
+      });
+    } else {
+      this.session.set(null);
+    }
   }
 
   async loadPayments() {
@@ -151,7 +213,29 @@ export class CashRegisterComponent implements OnInit {
 
     const res = await this.paymentsApi.getPaymentsByCash(s.id_cash_session);
     const data = Array.isArray(res) ? res : ((res as any)?.data ?? []);
-    this.payments.set(data as any[]);
+    
+    // Formatear las fechas de cada pago
+    const formattedPayments = data.map((payment: any) => {
+      const formatted = this.formatDateTime(payment.created_at);
+      
+      return {
+        ...payment,
+        formattedDate: formatted.date,
+        formattedTime: formatted.time
+      };
+    });
+    
+    this.payments.set(formattedPayments);
+  }
+
+  async loadPendingPrebillsFromApi() {
+    try {
+      const res = await this.paymentsApi.getPendingPrebills();
+      const data = Array.isArray(res) ? res : (res as any)?.data ?? [];
+      this.pendingRequests.set(data);
+    } catch (err) {
+      console.error('Error cargando cuentas pendientes', err);
+    }
   }
 
   async refreshData() {

@@ -69,4 +69,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   emitToBranch(id_branch: number, event: string, payload: any) {
     this.server.to(`branch_${id_branch}`).emit(event, payload);
   }
+
+  // Para notificaciones a un usuario en específico
+  emitToUser(id_user: number, event: string, payload: any) {
+    this.server.to(`user_${id_user}`).emit(event, payload);
+  }
+
 }
