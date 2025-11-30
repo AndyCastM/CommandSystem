@@ -12,17 +12,32 @@ export class MetricsController {
   constructor(private readonly metricsService: MetricsService, private readonly exportService: MetricsExportService) {}
 
   @Get('dashboard')
-  @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
+  @Roles(Role.Admin, Role.Gerente)
   async getDashboard(@Query() dto: GetDashboardDto, @Req() req) {
-    let id_branch = req.user.id_branch;
-    let id_company = req.user.id_company;
-    // Si es admin corporativo: ve todas las sucursales
-    if (req.user.role === 'Admin' || req.user.role === 'Superadmin') {
-      id_branch = null; // null = todas
+    const user = req.user;
+    const id_company = user.id_company;
+
+    let id_branch: number | null = null;
+
+    // Si es GERENTE: siempre su propia sucursal
+    if (user.role === 'Gerente') {
+      id_branch = user.id_branch; // obligado a su sucursal
+    }
+
+    // Si es ADMIN 
+    //  - si manda id_branch se usa esa
+    //  - si no manda nada muestra todas
+    if (user.role === 'Admin') {
+      if (dto.id_branch) {
+        id_branch = Number(dto.id_branch); // una sucursal específica
+      } else {
+        id_branch = null; // todas las sucursales de la empresa
+      }
     }
 
     return this.metricsService.getDashboard(dto, id_branch, id_company);
   }
+
 
   @Get('top-products')
   @Roles(Role.Superadmin, Role.Admin, Role.Gerente)
@@ -30,9 +45,32 @@ export class MetricsController {
     @Query('from') from: string,
     @Query('to') to: string,
     @CurrentUser() user: any,
+    @Query('id_branch') idBranchParam?: string,
   ) {
-    let id_branch: number | null = user.role === 'Admin' ? null : user.id_branch;
-    return this.metricsService.getTopProducts(from, to, id_branch, +user.id_company);
+    let id_branch: number | null = null;
+
+    // GERENTE: siempre su sucursal, ignorar lo que venga en query
+    if (user.role === 'Gerente') {
+      id_branch = user.id_branch;
+    }
+
+    // ADMIN
+    //  - si viene id_branch  usar esa
+    //  - si no viene mostrar todas
+    if (user.role === 'Admin') {
+      if (idBranchParam) {
+        id_branch = Number(idBranchParam);
+      } else {
+        id_branch = null;
+      }
+    }
+
+    return this.metricsService.getTopProducts(
+      from,
+      to,
+      id_branch,
+      Number(user.id_company),
+    );
   }
 
   @Get('cancellations')

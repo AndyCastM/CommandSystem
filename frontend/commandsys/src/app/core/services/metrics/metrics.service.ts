@@ -62,18 +62,27 @@ export class MetricsService {
   private http = inject(HttpClient);
   private apiUrl = API_URL + '/metrics';
 
-  getDashboard(from: string, to: string): Observable<MetricsResponse> {
-    const params = new HttpParams().set('from', from).set('to', to);
+  getDashboard(from: string, to: string, id_branch?: number | null): Observable<MetricsResponse> {
+    let params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
 
-    return this.http.get<MetricsResponse>(`${this.apiUrl}/dashboard`, {
-      params,
-    });
+    // Si viene una sucursal específica, la mandamos
+    if (id_branch !== null && id_branch !== undefined && id_branch !== 0) {
+      params = params.set('id_branch', String(id_branch));
+    }
+
+    return this.http.get<MetricsResponse>(`${this.apiUrl}/dashboard`, { params });
   }
 
-  getTopProducts(from: string, to: string) {
-    return this.http.get<any[]>(`${this.apiUrl}/top-products`, {
-      params: { from, to }
-    });
+  getTopProducts(from: string, to: string, id_branch?: number | null) {
+    const params: any = { from, to };
+
+    if (id_branch !== null && id_branch !== undefined && id_branch !== 0) {
+      params.id_branch = id_branch;
+    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/top-products`, { params });
   }
 
   exportPdf(from: string, to: string) {

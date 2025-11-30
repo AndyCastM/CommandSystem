@@ -19,7 +19,7 @@
     <!-- FILTRO FECHAS -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
 
-      <!-- BOTONES PREMIUM -->
+      <!-- BOTONES  -->
       <div class="flex flex-wrap gap-2 mb-3">
 
         <button
@@ -90,6 +90,35 @@
           Aplicar
         </button>
 
+      </div>
+
+      <!-- FILTRO SUCURSAL (solo Admin ) -->
+      <div
+        class="mt-3 pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-3 sm:items-end"
+      >
+        <div class="flex flex-col gap-1 w-full sm:max-w-xs">
+          <label class="text-xs font-medium text-slate-600">
+            Sucursal
+          </label>
+
+          <mat-select
+            class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 w-full bg-white transition-all"
+            [value]="selectedBranchId()"
+            [panelClass]="'filter-panel'"
+            (selectionChange)="onBranchChange($event.value)"
+          >
+            <mat-option [value]="0">
+              Todas las sucursales
+            </mat-option>
+
+            <mat-option
+              *ngFor="let b of branches()"
+              [value]="b.id_branch"
+            >
+              {{ b.name }}
+            </mat-option>
+          </mat-select>
+        </div>
       </div>
 
     </div>

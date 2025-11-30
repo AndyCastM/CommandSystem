@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MetricsService, MetricsResponse } from '../../../core/services/metrics/metrics.service';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { isBrowser } from '../../../core/utils/platform';
+import { BranchesApi } from '../../../core/services/branches/branches.api';
 
 // Chart.js
 import {
@@ -21,19 +22,21 @@ import {
   ChartConfiguration,
   registerables
 } from 'chart.js';
+import { MatSelectModule } from '@angular/material/select';
 
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard-metrics',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, MatSelectModule],
   templateUrl: './dashboard-metrics.component.html',
 })
 export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private metricsApi = inject(MetricsService);
   private toast = inject(ToastService);
+  private branchesSrv = inject(BranchesApi);
 
   loading = signal(false);
   metrics = signal<MetricsResponse | null>(null);
@@ -47,6 +50,9 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
 
   showCustom = false; // para mostrar/ocultar inputs de rango custom
 
+  selectedBranchId = signal<number>(0); // null = todas
+  branches = signal<any[]>([]);
+
   // canvas refs
   @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('ordersChart') ordersChartRef!: ElementRef<HTMLCanvasElement>;
@@ -54,7 +60,7 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
   private salesChart?: Chart;
   private ordersChart?: Chart;
 
-  ngOnInit() {
+  async ngOnInit() {
     if (!isBrowser()) return;
 
     const today = new Date();
@@ -69,7 +75,7 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
 
     this.minFrom = '2000-01-01';
     this.maxTo = this.today;
-
+    await this.loadBranches();
     this.refresh();
   }
 
@@ -126,6 +132,21 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
 
   toggleCustom() {
     this.showCustom = !this.showCustom;
+  }
+
+  // === Carga de Sucursales ===
+  async loadBranches() {
+    try {
+      const branches = await this.branchesSrv.getAll();
+      this.branches.set(branches);
+    } catch (err) {
+      console.error('Error al cargar sucursales:', err);
+    }
+  }
+  
+  onBranchChange(value: number) {
+    this.selectedBranchId.set(value);
+    this.refresh(); // recarga dashboard y top-products con esa sucursal
   }
 
   // ======= VALIDACIÓN RANGO =======
@@ -197,7 +218,9 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
     this.loading.set(true);
     this.loadTopProducts();
 
-    this.metricsApi.getDashboard(from, to).subscribe({
+    const idBranch = this.selectedBranchId() === 0 ? null : this.selectedBranchId();
+
+    this.metricsApi.getDashboard(from, to, idBranch).subscribe({
       next: (res) => {
         this.metrics.set(res);
         this.updateCharts();
@@ -214,7 +237,9 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
   topProducts = signal<any[]>([]);
 
   loadTopProducts() {
-    this.metricsApi.getTopProducts(this.from(), this.to()).subscribe({
+    const idBranch = this.selectedBranchId() === 0 ? null : this.selectedBranchId();
+
+    this.metricsApi.getTopProducts(this.from(), this.to(), idBranch).subscribe({
       next: (res) => this.topProducts.set(res),
       error: () => this.toast.error('Error cargando ranking de productos')
     });
