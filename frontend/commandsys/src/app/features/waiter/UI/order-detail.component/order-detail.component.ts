@@ -18,6 +18,7 @@ export class OrderDetailComponent {
 
   loadingCancel = false;
   loadingOrderCancel = false;
+  showConfirmCancel = false; // Nueva propiedad
 
   reason: string = '';
   cancelTarget: any = null; // item a cancelar
@@ -62,9 +63,14 @@ export class OrderDetailComponent {
 
   /** Cancelar comanda completa */
   async cancelOrder() {
-    if (!confirm('¿Cancelar toda la comanda? Esto no se puede deshacer.')) return;
+    // Mostrar confirmación personalizada
+    this.showConfirmCancel = true;
+  }
 
+  /** Confirmar cancelación */
+  async confirmCancelOrder() {
     this.loadingOrderCancel = true;
+    this.showConfirmCancel = false;
 
     try {
       await this.ordersApi.cancelOrder(this.data.order.id, this.orderReason);
@@ -76,5 +82,10 @@ export class OrderDetailComponent {
     } finally {
       this.loadingOrderCancel = false;
     }
+  }
+
+  /** Cancelar la confirmación */
+  cancelConfirmOrder() {
+    this.showConfirmCancel = false;
   }
 }

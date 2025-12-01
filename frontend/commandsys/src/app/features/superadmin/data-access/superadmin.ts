@@ -92,4 +92,13 @@ export class Superadmin {
       this.http.delete(`${this.API_URL2}/${id_user}`, {})
     );
   }
+
+  async resetPassword(id_user: number, password: string) {
+    const body = { password }; 
+
+    return firstValueFrom(
+      this.http.patch(`${this.API_URL2}/${id_user}`, body)
+    );
+  }
+
 }

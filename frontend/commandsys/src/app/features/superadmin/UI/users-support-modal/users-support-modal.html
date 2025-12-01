@@ -101,4 +101,13 @@
       Cerrar
     </button>
   </div>
+
+    <app-reset-password-modal
+      *ngIf="showResetModal()"
+      [user]="selectedUser()"
+      [close]="closeResetModal.bind(this)"
+      [onConfirm]="handleResetPassword.bind(this)"
+    />
+
 </div>
+

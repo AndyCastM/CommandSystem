@@ -5,11 +5,12 @@ import { UsersService } from '../../../../core/services/users/users.service';
 import { ToastService } from '../../../../shared/UI/toast.service';
 import { firstValueFrom } from 'rxjs';
 import { Superadmin } from '../../data-access/superadmin';
+import { ResetPasswordModalComponent } from '../reset-password-modal/reset-password-modal.component';
 
 @Component({
   selector: 'app-users-support-modal',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, ResetPasswordModalComponent],
   templateUrl: './users-support-modal.html',
 })
 export class UsersSupportModalComponent implements OnChanges {
@@ -22,6 +23,9 @@ export class UsersSupportModalComponent implements OnChanges {
 
   users = signal<any[]>([]);
   loading = signal(false);
+
+  showResetModal = signal(false);
+  selectedUser = signal<any>(null);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['company']?.currentValue) {
@@ -47,13 +51,25 @@ export class UsersSupportModalComponent implements OnChanges {
   }
 
   async resetPassword(u: any) {
+    this.selectedUser.set(u);
+    this.showResetModal.set(true);
+  }
+
+  async handleResetPassword(newPassword: string) {
     try {
-      this.toast.success(`Contraseña restablecida para ${u.username}`);
-    } catch {
+      await this.superadmin.resetPassword(this.selectedUser().id_user, newPassword);
+      this.toast.success(`Contraseña restablecida para ${this.selectedUser().username}`);
+      this.showResetModal.set(false);
+    } catch (err) {
+      console.error(err);
       this.toast.error('Error al restablecer contraseña');
+      throw err; // Re-lanzar para que el modal maneje el loading
     }
   }
 
+  closeResetModal() {
+    this.showResetModal.set(false);
+  }
   async toggleActive(u: any) {
     try {
       if (u.is_active){
