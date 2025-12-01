@@ -115,6 +115,7 @@ export interface ProductDetail {
   name: string;
   description?: string;
   base_price: number;
+  preparation_time: number;
 
   image_url?: string | null;
   is_active: number | boolean; // el back manda 1

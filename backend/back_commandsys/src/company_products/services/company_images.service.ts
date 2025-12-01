@@ -56,7 +56,8 @@ export class CompanyImagesService {
   // Obtener todas las imágenes de un producto
   async getImagesByProduct(id_product: number) {
     return this.prisma.company_product_images.findMany({
-      where: { id_company_product : id_product },
+      where: { id_company_product: id_product },
+      orderBy: { created_at: 'desc' }, 
     });
   }
 

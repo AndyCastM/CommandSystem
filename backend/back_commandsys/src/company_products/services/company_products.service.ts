@@ -10,6 +10,12 @@ export class CompanyProductsService {
   
   constructor (private prisma: PrismaService, private validators: CompanyProductsValidators){}
 
+  private getLocalDate(): Date {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local;
+  }
+
    /**
    * Crea un producto de empresa con opciones/valores/tiers y lo replica a TODAS las sucursales de esa empresa.
    */
@@ -34,6 +40,7 @@ export class CompanyProductsService {
           preparation_time: dto.preparation_time,
           description: dto.description ?? undefined,
           base_price: Number(dto.base_price),
+          created_at: this.getLocalDate(),
         },
       });
 
@@ -84,7 +91,8 @@ export class CompanyProductsService {
         await tx.branch_products.createMany({
           data: branches.map((b) => ({
             id_branch: b.id_branch,
-            id_company_product: product.id_company_product
+            id_company_product: product.id_company_product,
+            created_at: this.getLocalDate(),
           })),
         });
       }
@@ -144,14 +152,14 @@ export class CompanyProductsService {
     );
   }
 
-  async updateProduct(
+async updateProduct(
   id_company_product: number,
   dto: UpdateCompanyProductDto,
   id_company: number,
 ) {
-  // Validaciones básicas
   await this.validators.validateCompanyExists(id_company);
-  console.log("ACTUALIZACION RECIBIDA: ", dto);
+  console.log('ACTUALIZACION RECIBIDA: ', dto);
+
   const existingProduct = await this.prisma.company_products.findFirst({
     where: { id_company_product, id_company },
   });
@@ -159,7 +167,7 @@ export class CompanyProductsService {
     throw new NotFoundException('Producto no encontrado.');
   }
 
-  // Verificar duplicado si cambia el nombre o categoría
+  // Duplicados si cambia nombre/categoría
   if (
     dto.name &&
     (dto.name.trim() !== existingProduct.name ||
@@ -178,7 +186,7 @@ export class CompanyProductsService {
   }
 
   return this.prisma.$transaction(async (tx) => {
-    // 1) Actualizar producto principal
+    // 1) Producto base (incluye preparation_time)
     const updated = await tx.company_products.update({
       where: { id_company_product },
       data: {
@@ -187,43 +195,151 @@ export class CompanyProductsService {
         base_price: Number(dto.base_price ?? existingProduct.base_price),
         id_category: dto.id_category ?? existingProduct.id_category,
         id_area: dto.id_area ?? existingProduct.id_area,
+        preparation_time:
+          dto.preparation_time ?? existingProduct.preparation_time,
+        updated_at: this.getLocalDate(),
       },
     });
 
-    // 2) Opciones (tu lógica tal cual la tenías)
-    if (dto.options?.length) {
-      for (const opt of dto.options) {
-        const existingOpt = await tx.product_options.findFirst({
-          where: {
-            id_company_product,
-            name: opt.name.trim(),
-          },
-        });
+    // 2) Opciones + values + tiers
+    if (Array.isArray(dto.options) && dto.options.length > 0) {
+      for (const rawOpt of dto.options) {
+        const opt: any = rawOpt;
+        const name = opt.name?.trim();
+        if (!name) continue;
 
-        if (existingOpt) {
-          await tx.product_options.update({
-            where: { id_option: existingOpt.id_option },
+        const isRequired =
+          opt.is_required === 1 || opt.is_required === true ? 1 : 0;
+        const multiSelect =
+          opt.multi_select === 1 || opt.multi_select === true ? 1 : 0;
+
+        // 2.1 Buscar opción por id_option o por (producto+nombre)
+        let optionRecord =
+          opt.id_option != null
+            ? await tx.product_options.findUnique({
+                where: { id_option: opt.id_option },
+              })
+            : null;
+
+        if (!optionRecord) {
+          optionRecord = await tx.product_options.findFirst({
+            where: { id_company_product, name },
+          });
+        }
+
+        if (optionRecord) {
+          optionRecord = await tx.product_options.update({
+            where: { id_option: optionRecord.id_option },
             data: {
-              is_required: opt.is_required ?? existingOpt.is_required,
-              multi_select: opt.multi_select ?? existingOpt.multi_select,
-              max_selection: opt.max_selection ?? existingOpt.max_selection,
+              name,
+              is_required: isRequired,
+              multi_select: multiSelect,
+              max_selection:
+                opt.max_selection ?? optionRecord.max_selection ?? 1,
             },
           });
         } else {
-          await tx.product_options.create({
+          optionRecord = await tx.product_options.create({
             data: {
               id_company_product,
-              name: opt.name.trim(),
-              is_required: opt.is_required === 1 ? 1 : 0,
-              multi_select: opt.multi_select === 1 ? 1 : 0,
+              name,
+              is_required: isRequired,
+              multi_select: multiSelect,
               max_selection: opt.max_selection ?? 1,
             },
+          });
+        }
+
+        // 2.2 VALUES: upsert + soft delete de los que ya no vengan
+        const existingValues = await tx.product_option_values.findMany({
+          where: { id_option: optionRecord.id_option },
+        });
+        const existingValIds = new Set(
+          existingValues.map((v) => v.id_option_value),
+        );
+        const usedValIds = new Set<number>();
+
+        if (Array.isArray(opt.values)) {
+          for (const v of opt.values as any[]) {
+            const baseData = {
+              name: v.name.trim(),
+              extra_price: Number(v.extra_price ?? 0),
+              is_active: v.is_active === false ? false : true,
+            };
+
+            if (v.id_value) {
+              await tx.product_option_values.update({
+                where: { id_option_value: v.id_value },
+                data: baseData,
+              });
+              usedValIds.add(v.id_value);
+            } else {
+              const createdVal = await tx.product_option_values.create({
+                data: {
+                  ...baseData,
+                  id_option: optionRecord.id_option,
+                },
+              });
+              usedValIds.add(createdVal.id_option_value);
+            }
+          }
+        }
+
+        // Cualquiera que existía pero ya no viene → marcar inactivo
+        const toDisable = [...existingValIds].filter(
+          (id) => !usedValIds.has(id),
+        );
+        if (toDisable.length > 0) {
+          await tx.product_option_values.updateMany({
+            where: { id_option_value: { in: toDisable } },
+            data: { is_active: false },
+          });
+        }
+
+        // 2.3 TIERS: upsert + borrar los que ya no estén
+        const existingTiers = await tx.product_option_tiers.findMany({
+          where: { id_option: optionRecord.id_option },
+        });
+        const existingTierIds = new Set(existingTiers.map((t) => t.id_tier));
+        const usedTierIds = new Set<number>();
+
+        if (Array.isArray(opt.tiers)) {
+          for (const t of opt.tiers as any[]) {
+            const baseData = {
+              selection_count: Number(t.selection_count),
+              extra_price: Number(t.extra_price ?? 0),
+            };
+
+            if (t.id_tier) {
+              await tx.product_option_tiers.update({
+                where: { id_tier: t.id_tier },
+                data: baseData,
+              });
+              usedTierIds.add(t.id_tier);
+            } else {
+              const createdTier = await tx.product_option_tiers.create({
+                data: {
+                  ...baseData,
+                  id_option: optionRecord.id_option,
+                },
+              });
+              usedTierIds.add(createdTier.id_tier);
+            }
+          }
+        }
+
+        const tiersToDelete = [...existingTierIds].filter(
+          (id) => !usedTierIds.has(id),
+        );
+        if (tiersToDelete.length > 0) {
+          await tx.product_option_tiers.deleteMany({
+            where: { id_tier: { in: tiersToDelete } },
           });
         }
       }
     }
 
-    // 3) Volver a leer con relaciones + imagen para mandar mismo DTO que el listado
+    // 3) Volver a leer formateado para tu listado
     const prod = await tx.company_products.findUnique({
       where: { id_company_product: updated.id_company_product },
       include: {
@@ -252,6 +368,7 @@ export class CompanyProductsService {
     );
   });
 }
+
 
 /**
  * Cuando se crea una nueva sucursal, clona todos los productos de su empresa
@@ -295,6 +412,7 @@ async syncProductsToBranch(id_company: number, id_branch: number) {
     data: toCreate.map(p => ({
       id_branch,
       id_company_product: p.id_company_product,
+      created_at: this.getLocalDate(),
     })),
   });
 
@@ -312,7 +430,9 @@ async getProductDetail(id_branch_product: number) {
         include: {
           product_categories: true,
           print_areas: true,
-          company_product_images: true,
+          company_product_images: {
+            orderBy: { created_at: 'desc' }, 
+          },
           product_options: {
             include: {
               product_option_values: true,
@@ -348,7 +468,9 @@ async getProductDetail(id_branch_product: number) {
       is_required: o.is_required === 1,
       multi_select: o.multi_select === 1,
       max_selection: o.max_selection,
-      values: o.product_option_values.map(v => ({
+      values: o.product_option_values
+      .filter(v => v.is_active === true)
+      .map(v => ({
         id_value: v.id_option_value,
         name: v.name,
         extra_price: Number(v.extra_price),
@@ -371,7 +493,9 @@ async getCompanyProductDetail(id_company_product: number) {
     include: {
       product_categories: true,
       print_areas: true,
-      company_product_images: true,
+      company_product_images: {
+        orderBy: { created_at: 'desc' },
+      },
       product_options: {
         include: {
           product_option_values: true,
@@ -392,6 +516,7 @@ async getCompanyProductDetail(id_company_product: number) {
     name: prod.name,
     description: prod.description,
     base_price: Number(prod.base_price),
+    id_image : prod.company_product_images?.[0]?.id_image,
     image_url: prod.company_product_images?.[0]?.image_url || null,
     is_active: prod.is_active,
     category_name: prod.product_categories?.name,
@@ -437,7 +562,9 @@ async getCompanyProducts(
     include: {
       product_categories: true,
       print_areas: true,
-      company_product_images: true, //  importante
+      company_product_images: {
+        orderBy: { created_at: 'desc' }, 
+      },
     },
     orderBy: { id_category: 'asc' },
   });

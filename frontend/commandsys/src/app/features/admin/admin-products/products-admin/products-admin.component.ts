@@ -180,20 +180,37 @@ export class ProductsAdminComponent implements OnInit{
   }
 
   openEdit(p: CompanyProduct) {
-    //console.log('Mandando el producto a editar: ', p);
     this.dialog.open(ProductDialogComponent, {
       data: { mode: 'edit', value: p },
       panelClass: 'rounded-2xl',
-    }).afterClosed().subscribe((res: { dto: Partial<CreateCompanyProductDto>; file: File | null } | null) => {
+    })
+    .afterClosed()
+    .subscribe((res: { dto: Partial<CreateCompanyProductDto>; file: File | null } | null) => {
       if (!res) return;
-      this.productSrv.update(p.id_company_product, res.dto, res.file ?? undefined);
-      console.log(res.dto);
-      // invalida miniatura y la volverá a precargar
-      this.thumbMap.delete(p);
-      this.productSrv.getThumbUrl$(p.id_company_product).pipe(take(1)).subscribe(url => {
-        const finalUrl = url ? this.productSrv.cld(url) : this.placeholderDataUrl;
-        this.thumbMap.set(p, finalUrl);
-      });
+
+      this.productSrv
+        .update(p.id_company_product, res.dto, res.file ?? undefined)
+        .pipe(take(1))
+        .subscribe({
+          next: (updated) => {
+            this.toast.success('Producto actualizado correctamente');
+
+            // Invalida miniatura y recarga
+            this.thumbMap.delete(p);
+            this.productSrv.getThumbUrl$(p.id_company_product)
+              .pipe(take(1))
+              .subscribe(url => {
+                const finalUrl = url
+                  ? this.productSrv.cld(url)
+                  : this.placeholderDataUrl;
+                this.thumbMap.set(p, finalUrl);
+              });
+          },
+          error: (err) => {
+            console.error('Error al actualizar producto', err);
+            this.toast.error('No se pudo actualizar el producto');
+          },
+        });
     });
   }
 
@@ -236,13 +253,6 @@ export class ProductsAdminComponent implements OnInit{
       error: () => this.togglingIds.delete(p.id_company_product),
     });
   }
-
-  delete(p: CompanyProduct) {
-    if (confirm(`Eliminar "${p.name}"?`)) {
-      this.productSrv.remove(p.id_company_product);
-      this.imagesCache.delete(p.id_company_product);
-    }
-  }
-
+  
   trackById = (_: number, p: CompanyProduct) => p.id_company_product;
 }

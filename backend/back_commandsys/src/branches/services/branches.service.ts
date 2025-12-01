@@ -150,12 +150,14 @@ export class BranchesService {
           include: {
             product_categories: true, // Traer categorías de productos
             print_areas: true, // Traer áreas de impresión
-            company_product_images: true,
+            company_product_images: {
+              orderBy: { created_at: 'desc' }, 
+            },
             product_options: {
-              include: {
-                product_option_values: true,
-                product_option_tiers: true,
-              },
+            include: {
+              product_option_values: true,
+              product_option_tiers: true,
+            },
             },
           },
         },

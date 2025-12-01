@@ -118,21 +118,33 @@
         </button>
 
         <!-- MESA ABIERTA -->
-        <button
-          *ngIf="table.status === 'Abierta' && isMyTable(table)"
-          (click)="takeOrder(table)"
-          class="w-full bg-yellow-400 text-yellow-900 rounded-lg py-2 text-sm font-medium hover:bg-yellow-500 transition"
-        >
-          + Tomar Comanda
-        </button>
+        <ng-container *ngIf="table.status === 'Abierta'">
+          <button
+            *ngIf="isMyTable(table)"
+            (click)="takeOrder(table)"
+            class="w-full bg-yellow-400 text-yellow-900 rounded-lg py-2 text-sm font-medium hover:bg-yellow-500 transition"
+          >
+            + Tomar Comanda
+          </button>
 
-        <button
-          *ngIf="table.status === 'Abierta' && !isMyTable(table)"
-          disabled
-          class="w-full bg-yellow-200 text-yellow-400 rounded-lg py-2 text-sm font-medium cursor-not-allowed"
-        >
-          Mesa abierta por otro mesero
-        </button>
+          <button
+            *ngIf="!isMyTable(table)"
+            disabled
+            class="w-full bg-yellow-200 text-yellow-400 rounded-lg py-2 text-sm font-medium cursor-not-allowed"
+          >
+            Mesa abierta por otro mesero
+          </button>
+
+          <!-- BOTÓN CERRAR MESA VACÍA (solo si es mi mesa) -->
+          <button
+            *ngIf="isMyTable(table)"
+            (click)="releaseEmptyTable(table)"
+            class="w-full bg-slate-500 text-white border border-slate-600 rounded-lg py-2 text-sm font-medium hover:bg-slate-600 transition flex items-center justify-center gap-2"
+          >
+            <mat-icon fontIcon="close" class="!text-[18px] !w-[18px] !h-[18px]"></mat-icon>
+            <span>Cerrar mesa vacía</span>
+          </button>
+        </ng-container>
 
         <!-- MESA OCUPADA, PENDIENTE DE PAGO, O PAGADA -->
         <ng-container *ngIf="table.status === 'Ocupada' || table.status === 'Pendiente de pago' || table.status === 'Pagada'">

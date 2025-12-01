@@ -100,76 +100,90 @@ export class ProductService {
   uploadImageForProduct(id_company_product: number, file: File) {
     const fd = new FormData();
     fd.append('file', file);
+
     const url = `${this.base}/company-products/${id_company_product}/upload`;
-    return this.http.post<any>(url, fd);
+
+    // Backend: { message: string; image: ProductImage }
+    return this.http.post<{ message: string; image: ProductImage }>(url, fd);
   }
 
   // ---------- CRUD ----------
   create(input: CreateCompanyProductDto, imageFile?: File): Observable<CompanyProduct> {
-    const createUrl = `${this.base}/company-products`;
+  const createUrl = `${this.base}/company-products`;
 
-    return this.http.post<CompanyProduct>(createUrl, input).pipe(
-      switchMap(created => {
-        if (!imageFile) {
-          this.productsSig.set([created, ...this.productsSig()]);
-          return of(created);
-        }
+  return this.http.post<CompanyProduct>(createUrl, input).pipe(
+    switchMap(created => {
+      // Si NO hay imagen -> solo metemos el producto al signal y ya
+      if (!imageFile) {
+        this.productsSig.set([created, ...this.productsSig()]);
+        return of(created);
+      }
 
-        return this.uploadImageForProduct(created.id_company_product, imageFile).pipe(
-          map(uploadRes => {
-            const updated = (uploadRes?.product ?? uploadRes) as CompanyProduct || created;
-            this.productsSig.set([
-              updated,
-              ...this.productsSig().filter(p => p.id_company_product !== created.id_company_product),
-            ]);
-            return updated;
-          })
-        );
-      }),
-      tap(() => console.log('Producto creado y/o imagen subida correctamente')),
-      catchError(err => {
-        console.error('Error creando producto o subiendo imagen:', err);
-        return throwError(() => err);
-      })
-    );
-  }
+      // Si hay imagen -> subimos la imagen, pero el "producto válido" sigue siendo `created`
+      return this.uploadImageForProduct(created.id_company_product, imageFile).pipe(
+        map(() => {
+          // Limpiar caché de imágenes por si acaso
+          this.imagesCache.delete(created.id_company_product);
+          this.imagesInFlight.delete(created.id_company_product);
 
-  // 🔥 AQUÍ ES DONDE CAMBIA LA MAGIA
-  update(id_company_product: number, patch: UpdateCompanyProductDto, imageFile?: File) {
+          // Actualizar listado con el producto creado
+          this.productsSig.set([
+            created,
+            ...this.productsSig().filter(p => p.id_company_product !== created.id_company_product),
+          ]);
+
+          // Regresamos el mismo product
+          return created;
+        })
+      );
+    }),
+    tap(() => console.log('Producto creado y (si había) imagen subida correctamente')),
+    catchError(err => {
+      console.error('Error creando producto o subiendo imagen:', err);
+      return throwError(() => err);
+    })
+  );
+}
+
+
+  update(
+    id_company_product: number,
+    patch: UpdateCompanyProductDto,
+    imageFile?: File
+  ) {
     const url = `${this.base}/company-products/${id_company_product}`;
 
     return this.http.patch<{ data: CompanyProduct }>(url, patch).pipe(
-      // el back ahora manda { statusCode, message, data, timestamp }
-      map(res => res.data),
-      switchMap(updated => {
+      switchMap(res => {
+        const updated = res.data;
+
         if (!imageFile) {
-          // updated YA trae category, area, image_url, etc.
           this.productsSig.update(list =>
             list.map(p =>
               p.id_company_product === id_company_product ? updated : p
             )
           );
+        }
+
+        // Si no hay nueva imagen, terminamos aquí
+        if (!imageFile) {
           return of(updated);
         }
 
-        // Si además se sube nueva imagen:
+        // Si hay imagen nueva, súbela
         return this.uploadImageForProduct(id_company_product, imageFile).pipe(
-          map(uploadRes => {
-            const merged = (uploadRes?.product ?? uploadRes) as CompanyProduct || updated;
-
-            this.productsSig.update(list =>
-              list.map(p =>
-                p.id_company_product === id_company_product ? merged : p
-              )
-            );
-
-            return merged;
-          })
+          tap(() => {
+            // Invalida cachés de imagen para este producto
+            this.imagesCache.delete(id_company_product);
+            this.imagesInFlight.delete(id_company_product);
+          }),
+          // No cambiamos el producto, solo devolvemos el mismo `updated`
+          map(() => updated)
         );
       })
-    ).subscribe(); // lo sigues llamando como "fire and forget" desde el componente
+    );
   }
-
+  
   remove(id_company_product: number) {
     const url = `${this.base}/company-products/${id_company_product}`;
     return this.http.delete(url).pipe(
@@ -246,6 +260,19 @@ export class ProductService {
 
     this.imagesInFlight.set(id_company_product, req$);
     return req$;
+  }
+
+  // products.service.ts
+  deleteProductImage(id_image: number, id_company_product: number) {
+    const url = `${this.base}/company-products/${id_image}/delete`;
+
+    return this.http.delete<{ message: string }>(url).pipe(
+      tap(() => {
+        // limpiar cache de miniatura para ese producto
+        this.imagesCache.delete(id_company_product);
+        this.imagesInFlight.delete(id_company_product);
+      }),
+    );
   }
 
   warmImagesFor(products: CompanyProduct[], concurrency = 4) {

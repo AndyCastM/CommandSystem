@@ -115,4 +115,9 @@ export class CompanyProductsController {
     return this.companyImagesService.getImagesByProduct(+id_product);
   }
 
+  @Delete(':id_image/delete')
+  @Roles(Role.Admin)
+  async deleteImage(@Param('id_image') id_image: number) {
+    return this.companyImagesService.deleteImage(+id_image);
+  }
 }

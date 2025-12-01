@@ -224,7 +224,7 @@ export class TableSessionsService {
       where: { id_session: session.id_session },
       data: {
         status: 'closed',
-        closed_at: new Date(),
+        closed_at: this.getLocalDate(),
       },
     });
 
@@ -314,32 +314,56 @@ export class TableSessionsService {
     return session;
   }
 
-  // ===========================
-  // CRON: mesas open sin orden > 5 minutos
-  // ===========================
-  @Cron(CronExpression.EVERY_MINUTE)
-  async checkOpenSessions() {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+// ===========================
+// CRON: mesas open sin orden > 5 minutos
+// ===========================
+@Cron(CronExpression.EVERY_MINUTE)
+async checkOpenSessions() {
+  // Obtener la hora actual local
+  const now = new Date();
+  
+  // Restar 5 minutos
+  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
-    const sessions = await this.prisma.table_sessions.findMany({
-      where: {
-        status: 'open',
-        opened_at: { lt: fiveMinutesAgo },
-      },
-      include: {
-        tables: { include: { branches: true } },
-        users: true,
-      },
+  const sessions = await this.prisma.table_sessions.findMany({
+    where: {
+      status: 'open',
+      opened_at: { lt: fiveMinutesAgo },
+    },
+    include: {
+      tables: { include: { branches: true } },
+      users: true,
+    },
+  });
+
+  for (const s of sessions) {
+    // Validar que opened_at no sea null
+    if (!s.opened_at) continue;
+
+    // Convertir opened_at a Date interpretándola como hora local
+    // Si viene como string "2025-11-30 22:36:14", new Date() la interpreta como local
+    const openedDateStr = s.opened_at instanceof Date 
+      ? s.opened_at.toISOString().slice(0, 19).replace('T', ' ')
+      : String(s.opened_at);
+    
+    // Crear Date sin 'Z' para forzar interpretación local
+    const openedDate = new Date(openedDateStr.replace(' ', 'T'));
+    
+    // Calcular el tiempo transcurrido
+    const elapsedMs = now.getTime() - openedDate.getTime();
+    const elapsedMinutes = Math.floor(elapsedMs / 60000);
+
+    // Solo enviar notificación si han pasado 5 minutos o más
+    if (elapsedMinutes < 5) continue;
+
+    this.notif.emitToBranch(s.tables.id_branch, 'alert:table-open', {
+      table: s.tables.number,
+      branch: s.tables.branches.name,
+      guests: s.guests,
+      waiter: `${s.users.name} ${s.users.last_name}`,
+      message: `La mesa ${s.tables.number} lleva más de 5 minutos abierta sin orden.`,
+      elapsedMinutes,
     });
-
-    for (const s of sessions) {
-      this.notif.emitToBranch(s.tables.id_branch, 'alert:table-open', {
-        table: s.tables.number,
-        branch: s.tables.branches.name,
-        guests: s.guests,
-        waiter: `${s.users.name} ${s.users.last_name}`,
-        message: `La mesa ${s.tables.number} lleva más de 5 minutos abierta sin orden.`,
-      });
-    }
   }
+}
 }

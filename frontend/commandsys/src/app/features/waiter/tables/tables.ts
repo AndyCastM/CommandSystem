@@ -71,9 +71,17 @@ export class Tables implements OnInit {
   }
 
   isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  now = signal<number>(Date.now());
+  private timerId: any = null;
 
   async ngOnInit() {
     if (!this.isBrowser) return;
+
+    // Reloj que se actualiza cada minuto
+    this.timerId = setInterval(() => {
+      this.now.set(Date.now());
+    }, 60_000); // 60 segundos, puedes bajar a 10_000 si quieres más preciso
+
     this.loading.set(true);
     this.locationsService.loadAll().subscribe();
 
@@ -107,8 +115,59 @@ export class Tables implements OnInit {
       const matchStatus = status ? t.status === status : true;
       const matchLocation = location ? t.location === location : true;
       return matchStatus && matchLocation;
+    })
+    .map((t) => {
+      const openedAt = t.opened_at || null;
+
+      let timeLabel: string | null = null;
+
+      if (
+        openedAt &&
+        (t.status === 'Abierta' ||
+          t.status === 'Ocupada' ||
+          t.status === 'Pendiente de pago')
+      ) {
+        timeLabel = this.formatElapsed(openedAt, this.now());
+      }
+
+      // devolvemos el mismo objeto + time (no modificamos el original)
+      return {
+        ...t,
+        time: timeLabel,
+      };
     });
   });
+
+  private formatElapsed(start: string | Date, nowMs: number): string {
+    let startMs: number;
+
+    if (start instanceof Date) {
+      startMs = start.getTime();
+    } else {
+      // Si es string, crear Date directamente (interpreta como local si no tiene Z)
+      // Si viene con formato ISO pero sin 'Z', lo trata como local
+      const dateStr = String(start);
+      
+      // Si la fecha viene del backend sin zona horaria, asumimos que es local
+      // Removemos 'Z' si existe para forzar interpretación local
+      const localDateStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
+      startMs = new Date(localDateStr).getTime();
+    }
+
+    if (isNaN(startMs)) return '';
+
+    const diff = nowMs - startMs;
+    if (diff < 0) return '';
+
+    const totalMinutes = Math.floor(diff / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (totalMinutes < 1) return 'Hace menos de 1 min';
+    if (totalMinutes < 60) return `Hace ${totalMinutes} min`;
+    if (minutes === 0) return `Hace ${hours} h`;
+    return `Hace ${hours} h ${minutes} min`;
+  }
 
   filterByStatus(event: any) {
     const value = event.value;
@@ -221,6 +280,21 @@ export class Tables implements OnInit {
     }
   }
 
+  async releaseEmptyTable(table:any){
+    if (!this.isMyTable(table)) {
+      return this.toast.error('Solo el mesero asignado puede liberar la mesa');
+    }
+
+    try {
+      const res = await this.tablesService.releaseEmptyTable(table.id);
+      this.toast.success(res.message);
+      await this.reloadTables();
+    } catch (err: any) {
+      console.error(err);
+      this.toast.error(err.error?.message || 'Error al liberar la mesa');
+    }
+  }
+
   async requestPrebill(table: any) {
     console.log("SESSIONNN:", table.id_session);
 
@@ -273,7 +347,4 @@ export class Tables implements OnInit {
       this.toast.error('No se pudo cargar el resumen de la mesa');
     }
   }
-
-
-
 }

@@ -18,7 +18,7 @@ import type {
   CreateCompanyProductDto,
   Category,
   Area,
-  ProductDetail,                
+  ProductDetail,
 } from '../../../../../core/services/products/products.models';
 import { CustomizationFormComponent } from '../customization-form/customization-form.component';
 import { ProductAreasService } from '../../../../../core/services/products/products-area.service';
@@ -99,11 +99,12 @@ export class ProductDialogComponent {
     const v = (data?.value ?? {}) as CompanyProduct;
     this.editing.set(data?.mode === 'edit');
 
-    // Patch básico
+    // Patch básico con lo que trae el listado
     this.form.patchValue({
       name: v.name ?? '',
       base_price: v.base_price ?? 0,
       preparation_time: (v as any).preparation_time ?? null,
+      description: v.description ?? '',
     });
 
     // === Cargar categorías y áreas si aún no existen ===
@@ -123,7 +124,7 @@ export class ProductDialogComponent {
       }
     });
 
-    // Cargar imagen en edición (solo imágenes ligadas, lo puedes dejar o quitar si usas image_url del detail)
+    // Cargar imagen (por ahora desde endpoint de imágenes)
     if (this.editing() && v?.id_company_product) {
       this.productSrv.getProductImages(v.id_company_product).subscribe(list => {
         const first = list?.[0]?.image_url ?? null;
@@ -137,19 +138,22 @@ export class ProductDialogComponent {
         next: (res) => {
           const detail: ProductDetail = res.data;
 
-          // Patch de categoría / área si hace falta
+          // Patch con info más completa
           this.form.patchValue({
-            id_category: v.id_category ?? detail.id_category ?? null,
-            id_area: v.id_area ?? detail.id_area ?? null,
-            description: detail.description,
+            id_category: v.id_category ?? (detail as any).id_category ?? null,
+            id_area: v.id_area ?? (detail as any).id_area ?? null,
+            description: detail.description ?? v.description ?? '',
+            base_price: detail.base_price ?? v.base_price,
+            preparation_time: detail.preparation_time ?? (v as any).preparation_time ?? null,
+            image_url: detail.image_url ?? '',
           }, { emitEvent: false });
 
-          // Imagen desde el detail si no hay preview todavía
+          // Imagen desde el detail si no había preview
           if (detail.image_url && !this.imagePreview()) {
             this.imagePreview.set(detail.image_url);
           }
 
-          // Opciones -> abrir panel derecho si existen
+          // Opciones → abrir panel derecho si existen
           if (detail.options && detail.options.length > 0) {
             this.loadOptionsFromDetail(detail);
             this.form.controls.is_customizable.setValue(true, { emitEvent: false });
@@ -166,7 +170,7 @@ export class ProductDialogComponent {
     this.form.controls.id_category.addValidators([Validators.required]);
     this.form.controls.id_area.addValidators([Validators.required]);
 
-    // 1) Sincronizar disabled de los selects con las signals de loading (SIN usar [disabled] en template)
+    // 1) Sincronizar disabled de los selects con las signals de loading
     effect(() => {
       const loadingCats = this.loadingCategories();
       const loadingAreas = this.loadingAreas();
@@ -197,19 +201,18 @@ export class ProductDialogComponent {
       }
     });
 
-    // 3) Cargar selección de categoría/área una vez listas
+    // 3) Cargar selección de categoría/área una vez listas (fallback por si el detail no llega antes)
     effect(() => {
       const catsReady = !this.loadingCategories();
       const areasReady = !this.loadingAreas();
       const v = this.data?.value;
 
       if (this.editing() && v && catsReady && areasReady) {
-        // Evita re-patchear si ya se cargó correctamente
         if (!this.form.value.id_category && !this.form.value.id_area) {
           this.form.patchValue({
             id_category: v.id_category ?? null,
             id_area: v.id_area ?? null,
-          });
+          }, { emitEvent: false });
         }
       }
     });
@@ -269,8 +272,10 @@ export class ProductDialogComponent {
       const valuesFA = this.fb.array<FormGroup>(
         (o.values ?? []).map(val =>
           this.fb.group({
+            id_value: [val.id_value ?? null],
             name: [val.name ?? ''],
             extra_price: [val.extra_price ?? 0],
+            is_active: [val.is_active ?? true],
           })
         )
       );
@@ -278,6 +283,7 @@ export class ProductDialogComponent {
       const tiersFA = this.fb.array<FormGroup>(
         (o.tiers ?? []).map(t =>
           this.fb.group({
+            id_tier: [t.id_tier ?? null],
             selection_count: [t.selection_count ?? 1],
             extra_price: [t.extra_price ?? 0],
           })
@@ -285,6 +291,7 @@ export class ProductDialogComponent {
       );
 
       const optionGroup = this.fb.group({
+        id_option: [o.id_option ?? null],
         name: [o.name ?? ''],
         is_required: [o.is_required ? 1 : 0],
         multi_select: [o.multi_select ? 1 : 0],
@@ -299,6 +306,7 @@ export class ProductDialogComponent {
 
   addOption() {
     const option = this.fb.group({
+      id_option: [null],
       name: [''],
       is_required: [0],
       multi_select: [0],
@@ -313,7 +321,12 @@ export class ProductDialogComponent {
 
   addValue(optIdx: number) {
     this.getOptionValues(optIdx).push(
-      this.fb.group({ name: [''], extra_price: [0] })
+      this.fb.group({
+        id_value: [null],
+        name: [''],
+        extra_price: [0],
+        is_active: [true],
+      })
     );
   }
 
@@ -323,7 +336,11 @@ export class ProductDialogComponent {
 
   addTier(optIdx: number) {
     this.getOptionTiers(optIdx).push(
-      this.fb.group({ selection_count: [1], extra_price: [0] })
+      this.fb.group({
+        id_tier: [null],
+        selection_count: [1],
+        extra_price: [0],
+      })
     );
   }
 
@@ -340,30 +357,36 @@ export class ProductDialogComponent {
     }
 
     const raw = this.form.getRawValue();
-    const dto: CreateCompanyProductDto = {
+
+    const dto: CreateCompanyProductDto & { options?: any[] } = {
       id_category: Number(raw.id_category),
       id_area: Number(raw.id_area),
       name: String(raw.name).trim(),
       description: raw.description ?? '',
       base_price: Number(raw.base_price ?? 0),
       image_url: raw.image_url ?? '',
-      preparation_time: raw.preparation_time != null ? Number(raw.preparation_time) : undefined,
+      preparation_time:
+        raw.preparation_time != null ? Number(raw.preparation_time) : undefined,
       options: raw.is_customizable
-        ? raw.options.map(o => ({
-            name: o['name'],
-            is_required: o['is_required'] ? 1 : 0,
-            multi_select: o['multi_select'] ? 1 : 0,
-            max_selection: Number(o['max_selection'] ?? 1),
-            tiers: o['tiers'].map((t: { selection_count: any; extra_price: any; }) => ({
+        ? (raw.options as any[]).map(o => ({
+            id_option: o.id_option ?? undefined,
+            name: o.name,
+            is_required: o.is_required ? 1 : 0,
+            multi_select: o.multi_select ? 1 : 0,
+            max_selection: Number(o.max_selection ?? 1),
+            tiers: (o.tiers ?? []).map((t: any) => ({
+              id_tier: t.id_tier ?? undefined,
               selection_count: Number(t.selection_count),
-              extra_price: Number(t.extra_price ?? 0)
+              extra_price: Number(t.extra_price ?? 0),
             })),
-            values: o['values'].map((v: { name: any; extra_price: any; }) => ({
+            values: (o.values ?? []).map((v: any) => ({
+              id_value: v.id_value ?? undefined,
               name: v.name,
-              extra_price: Number(v.extra_price ?? 0)
-            }))
+              extra_price: Number(v.extra_price ?? 0),
+              is_active: v.is_active === false ? false : true,
+            })),
           }))
-        : []
+        : [],
     };
 
     const file = raw.file as File | null;
