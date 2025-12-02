@@ -12,7 +12,7 @@ export class FallbackIntentHandler implements RequestHandler {
 
   handle(handlerInput: HandlerInput) {
     return handlerInput.responseBuilder
-      .speak('No entendí eso. Puedes decir cosas como: marca la comanda uno como listo.')
+      .speak('No entendí eso. Puedes decir cosas como: marca el item uno como listo.')
       .reprompt('¿Qué deseas hacer?')
       .getResponse();
   }

@@ -1,0 +1,284 @@
+<div class="max-w-6xl mx-auto flex flex-col gap-8">
+
+  <!-- Título -->
+  <div>
+    <div class="text-sm text-slate-500">Admin / <span class="text-slate-700 font-medium">Generador IA</span></div>
+    <h1 class="text-3xl font-bold text-slate-800 tracking-tight">
+      Generador <span class="text-sky-600">IA</span>
+    </h1>
+    <p class="text-sm text-slate-600">Genera descripciones, nombres y copys con Inteligencia Artificial.</p>
+  </div>
+
+  <!-- CARD SUBIDA -->
+  <div
+    class="bg-white rounded-2xl p-8 shadow-lg border border-slate-200 transition-all"
+    *ngIf="!result()"
+  >
+    <label class="text-sm font-medium text-slate-700">Imagen del producto</label>
+
+    <!-- DRAG & DROP -->
+    <label
+      class="mt-2 border-2 border-dashed rounded-xl p-8 w-full flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:border-sky-400 hover:text-sky-600 transition"
+    >
+      <input
+        type="file"
+        accept="image/*"
+        class="hidden"
+        (change)="onFileSelected($event)"
+      />
+
+      <div *ngIf="!imagePreview()" class="flex flex-col items-center gap-2">
+        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 16.5V18a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 18v-1.5m-18 0V8.25A2.25 2.25 0 015.25 6h13.5A2.25 2.25 0 0121 8.25v8.25m-18 0h18M8.25 10.5l3 3 4.5-4.5"/>
+        </svg>
+
+        <span class="text-sm">Haz clic o arrastra una imagen aquí</span>
+      </div>
+
+      <!-- IMAGEN PREVIEW -->
+      <div *ngIf="imagePreview()" class="mt-4 flex flex-col items-center gap-4">
+        <img [src]="imagePreview()" class="w-64 rounded-xl shadow-md" />
+
+        <button
+          class="text-sm text-red-500 hover:underline"
+          (click)="imagePreview.set(null); selectedFile=null"
+        >
+          Quitar imagen
+        </button>
+      </div>
+    </label>
+
+    <!-- CONTEXTO -->
+    <div class="mt-6">
+      <label class="text-sm font-medium text-slate-700">
+        Contexto adicional (opcional)
+      </label>
+      <textarea
+        class="mt-2 w-full px-3 py-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-sky-400 transition resize-none"
+        rows="3"
+        placeholder="Ej: Pizza artesanal, bebida refrescante, plato gourmet…"
+        [(ngModel)]="context"
+      ></textarea>
+    </div>
+
+    <button
+      (click)="sendToAI()"
+      [disabled]="loading()"
+      class="mt-6 px-5 py-3 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-xl transition disabled:bg-sky-300"
+    >
+      {{ loading() ? "Procesando..." : "Generar descripción con IA" }}
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="loading()" class="flex justify-center py-10">
+    <div class="animate-spin w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full"></div>
+  </div>
+
+  <!-- ERROR -->
+  <div *ngIf="error()" class="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">
+    {{ error() }}
+  </div>
+
+  <!-- RESULTADOS -->
+  <div *ngIf="result()" class="flex flex-col gap-8 animate-fade-scale">
+
+    <!-- BOTÓN REINTENTAR -->
+    <div class="flex justify-end">
+      <button
+        class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition"
+        (click)="result.set(null); imagePreview.set(null); selectedFile=null"
+      >
+        Intentar con otra imagen
+      </button>
+    </div>
+
+    <!-- GRID DESCRIPCIONES -->
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- PROFESIONAL -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h2 class="font-semibold text-slate-800 text-lg">Profesional</h2>
+        <p class="text-slate-600 mt-3 leading-relaxed">{{ result().professional }}</p>
+
+        <button
+            (click)="copy(result().professional, 'professional')"
+            class="mt-4 p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === 'professional' ? 'bg-emerald-200 text-emerald-700' : ''"
+        >
+            <ng-container *ngIf="copied() !== 'professional'; else copiedProf">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedProf>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+        </button>
+
+      </div>
+
+      <!-- COMERCIAL -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h2 class="font-semibold text-slate-800 text-lg">Comercial</h2>
+        <p class="text-slate-600 mt-3 leading-relaxed">{{ result().commercial }}</p>
+
+        <button
+            (click)="copy(result().commercial, 'commercial')"
+            class="mt-4 p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === 'commercial' ? 'bg-emerald-200 text-emerald-700' : ''"
+        >
+            <ng-container *ngIf="copied() !== 'commercial'; else copiedComm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedComm>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+        </button>
+
+      </div>
+
+      <!-- CORTA -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h2 class="font-semibold text-slate-800 text-lg">Descripción Corta</h2>
+        <p class="text-slate-600 mt-3 leading-relaxed">{{ result().short }}</p>
+
+        <button
+            (click)="copy(result().short, 'short')"
+            class="mt-4 p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === 'short' ? 'bg-emerald-200 text-emerald-700' : ''"
+        >
+            <ng-container *ngIf="copied() !== 'short'; else copiedShort">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedShort>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ALERGENOS -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+      <h2 class="font-semibold text-slate-800 text-lg">Alergénicos detectados</h2>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span
+          *ngFor="let a of result().allergens"
+          class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm"
+        >
+          {{ a }}
+        </span>
+      </div>
+    </div>
+
+    <!-- NOMBRES SUGERIDOS -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+      <h2 class="font-semibold text-slate-800 text-lg">Nombres sugeridos</h2>
+
+      <div class="mt-4 flex flex-col gap-2">
+        <div
+          *ngFor="let n of result().nameSuggestions"
+          class="flex justify-between items-center bg-slate-100 px-4 py-3 rounded-xl"
+        >
+          <span>{{ n }}</span>
+
+          <button
+            (click)="copy(n, 'name-' + n)"
+            class="p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === ('name-' + n) ? 'bg-emerald-200 text-emerald-700' : ''"
+          >
+            <ng-container *ngIf="copied() !== ('name-' + n); else copiedName">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedName>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COPYS SOCIALES -->
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h2 class="font-semibold text-slate-800 text-lg">Instagram</h2>
+        <p class="text-slate-600 mt-3">{{ result().social.instagram }}</p>
+
+        <button
+            (click)="copy(result().social.instagram, 'instagram')"
+            class="mt-4 p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === 'instagram' ? 'bg-emerald-200 text-emerald-700' : ''"
+        >
+            <ng-container *ngIf="copied() !== 'instagram'; else copiedIG">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedIG>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+        </button>
+
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h2 class="font-semibold text-slate-800 text-lg">Facebook</h2>
+        <p class="text-slate-600 mt-3">{{ result().social.facebook }}</p>
+
+        <button
+            (click)="copy(result().social.facebook, 'facebook')"
+            class="mt-4 p-2 rounded-lg inline-flex items-center gap-1
+                   transition-all duration-200 ease-out active:scale-95
+                   hover:bg-slate-200 text-slate-700"
+            [ngClass]="copied() === 'facebook' ? 'bg-emerald-200 text-emerald-700' : ''"
+        >
+            <ng-container *ngIf="copied() !== 'facebook'; else copiedFB">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v2m-4 12h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6z" />
+                </svg>
+            </ng-container>
+
+            <ng-template #copiedFB>
+              <span class="animate-fade-scale">✓ Copiado</span>
+            </ng-template>
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,71 +1,141 @@
-// import { Injectable } from '@nestjs/common';
-// import OpenAI from 'openai';
-
-// @Injectable()
-// export class AiService {
-//   private openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-//   async generateDescription(imageUrl: string): Promise<string> {
-//     const response = await this.openai.chat.completions.create({
-//       model: "gpt-3.5-turbo",
-//       messages: [
-//         {
-//           role: "system",
-//           content:
-//             "Eres un asistente que genera descripciones comerciales de productos para un menú de restaurante.",
-//         },
-//         {
-//           role: "user",
-//           content: [
-//             { type: "text", text: "Describe brevemente este producto:" },
-//             { type: "image_url", image_url: imageUrl },
-//           ] as any,
-//         },
-//       ],
-//     });
-
-//     const description = response.choices?.[0]?.message?.content;
-//     return description || "No se pudo generar la descripción.";
-//   }
-// }
-
-
-// POR MIENTRAS ESTOY USANDO EL MODELO 3.5 QUE SOLO USA TEXTO, DESPUES LO MOVERE AL 4 PARA QUE USE IMAGENES
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+import { HttpService } from '@nestjs/axios';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { DescribeProductDto } from './dto/describe-product.dto';
+import { DescribeProductResult } from './types/describe-product-result';
 
 @Injectable()
-export class AiService {
-  private openai: OpenAI;
+export class AIService {
+  private readonly apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  private readonly apiKey = process.env.OPENROUTER_API_KEY;
+  private readonly model =
+    process.env.OPENROUTER_MODEL_VISION || 'google/gemini-2.5-flash';
 
-  constructor(private configService: ConfigService) {
-    this.openai = new OpenAI({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-    });
+  constructor(private readonly http: HttpService) {}
+
+  // JSON extractor
+  private extractJson(text: string) {
+    // Eliminar bloques ```json y ```
+    text = text
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    // Buscar primer { y último }
+    const first = text.indexOf('{');
+    const last = text.lastIndexOf('}');
+
+    if (first === -1 || last === -1) {
+      throw new Error('No se encontró JSON válido en la respuesta');
+    }
+
+    const jsonString = text.substring(first, last + 1);
+
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error('JSON inválido recibido de IA:', jsonString);
+      throw new Error('JSON inválido después de extraer');
+    }
   }
 
-  async generateDescription(name: string, category: string): Promise<string> {
-    // GPT-3.5 no entiende imágenes, así que usamos solo texto contextual
-    const prompt = `
-       Eres un asistente experto en marketing gastronómico.
-       Crea una descripción comercial breve y atractiva para un producto del menú.
-        Nombre del producto: ${name}
-        Categoría: ${category}
-        La descripción debe ser concisa, persuasiva y resaltar los aspectos más apetitosos del producto.
-    `;
+  async describeProduct(
+    dto: DescribeProductDto,
+  ): Promise<DescribeProductResult> {
+    if (!this.apiKey) {
+      throw new InternalServerErrorException(
+        'OPENROUTER_API_KEY no está configurada',
+      );
+    }
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'Eres un asistente que escribe descripciones de comida y bebidas.' },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 80,
-      temperature: 0.8,
-    });
+    const locale = dto.locale || 'es-MX';
 
-    const description = response.choices?.[0]?.message?.content?.trim();
-    return description || 'Descripción no disponible';
+    // Prompt del sistema 
+    const systemPrompt = `
+Eres un asistente experto en gastronomía y redacción para menús de restaurantes.
+
+RESPONDE EXCLUSIVAMENTE con un JSON válido. 
+NO incluyas explicaciones, texto adicional ni markdown.
+NO incluyas backticks.
+
+Formato EXACTO:
+{
+  "professional": "string",
+  "commercial": "string",
+  "short": "string",
+  "allergens": ["string"],
+  "nameSuggestions": ["string"],
+  "social": {
+    "instagram": "string",
+    "facebook": "string"
+  }
+}
+
+Reglas:
+- Idioma: ${locale}
+- professional: descripción formal del producto.
+- commercial: texto atractivo estilo ventas.
+- short: máximo 120 caracteres.
+- allergens: posibles alérgenos detectados visualmente.
+- nameSuggestions: 3 a 5 nombres sugeridos.
+- social.instagram: estilo creativo, trendy.
+- social.facebook: estilo más neutral.
+`.trim();
+
+    const userPrompt = `
+Genera toda la información usando la imagen.
+Contexto adicional: ${dto.context ?? 'ninguno'}.
+`.trim();
+
+    try {
+      // Llamada a OpenRouter
+      const response$ = this.http.post(
+        this.apiUrl,
+        {
+          model: this.model,
+          max_tokens: 1500, // limite maximo de tokens pa que no me cobre
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: userPrompt },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: dto.imageUrl,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+
+            // Recomendado por OpenRouter
+            'HTTP-Referer': 'http://localhost:4200',
+            'X-Title': 'CommandSystem AI Helper',
+          },
+        },
+      );
+
+      const { data } = await firstValueFrom(response$);
+
+      const rawContent: string =
+        data?.choices?.[0]?.message?.content ?? '';
+
+      // Extraer JSON real 
+      const parsed = this.extractJson(rawContent);
+
+      return parsed;
+    } catch (err) {
+      console.error('Error llamando a OpenRouter:', err?.response?.data || err);
+      throw new InternalServerErrorException(
+        'Error al generar la descripción con IA',
+      );
+    }
   }
 }

@@ -9,7 +9,7 @@ export class LaunchRequestHandler implements RequestHandler {
   }
 
   handle(handlerInput: HandlerInput) {
-    const speechText = 'Bienvenido al sistema de comandas. Puedes decir cosas como: marca la comanda uno como listo.';
+    const speechText = 'Bienvenido al sistema de comandas. Puedes decir cosas como: marca el item uno como listo.';
 
     return handlerInput.responseBuilder
       .speak(speechText)

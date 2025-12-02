@@ -2,7 +2,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { AiService } from 'src/ai/ai.service';
 import { CompanyProductsService } from './company_products.service';
 
 @Injectable()
@@ -10,7 +9,6 @@ export class CompanyImagesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
-    private readonly aiService: AiService,
   ) {}
 
   // Subir imagen, generar descripción IA y guardar en BD

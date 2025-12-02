@@ -12,7 +12,7 @@ export class HelpIntentHandler implements RequestHandler {
 
   handle(handlerInput: HandlerInput) {
     return handlerInput.responseBuilder
-      .speak('Puedes decirme cosas como: marca la comanda uno como listo, o marca el item tres como entregado.')
+      .speak('Puedes decirme cosas como: marca el item uno como listo, o marca el item tres como entregado.')
       .reprompt('¿Qué deseas hacer?')
       .getResponse();
   }

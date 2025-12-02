@@ -19,6 +19,8 @@ export class ChangeItemStatusIntentHandler implements RequestHandler {
     if (!req.intent?.slots) {
       return handlerInput.responseBuilder
         .speak('No pude entender los valores del ítem o del estado.')
+        .reprompt("¿Quieres intentarlo de nuevo?")
+        .withShouldEndSession(false)
         .getResponse();
     }
 
@@ -28,12 +30,16 @@ export class ChangeItemStatusIntentHandler implements RequestHandler {
     if (!itemSlot?.value) {
       return handlerInput.responseBuilder
         .speak('No entendí el número de ítem.')
+        .reprompt("¿Quieres intentarlo de nuevo?")
+        .withShouldEndSession(false)
         .getResponse();
     }
 
     if (!statusSlot?.value) {
       return handlerInput.responseBuilder
         .speak('No entendí el estado que deseas aplicar.')
+        .reprompt("¿Quieres intentarlo de nuevo?")
+        .withShouldEndSession(false)
         .getResponse();
     }
 
@@ -60,6 +66,8 @@ export class ChangeItemStatusIntentHandler implements RequestHandler {
 
     return handlerInput.responseBuilder
       .speak(`El ítem ${itemId} fue marcado como ${spokenStatus}.`)
+      .reprompt("¿Qué más deseas hacer?")
+      .withShouldEndSession(false)
       .getResponse();
   }
 }
