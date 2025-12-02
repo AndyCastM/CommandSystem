@@ -1,3 +1,5 @@
+const TICKET_WIDTH = 48; 
+
 export function buildTicketFormat(payload: {
   companyHeader?: string;
   companyFooter?: string;
@@ -22,18 +24,19 @@ export function buildTicketFormat(payload: {
 
   const text: string[] = [];
 
-  text.push("--------------------------------");
+  text.push("-".repeat(TICKET_WIDTH));
   text.push(center(`AREA: ${payload.areaName.toUpperCase()}`));
   text.push(center(orderTypeMap[payload.orderType] || "ORDEN"));
-  text.push("--------------------------------");
+  text.push("-".repeat(TICKET_WIDTH));
 
   text.push(`Comanda: #${payload.id_order}`);
   if (payload.mesa) text.push(`Mesa: ${payload.mesa}`);
   if (payload.mesero) text.push(`Mesero: ${payload.mesero}`);
   text.push(`Fecha: ${payload.created_at}`);
-  text.push("--------------------------------");
-  text.push("DETALLE DE ITEMS");
-  text.push("--------------------------------");
+
+  text.push("-".repeat(TICKET_WIDTH));
+  text.push(center("DETALLE DE ITEMS"));
+  text.push("-".repeat(TICKET_WIDTH));
 
   for (const item of payload.items) {
     text.push(`${item.quantity} x ${item.name}`);
@@ -50,16 +53,14 @@ export function buildTicketFormat(payload: {
     text.push("");
   }
 
-  text.push("--------------------------------");
-
+  text.push("-".repeat(TICKET_WIDTH));
   text.push("");
 
   return text.join("\n");
 }
 
 function center(text: string): string {
-  const width = 32;
-  const pad = Math.floor((width - text.length) / 2);
+  const pad = Math.floor((TICKET_WIDTH - text.length) / 2);
   if (pad < 0) return text;
   return " ".repeat(pad) + text;
 }

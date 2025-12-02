@@ -84,9 +84,15 @@
       <div class="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-100">
         <h3 class="font-semibold text-slate-800 text-lg">{{ p.displayName }}</h3>
 
-        <span class="text-xs font-medium rounded-full px-3 py-1 bg-emerald-50 
-                     text-emerald-700 border border-emerald-200">
-          USB
+        <!-- TAG / BADGE -->
+        <span
+          class="text-xs font-medium rounded-full px-3 py-1 border"
+          [ngClass]="{
+            'bg-emerald-50 text-emerald-700 border-emerald-200': p.isActive === 1,
+            'bg-slate-200 text-slate-600 border-slate-300': p.isActive === 0
+          }"
+        >
+          {{ p.isActive === 1 ? 'Activa' : 'Inactiva' }}
         </span>
       </div>
 
@@ -105,17 +111,47 @@
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="flex items-center justify-end gap-2 px-5 py-2 border-t border-slate-100 bg-slate-50">
-        <button class="p-1.5 hover:bg-white rounded-lg" title="Editar impresora">
+
+        <!-- EDITAR -->
+        <button
+          class="p-1.5 hover:bg-white rounded-lg"
+          title="Editar impresora"
+          (click)="openEditModal(p)"
+        >
           <mat-icon class="text-slate-600">edit</mat-icon>
         </button>
-        <button class="p-1.5 hover:bg-white rounded-lg" title="Eliminar impresora">
-          <mat-icon class="text-rose-500">delete</mat-icon>
-        </button>
-      </div>
 
+        <!-- ACTIVAR / DESACTIVAR -->
+        <button
+          class="p-1.5 rounded-lg transition-all"
+          [ngClass]="{
+            'hover:bg-rose-50': p.isActive === 1,
+            'hover:bg-emerald-50': p.isActive === 0
+          }"
+          (click)="toggleActive(p)"
+        >
+          <mat-icon
+            [ngClass]="{
+              'text-rose-500': p.isActive === 1,
+              'text-emerald-600': p.isActive === 0
+            }"
+          >
+            power_settings_new
+          </mat-icon>
+        </button>
+
+      </div>
     </div>
   </div>
 
+  <app-printer-edit-modal
+    *ngIf="editModalOpen()"
+    [printer]="editingPrinter()!"
+    [areas]="areasSig()"
+    (closeModal)="closeEdit()"
+    (saveChanges)="updatePrinter($event)">
+  </app-printer-edit-modal>
+
 </div>
+

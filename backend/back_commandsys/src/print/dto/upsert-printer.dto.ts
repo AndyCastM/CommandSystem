@@ -2,6 +2,7 @@ import { IsInt, IsIP, IsNotEmpty, IsOptional, IsString, ArrayNotEmpty, ArrayUniq
 
 export class UpsertPrinterDto {
 
+  
   @IsString()
   @IsNotEmpty()
   displayName: string;         // nombre amigable en UI
@@ -12,7 +13,9 @@ export class UpsertPrinterDto {
   @ArrayNotEmpty()
   @ArrayUnique()
   areaIds: number[];           // ids de print_areas que imprimirá
-
+  
+  ids_station?: number[];
+  
   @IsOptional()
   @IsInt()
   isActive?: number;           // 1 / 0

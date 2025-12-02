@@ -89,7 +89,7 @@ export class Orders implements OnInit{
           created: localDate.toLocaleTimeString('es-MX', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false // Opcional: formato 24 horas
+            hour12: true 
           }),
           time: this.timeSince(localDate.toISOString()),
           type: orderType,

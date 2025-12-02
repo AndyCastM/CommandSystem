@@ -4,6 +4,7 @@ export interface Area {
 }
 
 export interface PrinterConfig {
+  ids_station? : number[];
   printerIp: string;
   displayName: string;
   isActive: number;

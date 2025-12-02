@@ -2,7 +2,8 @@ import {
   Component,
   OnInit,
   signal,
-  inject
+  inject,
+  PLATFORM_ID
 } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,11 +11,13 @@ import { PrinterService } from '../../../core/services/printer/printer.service';
 import { Area, PrinterConfig } from '../../../core/services/printer/printers.model';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { MatIconModule } from '@angular/material/icon';
+import { PrinterEditModalComponent } from './UI/printer-edit-modal/printer-edit-modal.component';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-printer-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgFor, NgIf, MatIconModule],
+  imports: [CommonModule, FormsModule, NgFor, NgIf, MatIconModule, PrinterEditModalComponent],
   templateUrl: './printer-config.html',
 })
 export class PrinterConfigComponent implements OnInit {
@@ -22,6 +25,8 @@ export class PrinterConfigComponent implements OnInit {
   private printerApi = inject(PrinterService);
   private toast = inject(ToastService);
 
+  private platformId = inject(PLATFORM_ID);
+  isBrowser = isPlatformBrowser(this.platformId);
 
   loading = signal(false);
   areasSig = signal<Area[]>([]);
@@ -34,6 +39,7 @@ export class PrinterConfigComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (!this.isBrowser) return;
     this.loadAreas();
     this.loadStations();
   }
@@ -109,4 +115,81 @@ export class PrinterConfigComponent implements OnInit {
     return printer.areas.map((a) => a.name).join(', ');
   }
 
+  editModalOpen = signal(false);
+  editingPrinter = signal<PrinterConfig | null>(null);
+
+  openEditModal(p: PrinterConfig) {
+    this.editingPrinter.set(p);
+    this.editModalOpen.set(true);
+  }
+
+  closeEdit() {
+    this.editModalOpen.set(false);
+    this.editingPrinter.set(null);
+  }
+
+  /** Guardar los cambios recibidos del modal */
+  updatePrinter(data: { displayName: string; areaIds: number[] }) {
+    this.printerApi.upsertPrinter({
+      displayName: data.displayName,
+      printerIp: 'USB',
+      areaIds: data.areaIds,
+      ids_station: this.editingPrinter()?.ids_station || [],
+    }).subscribe({
+      next: () => {
+        this.toast.success("Impresora actualizada");
+        this.closeEdit();
+        this.loadStations();
+      },
+      error: () => this.toast.error("No se pudo actualizar")
+    });
+  }
+
+  deactivate(id: number){
+    this.printerApi.deactivatePrinter(id).subscribe({
+      next: () => {
+        this.toast.success("Configuración de impresora desactivada");
+        this.loadStations();
+      },
+      error: () =>  this.toast.error("No se pudo completar la acción")
+    });
+  }
+
+  deactivateMany(ids: number[]) {
+    this.printerApi.deactivateMany(ids).subscribe({
+      next: () => {
+        this.toast.success("Impresora desactivada");
+        this.loadStations();
+      },
+      error: () => this.toast.error("Error al desactivar impresora")
+    });
+  }
+
+  toggleActive(p: PrinterConfig) {
+    if (!p.ids_station?.length) return;
+
+    // si está activa → desactivar
+    if (p.isActive === 1) {
+      this.printerApi.deactivateMany(p.ids_station).subscribe({
+        next: () => {
+          this.toast.success("Impresora desactivada");
+          this.loadStations();
+        },
+        error: () => this.toast.error("Error al desactivar")
+      });
+    }
+
+    // si está inactiva → activar
+    else {
+      this.printerApi.activateMany(p.ids_station).subscribe({
+        next: () => {
+          this.toast.success("Impresora activada");
+          this.loadStations();
+        },
+        error: () => this.toast.error("Error al activar")
+      });
+    }
+  }
+
 }
+

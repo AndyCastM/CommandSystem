@@ -24,7 +24,22 @@ export class PrinterService {
     displayName: string;
     printerIp: string;
     areaIds: number[];
+    ids_station?: number[];
   }) {
     return this.http.post(`${this.baseUrl}/stations`, data);
   }
+
+  deactivatePrinter(id: number) {
+    return this.http.patch(`${this.baseUrl}/stations/${id}/disable`, {});
+  }
+
+  activateMany(ids: number[]) {
+    return this.http.patch(`${this.baseUrl}/stations/activate-many`, { ids });
+  }
+
+  deactivateMany(ids: number[]) {
+    return this.http.patch(`${this.baseUrl}/stations/disable-many`, { ids });
+  }
+
 }
+
