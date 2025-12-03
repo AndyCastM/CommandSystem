@@ -1,9 +1,10 @@
 import { Component, Input, Inject, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
+
 import { CreateUser, User } from '../../../../core/services/users/user.model';
 import { UsersService } from '../../../../core/services/users/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
@@ -24,7 +25,6 @@ export type UserDialogData = {
   templateUrl: './user-form.component.html',
 })
 export class UserFormComponent {
-  // === Signals ===
   editing = signal(false);
   branches = signal<any[]>([]);
   roles = signal<any[]>([]);
@@ -49,18 +49,34 @@ export class UserFormComponent {
     this.form = this.fb.group({
       id_branch: [null],
       id_role: [null, Validators.required],
-      name: ['', Validators.required],
-      last_name: ['', Validators.required],
+
+      // Validación: no vacíos, no puro espacio y evitar símbolos raros
+      name: ['', [Validators.required, this.noOnlySpaces]],
+      last_name: ['', [Validators.required, this.noOnlySpaces]],
       last_name2: [''],
-      username: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+
+      username: ['', [
+        Validators.required,
+        this.noOnlySpaces,
+        Validators.pattern(/^[a-zA-Z0-9._-]{3,20}$/)
+      ]],
+
+      // password requerida solo en create
+      password: ['', [Validators.minLength(6)]],
     });
   }
 
-  // === UI Computeds ===
+  // ===== Validación personalizada =====
+  noOnlySpaces(control: AbstractControl): ValidationErrors | null {
+    const val = (control.value ?? '').trim();
+    return val.length ? null : { onlySpaces: true };
+  }
+
+  // ===== UI =====
   title = computed(() =>
     this.editing() ? 'Editar Usuario' : 'Nuevo Usuario'
   );
+
   subtitle = computed(() =>
     this.editing()
       ? 'Modifica los datos del usuario.'
@@ -71,13 +87,15 @@ export class UserFormComponent {
     const currentUser = this.data?.currentUser;
 
     this.loadRoles(currentUser);
+
     if (this.shouldShowBranch(currentUser)) {
       this.loadBranches();
     }
 
+    // ===== Edición =====
     if (this.editing() && this.data?.value) {
-      // Obtener la versión actualizada del usuario desde el signal
-      const user = this.usersService.users().find(u => u.id_user === this.data.value!.id_user) || this.data.value;
+      const user = this.usersService.users().find(u => u.id_user === this.data.value!.id_user)
+                 || this.data.value;
 
       this.form.patchValue({
         id_branch: user.id_branch,
@@ -89,25 +107,26 @@ export class UserFormComponent {
         password: '',
       });
 
+      // password no obligatoria en edición
       this.form.get('password')?.clearValidators();
       this.form.get('password')?.updateValueAndValidity();
     }
   }
 
-  // === Carga de Roles según el tipo de usuario ===
+  // ===== Roles =====
   loadRoles(currentUser: any) {
     this.rolesSrv.getRoles().subscribe((roles) => {
       let filtered = roles;
 
       switch (currentUser?.role) {
         case 'Superadmin':
-          filtered = roles.filter((r) => r.name === 'Admin');
+          filtered = roles.filter(r => r.name === 'Admin');
           break;
         case 'Admin':
-          filtered = roles.filter((r) => r.name === 'Gerente');
+          filtered = roles.filter(r => r.name === 'Gerente');
           break;
         case 'Gerente':
-          filtered = roles.filter((r) =>
+          filtered = roles.filter(r =>
             ['Mesero', 'Cajero'].includes(r.name)
           );
           break;
@@ -117,7 +136,7 @@ export class UserFormComponent {
     });
   }
 
-  // === Carga de Sucursales ===
+  // ===== Sucursales =====
   async loadBranches() {
     try {
       const branches = await this.branchesSrv.getAll();
@@ -126,32 +145,41 @@ export class UserFormComponent {
       console.error('Error al cargar sucursales:', err);
     }
   }
-  
-  // === Lógica condicional para mostrar campo de sucursal ===
+
   shouldShowBranch(currentUser: any): boolean {
-    // Los gerentes solo pueden crear usuarios dentro de su propia sucursal
     return currentUser?.role !== 'Gerente';
   }
 
   isEditingLocked(): boolean {
-    // Bloquea si el modal está en modo edición y el usuario actual es Gerente
     return this.editing() && this.data?.currentUser?.role === 'Gerente';
   }
 
-  // === Acciones ===
+  // ===== Botón cerrar =====
   close() {
     this.ref.close();
   }
 
+  // ===== Submit =====
   async submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.toast.warning('Revisa los campos marcados.');
+      return;
+    }
+
+    // Validación adicional: si se usa sucursal, debe escoger una
+    if (this.shouldShowBranch(this.data?.currentUser) && !this.form.value.id_branch) {
+      this.toast.error('Selecciona una sucursal.');
+      return;
+    }
+
+    // Crear payload limpio
+    const data: CreateUser = { ...this.form.value };
 
     this.saving.set(true);
-    const data: CreateUser = this.form.value as CreateUser;
 
     try {
       if (this.editing()) {
-        // --- Actualizar usuario ---
         const id = this.data?.value?.id_user;
         if (!id) {
           this.toast.error('No se encontró el ID del usuario');
@@ -161,14 +189,12 @@ export class UserFormComponent {
         if (!data.password) delete (data as any).password;
 
         const updated = await this.usersService.updateUser(id, data);
-        this.ref.close(updated); // devuelve el objeto actualizado
+        this.ref.close(updated);
 
       } else {
-        // --- Crear usuario ---
         const created = await this.usersService.createUser(data);
-        this.ref.close(created); // devuelve el objeto creado
+        this.ref.close(created);
       }
-
     } catch (err: any) {
       console.error(err);
       this.toast.error(err?.error?.message || 'Error al guardar el usuario');

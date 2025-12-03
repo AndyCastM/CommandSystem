@@ -24,25 +24,47 @@ export class CompanyFormComponent {
   ) {
     this.form = this.fb.group({
       // Empresa
-      name: ['', Validators.required],
-      legal_name: ['', Validators.required],
-      rfc: ['', [Validators.required, Validators.minLength(12)]],
-      street: ['', [Validators.required]],
+      name: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'-]{3,80}$/)
+        ]
+      ],
+      legal_name: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'-]{3,120}$/)
+        ]
+      ],
+      rfc: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^([A-ZÑ&]{3,4})(\d{6})([A-Z0-9]{3})$/), // RFC formato oficial
+        ],
+      ],
+      street: ['', Validators.required],
       num_ext: [''],
-      colony: [''],
-      cp: ['', [Validators.required]],
-      city: ['', [Validators.required]],
-      state: ['', [Validators.required]],
-      phone: ['', [Validators.required]],
+      colony: ['', Validators.required],
+      cp: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
+      city: ['', Validators.required],
+      state: ['', Validators.required],
+      phone: ['', [Validators.required, Validators.pattern(/^(?=(?:.*\d){10,})[0-9 +()-]{10,20}$/)]],
       email: ['', [Validators.required, Validators.email]],
 
       // Admin
-      admin_username: ['', Validators.required],
+      admin_username: [
+        '',
+        [Validators.required, Validators.pattern(/^[a-zA-Z0-9._-]+$/)],
+      ],
       admin_name: ['', Validators.required],
       admin_last_name: ['', Validators.required],
       admin_last_name2: [''],
       admin_password: ['', [Validators.required, Validators.minLength(6)]],
     });
+
   }
 
   async submit() {
@@ -66,4 +88,29 @@ export class CompanyFormComponent {
   subtitle() {
     return 'Crea una nueva empresa y su usuario administrador principal';
   }
+
+  isInvalid(control: string) {
+  const c = this.form.get(control);
+  return c?.invalid && (c.dirty || c.touched);
+}
+
+errorMsg(control: string) {
+  const c = this.form.get(control);
+  if (!c) return '';
+
+  if (c.errors?.['required']) return 'Campo requerido';
+  if (c.errors?.['minlength']) return 'Longitud insuficiente';
+  if (c.errors?.['email']) return 'Correo inválido';
+  if (c.errors?.['pattern']) {
+    if (control === 'rfc') return 'RFC inválido';
+    if (control === 'cp') return 'Código postal inválido (5 dígitos)';
+    if (control === 'phone') return 'Teléfono inválido (10 dígitos)';
+    if (control === 'admin_username')
+      return 'Sin espacios, solo letras, números o ._-';
+    return 'Formato inválido';
+  }
+
+  return 'Valor inválido';
+}
+
 }

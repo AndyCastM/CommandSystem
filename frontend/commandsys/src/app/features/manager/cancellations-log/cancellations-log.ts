@@ -86,32 +86,67 @@ export class CancellationsLogComponent implements OnInit {
   }
 
   loadLogs(): void {
-    if (!this.filters.from || !this.filters.to) {
-      this.error.set('Selecciona un rango de fechas.');
-      return;
-    }
+  const { from, to } = this.filters;
 
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.cancellationsService
-      .getCancellations({
-        from: this.filters.from,
-        to: this.filters.to,
-        id_user: this.filters.id_user || undefined,
-      })
-      .subscribe({
-        next: (data) => {
-          this.logs.set(data);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          console.error(err);
-          this.error.set('Error al cargar las cancelaciones.');
-          this.loading.set(false);
-        },
-      });
+  // --- Validaciones básicas ---
+  if (!from || !to) {
+    this.error.set('Selecciona un rango de fechas.');
+    return;
   }
+
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  const today = new Date();
+
+  // Fecha inválida
+  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    this.error.set('Las fechas no son válidas.');
+    return;
+  }
+
+  // Rango invertido
+  if (fromDate > toDate) {
+    this.error.set('La fecha "Desde" no puede ser mayor que "Hasta".');
+    return;
+  }
+
+  // Opcional: evitar fechas futuras
+  if (toDate > today) {
+    this.error.set('La fecha final no puede ser futura.');
+    return;
+  }
+
+  // Opcional: limitar rango a 90 días (o lo que necesites)
+  const diffDays =
+    (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays > 90) {
+    this.error.set('El rango máximo permitido es de 90 días.');
+    return;
+  }
+
+  // --- Si pasa las validaciones, limpiamos error ---
+  this.error.set(null);
+  this.loading.set(true);
+
+  this.cancellationsService
+    .getCancellations({
+      from,
+      to,
+      id_user: this.filters.id_user || undefined,
+    })
+    .subscribe({
+      next: (data) => {
+        this.logs.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.error.set('Error al cargar las cancelaciones.');
+        this.loading.set(false);
+      },
+    });
+}
+
 
   resetFilters(): void {
     const today = new Date();
@@ -131,4 +166,5 @@ export class CancellationsLogComponent implements OnInit {
     return '—';
   }
 
+  
 }

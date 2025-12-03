@@ -1,193 +1,244 @@
 <div class="max-w-6xl mx-auto">
   <div class="flex items-center justify-between mb-4">
     <div>
-      <div class="text-sm text-slate-500">Admin / <span class="text-slate-700 font-medium">Configuración</span></div>
-      <h1 class="text-3xl font-bold text-slate-800 mt-1">Configuración General</h1>
-      <p class="text-slate-500">Configura los aspectos principales del sistema de comandas</p>
+      <div class="text-sm text-slate-500">
+        Admin /
+        <span class="text-slate-700 font-medium">Configuración</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 mt-1">
+        Configuración General
+      </h1>
+      <p class="text-slate-500">
+        Configura los aspectos principales del sistema de comandas
+      </p>
     </div>
   </div>
 
   <mat-tab-group [selectedIndex]="activeTabIndex">
-    <!-- EMPRESA -->
+    <!-- ================= EMPRESA ================= -->
     <mat-tab label="Empresa">
       <div class="mt-4 space-y-6">
         <mat-card>
           <mat-card-header>
             <mat-card-title>
               <div class="flex items-center gap-2 text-[#283996] mb-2">
-                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]" aria-hidden="true">
-                  business
-                </mat-icon>
-                <span class="inline-block align-middle leading-tight font-medium">
+                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]">business</mat-icon>
+                <span class="inline-block align-middle font-medium">
                   Información de la Empresa
                 </span>
               </div>
             </mat-card-title>
           </mat-card-header>
 
-
           <mat-card-content class="space-y-6">
-            <!-- fila 1 -->
+
+            <!-- ================= FILA 1 ================= -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- NOMBRE COMERCIAL -->
               <div>
-                <label for="company-name" class="block text-sm font-medium mb-1">Nombre Comercial</label>
+                <label class="block text-sm font-medium mb-1">Nombre Comercial</label>
                 <input
                   type="text"
-                  id="company-name"
-                  name="company-name"
                   [formControl]="companyForm.controls.name"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Nombre comercial de la empresa"
                 />
+
+                <!-- errores -->
+                <p *ngIf="companyForm.controls.name.invalid && (companyForm.controls.name.touched || companyForm.controls.name.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.name.errors?.['required']">
+                    Este campo es obligatorio.
+                  </span>
+                  <span *ngIf="companyForm.controls.name.errors?.['minlength']">
+                    Debe tener al menos 2 caracteres.
+                  </span>
+                  <span *ngIf="companyForm.controls.name.errors?.['maxlength']">
+                    Máximo 80 caracteres permitidos.
+                  </span>
+                  <span *ngIf="companyForm.controls.name.errors?.['pattern']">
+                    Solo se permiten letras, números y ., - , &.
+                  </span>
+                </p>
               </div>
 
+              <!-- RAZÓN SOCIAL -->
               <div>
-                <label for="company-legal-name" class="block text-sm font-medium mb-1">Razón Social</label>
+                <label class="block text-sm font-medium mb-1">Razón Social</label>
                 <input
                   type="text"
-                  id="company-legal-name"
-                  name="company-legal-name"
                   [formControl]="companyForm.controls.legal_name"
                   class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
                          focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Razón social de la empresa"
                 />
+
+                <p *ngIf="companyForm.controls.legal_name.invalid && (companyForm.controls.legal_name.touched || companyForm.controls.legal_name.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.legal_name.errors?.['required']">
+                    Este campo es obligatorio.
+                  </span>
+                  <span *ngIf="companyForm.controls.legal_name.errors?.['pattern']">
+                    Formato inválido: solo letras, números, espacios y . - &.
+                  </span>
+                </p>
               </div>
             </div>
 
-            <!-- fila 2 -->
+            <!-- ================= FILA 2 ================= -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- TELÉFONO -->
               <div>
-                <label for="company-phone" class="block text-sm font-medium mb-1 flex items-center">
-                  <mat-icon class="mr-1" aria-hidden="true">call</mat-icon>
-                  Teléfono Principal
-                </label>
+                <label class="block text-sm font-medium mb-1">Teléfono Principal</label>
                 <input
                   type="tel"
-                  id="company-phone"
-                  name="company-phone"
                   [formControl]="companyForm.controls.phone"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Teléfono principal de la empresa"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.phone.invalid && (companyForm.controls.phone.touched || companyForm.controls.phone.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.phone.errors?.['pattern']">
+                    Formato de teléfono no válido.
+                  </span>
+                </p>
               </div>
 
+              <!-- EMAIL -->
               <div>
-                <label for="company-email" class="block text-sm font-medium mb-1 flex items-center">
-                  <mat-icon class="mr-1" aria-hidden="true">mail</mat-icon>
-                  Email Corporativo
-                </label>
+                <label class="block text-sm font-medium mb-1">Email Corporativo</label>
                 <input
                   type="email"
-                  id="company-email"
-                  name="company-email"
                   [formControl]="companyForm.controls.email"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Email corporativo de la empresa"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.email.invalid && (companyForm.controls.email.touched || companyForm.controls.email.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.email.errors?.['email']">
+                    Email inválido.
+                  </span>
+                </p>
               </div>
+
             </div>
 
             <mat-divider></mat-divider>
             <h3 class="font-medium text-[#283996]">Dirección Fiscal</h3>
 
-            <!-- fila 3 -->
+            <!-- ================= FILA 3 ================= -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+              <!-- CALLE -->
               <div class="lg:col-span-2">
-                <label for="company-street" class="block text-sm font-medium mb-1">Calle</label>
+                <label class="block text-sm font-medium mb-1">Calle</label>
                 <input
                   type="text"
-                  id="company-street"
-                  name="company-street"
                   [formControl]="companyForm.controls.street"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Calle de la dirección fiscal"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.street.invalid && (companyForm.controls.street.touched || companyForm.controls.street.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.street.errors?.['pattern']">
+                    Solo letras, números y . , # -
+                  </span>
+                </p>
               </div>
 
+              <!-- NÚM EXT -->
               <div>
-                <label for="company-num-ext" class="block text-sm font-medium mb-1">Número Exterior</label>
+                <label class="block text-sm font-medium mb-1">Número Exterior</label>
                 <input
                   type="text"
-                  id="company-num-ext"
-                  name="company-num-ext"
                   [formControl]="companyForm.controls.num_ext"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Número exterior"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
               </div>
             </div>
 
-            <!-- fila 4 -->
+            <!-- ================= FILA 4 ================= -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+
+              <!-- CP -->
               <div>
-                <label for="company-cp" class="block text-sm font-medium mb-1">Código Postal</label>
+                <label class="block text-sm font-medium mb-1">Código Postal</label>
                 <input
                   type="text"
-                  id="company-cp"
-                  name="company-cp"
                   maxlength="5"
                   [formControl]="companyForm.controls.cp"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Código postal"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+                <p *ngIf="companyForm.controls.cp.invalid && (companyForm.controls.cp.touched || companyForm.controls.cp.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.cp.errors?.['pattern']">
+                    El CP debe ser un número de 5 dígitos.
+                  </span>
+                </p>
               </div>
 
+              <!-- CIUDAD -->
               <div>
-                <label for="company-city" class="block text-sm font-medium mb-1">Ciudad</label>
+                <label class="block text-sm font-medium mb-1">Ciudad</label>
                 <input
                   type="text"
-                  id="company-city"
-                  name="company-city"
                   [formControl]="companyForm.controls.city"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Ciudad"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.city.invalid && (companyForm.controls.city.touched || companyForm.controls.city.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.city.errors?.['pattern']">
+                    Solo letras y espacios.
+                  </span>
+                </p>
               </div>
 
+              <!-- ESTADO -->
               <div>
-                <label for="company-state" class="block text-sm font-medium mb-1">Estado</label>
+                <label class="block text-sm font-medium mb-1">Estado</label>
                 <input
                   type="text"
-                  id="company-state"
-                  name="company-state"
                   [formControl]="companyForm.controls.state"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Estado"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.state.invalid && (companyForm.controls.state.touched || companyForm.controls.state.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.state.errors?.['pattern']">
+                    Solo letras y espacios.
+                  </span>
+                </p>
               </div>
 
+              <!-- PAÍS -->
               <div>
-                <label for="company-country" class="block text-sm font-medium mb-1">País</label>
+                <label class="block text-sm font-medium mb-1">País</label>
                 <input
                   type="text"
-                  id="company-country"
-                  name="company-country"
                   [formControl]="companyForm.controls.country"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="País"
+                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
+
+                <p *ngIf="companyForm.controls.country.invalid && (companyForm.controls.country.touched || companyForm.controls.country.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.country.errors?.['pattern']">
+                    Solo letras y espacios.
+                  </span>
+                </p>
               </div>
+
             </div>
 
             <div class="flex justify-end">
               <button
                 type="button"
                 (click)="saveCompany()"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 transition
-                       shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
-                aria-label="Guardar información de la empresa"
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 shadow-sm
+                       focus:ring-2 focus:ring-sky-200"
               >
-                <mat-icon aria-hidden="true">save</mat-icon>
+                <mat-icon>save</mat-icon>
                 Guardar Información
               </button>
             </div>
@@ -196,101 +247,96 @@
       </div>
     </mat-tab>
 
-    <!-- FISCAL -->
+    <!-- ================= FISCAL ================= -->
     <mat-tab label="Fiscal">
       <div class="mt-4 space-y-6">
         <mat-card>
+
           <mat-card-header>
             <mat-card-title>
               <div class="flex items-center gap-2 text-[#283996] mb-2">
-                <mat-icon class="inline-block align-middle leading-none h-5 w-5 translate-y-[1px]" aria-hidden="true">
-                  payments
-                </mat-icon>
-                <span class="inline-block align-middle leading-tight font-medium">
-                  Configuración Fiscal
-                </span>
+                <mat-icon>payments</mat-icon>
+                <span class="font-medium">Configuración Fiscal</span>
               </div>
             </mat-card-title>
           </mat-card-header>
 
           <mat-card-content class="space-y-6">
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+
+            <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
               <h3 class="font-medium text-yellow-800 mb-2">Información Fiscal</h3>
-              <p class="text-sm text-yellow-700">Esta información se usa para tickets y facturas.</p>
+              <p class="text-sm text-yellow-700">Esta información aparece en tickets y facturas.</p>
             </div>
 
-            <!-- fila fiscal -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- RFC -->
               <div>
-                <label for="company-rfc" class="block text-sm font-medium mb-1">RFC de la Empresa</label>
+                <label class="block text-sm font-medium mb-1">RFC de la Empresa</label>
                 <input
                   type="text"
-                  id="company-rfc"
-                  name="company-rfc"
                   maxlength="13"
                   [formControl]="companyForm.controls.rfc"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="RFC de la empresa"
-                  aria-describedby="rfc-help"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
-                <p id="rfc-help" class="text-sm text-slate-500 mt-1">Registro Federal de Contribuyentes</p>
+
+                <p *ngIf="companyForm.controls.rfc.invalid && (companyForm.controls.rfc.touched || companyForm.controls.rfc.dirty)"
+                   class="text-xs text-red-600 mt-1">
+                  <span *ngIf="companyForm.controls.rfc.errors?.['pattern']">
+                    RFC inválido (formato SAT).
+                  </span>
+                </p>
               </div>
 
+              <!-- IVA -->
               <div>
-                <label for="company-tax" class="block text-sm font-medium mb-1">Porcentaje de IVA (%)</label>
+                <label class="block text-sm font-medium mb-1">Porcentaje de IVA (%)</label>
                 <input
                   type="number"
-                  id="company-tax"
-                  name="company-tax"
-                  min="0" max="100" step="0.01"
+                  min="0"
+                  max="100"
+                  step="0.01"
                   [formControl]="companyForm.controls.tax_percentage"
-                  class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none
-                         focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                  aria-label="Porcentaje de IVA"
-                  aria-describedby="tax-help"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                 />
-                <p id="tax-help" class="text-sm text-slate-500 mt-1">IVA en productos y servicios</p>
+
+                <p *ngIf="companyForm.controls.tax_percentage.invalid"
+                   class="text-xs text-red-600 mt-1">
+                  Valor inválido (0–100).
+                </p>
               </div>
+
             </div>
 
             <mat-divider></mat-divider>
 
-            <!-- ENCABEZADO DEL TICKET -->
+            <!-- HEADER TICKET -->
             <div>
-              <label for="ticket-header" class="block text-sm font-medium mb-1">Encabezado del Ticket (opcional)</label>
+              <label class="block text-sm font-medium mb-1">Encabezado del Ticket (opcional)</label>
               <textarea
-                id="ticket-header"
-                name="ticket-header"
                 rows="2"
                 [formControl]="companyForm.controls.ticket_header"
-                class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
-                      focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                placeholder="Ejemplo: Gracias por elegirnos ! Vuelve pronto."
-                aria-label="Encabezado del ticket"
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               ></textarea>
             </div>
 
-            <!-- PIE DEL TICKET -->
+            <!-- FOOTER TICKET -->
             <div>
-              <label for="ticket-footer" class="block text-sm font-medium mb-1">Mensaje al Pie del Ticket (opcional)</label>
+              <label class="block text-sm font-medium mb-1">Mensaje al Pie del Ticket (opcional)</label>
               <textarea
-                id="ticket-footer"
-                name="ticket-footer"
                 rows="2"
                 [formControl]="companyForm.controls.ticket_footer"
-                class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none
-                      focus:ring-2 focus:ring-sky-200 focus:border-sky-300"
-                placeholder="Ejemplo: Solicita tu factura en www.empresa.com/facturar"
-                aria-label="Mensaje al pie del ticket"
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               ></textarea>
             </div>
 
+            <!-- PREVIEW -->
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 class="font-medium text-blue-800 mb-3">Vista Previa del Ticket</h3>
-              <div class="bg-white p-4 rounded border font-mono text-sm" role="img" aria-label="Vista previa del diseño del ticket">
-                <!-- Encabezado del ticket -->
-                <div *ngIf="company.ticket_header" class="text-center text-xs mb-2">
+              <div class="bg-white p-4 rounded border font-mono text-sm">
+
+                <div *ngIf="company.ticket_header"
+                     class="text-center text-xs mb-2">
                   {{ company.ticket_header }}
                 </div>
 
@@ -299,14 +345,19 @@
                   <div class="text-xs">{{ company.legal_name }}</div>
                   <div class="text-xs">RFC: {{ company.rfc }}</div>
                   <div class="text-xs">
-                    {{ company.street }} {{ company.num_ext }}, {{ company.city }}, {{ company.state }}
+                    {{ company.street }} {{ company.num_ext }},
+                    {{ company.city }}, {{ company.state }}
                   </div>
                   <div class="text-xs">CP: {{ company.cp }}</div>
                   <div class="text-xs">Tel: {{ company.phone }}</div>
                 </div>
-                <div class="text-xs text-center text-gray-600">IVA: {{ company.tax_percentage }}%</div>
-                <!-- Pie del ticket -->
-                <div *ngIf="company.ticket_footer" class="text-center text-xs mt-2">
+
+                <div class="text-xs text-center text-gray-600">
+                  IVA: {{ company.tax_percentage }}%
+                </div>
+
+                <div *ngIf="company.ticket_footer"
+                     class="text-center text-xs mt-2">
                   {{ company.ticket_footer }}
                 </div>
               </div>
@@ -316,14 +367,13 @@
               <button
                 type="button"
                 (click)="saveFiscal()"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white  bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 transition
-                       shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
-                aria-label="Guardar configuración fiscal"
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-white bg-gradient-to-r from-[#16a3bd] to-[#283996] hover:opacity-90 shadow-sm"
               >
-                <mat-icon aria-hidden="true">save</mat-icon>
+                <mat-icon>save</mat-icon>
                 Guardar Configuración Fiscal
               </button>
             </div>
+
           </mat-card-content>
         </mat-card>
       </div>

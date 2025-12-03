@@ -288,37 +288,165 @@ export class MetricsService {
   }
 
   async exportExcel(dto: GetDashboardDto, id_branch: number, id_company: number) {
-    const metrics = await this.getDashboard(dto, id_branch, id_company);
+  const metrics = await this.getDashboard(dto, id_branch, id_company);
 
-    const ExcelJS = require('exceljs');
-    const wb = new ExcelJS.Workbook();
-    const sheet = wb.addWorksheet('Métricas');
+  const ExcelJS = require('exceljs');
+  const wb = new ExcelJS.Workbook();
+  const sheet = wb.addWorksheet('Métricas', {
+    properties: { defaultColWidth: 20 }
+  });
 
-    // KPIs
-    sheet.addRow(['Métrica', 'Valor']);
-    sheet.addRow(['Ventas totales', metrics.total_sales]);
-    sheet.addRow(['Comandas', metrics.total_orders]);
-    sheet.addRow(['Ticket promedio', metrics.avg_ticket]);
-    sheet.addRow(['Prep. promedio (s)', metrics.avg_prep_time]);
-    sheet.addRow(['Entrega promedio (s)', metrics.avg_delivery_time]);
-    sheet.addRow(['Total promedio (s)', metrics.avg_total_time]);
+  // =========================
+  // ESTILOS GLOBALES
+  // =========================
+  const headerStyle = {
+    font: { bold: true, color: { argb: 'FF6E6E73' } }, // gris apple
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F7' } }
+  };
 
+  const titleStyle = {
+    font: { bold: true, size: 18, color: { argb: 'FF1C1C1E' } }
+  };
+
+  const subtitleStyle = {
+    font: { color: { argb: 'FF8E8E93' }, size: 11 }
+  };
+
+  // Helper: formato currency
+  const formatCurrency = (n: number) =>
+    `MX$ ${n.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
+
+  // Helper: segundos a minutos
+  const secToMin = (sec?: number) => {
+    if (!sec || sec <= 0) return '-';
+    return `${(sec / 60).toFixed(1)} min`;
+  };
+
+  // =========================
+  // ENCABEZADO TIPO APPLE
+  // =========================
+
+  sheet.addRow(['Reporte de métricas']).font = titleStyle.font;
+  sheet.getRow(1).height = 25;
+
+  sheet.addRow([`Del ${dto.from} al ${dto.to}`]).font = subtitleStyle.font;
+  sheet.addRow([
+    metrics.branch_name
+      ? `Sucursal: ${metrics.branch_name}`
+      : `Empresa: ${id_company}`
+  ]).font = subtitleStyle.font;
+
+  sheet.addRow([]); // espacio
+
+  // Línea divisoria
+  const divider = sheet.addRow(['']);
+  divider.border = {
+    top: { style: 'thin', color: { argb: 'FFE5E5EA' } }
+  };
+  sheet.addRow([]); // espacio
+
+  // =========================
+  // SECCIÓN KPIs
+  // =========================
+  sheet.addRow(['Resumen']).font = { bold: true, size: 14 };
+  sheet.addRow([]);
+
+  const kpis = [
+    ['Ventas totales', formatCurrency(metrics.total_sales)],
+    ['Comandas', metrics.total_orders],
+    ['Ticket promedio', formatCurrency(metrics.avg_ticket)],
+    ['Productos vendidos', metrics.total_items]
+  ];
+
+  const kpiSheet = sheet.addRow([]);
+  for (const [label, value] of kpis) {
+    sheet.addRow([label, value]);
+  }
+
+  sheet.addRow([]);
+
+  // =========================
+  // TABLA DE TIEMPOS PROMEDIO
+  // =========================
+
+  if (metrics.avg_total_time) {
+    sheet.addRow(['Tiempos promedio']).font = { bold: true, size: 14 };
+    const table = sheet.addRow([]);
+    sheet.addRow(['Preparación', 'Entrega', 'Total']).eachCell((c) => {
+      Object.assign(c, headerStyle);
+    });
+
+    sheet.addRow([
+      secToMin(metrics.avg_prep_time),
+      secToMin(metrics.avg_delivery_time),
+      secToMin(metrics.avg_total_time)
+    ]);
     sheet.addRow([]);
-    sheet.addRow(['Áreas de producción']);
-    sheet.addRow(['Área', 'Items', 'Prep (s)', 'Entrega (s)']);
+  }
 
-    for (const area of metrics.production_areas) {
+  // =========================
+  // ÁREAS DE PRODUCCIÓN
+  // =========================
+  if (metrics.production_areas?.length) {
+    sheet.addRow(['Áreas de producción']).font = { bold: true, size: 14 };
+
+    const header = sheet.addRow(['Área', 'Items', 'Prep', 'Entrega', 'Total']);
+    header.eachCell((c) => Object.assign(c, headerStyle));
+
+    for (const a of metrics.production_areas) {
       sheet.addRow([
-        area.area,
-        area.items,
-        area.prep_avg,
-        area.delivery_avg,
+        a.area,
+        a.items,
+        secToMin(a.prep_avg),
+        secToMin(a.delivery_avg),
+        secToMin(a.prep_avg + a.delivery_avg),
       ]);
     }
 
-    const buffer = await wb.xlsx.writeBuffer();
-    return buffer;
+    sheet.addRow([]);
   }
+
+  // =========================
+  // PRODUCTOS LENTOS
+  // =========================
+  if (metrics.slowest_products?.length) {
+    sheet.addRow(['Productos más lentos']).font = { bold: true, size: 14 };
+
+    const header = sheet.addRow(['Producto', 'Items', 'Tiempo prom.']);
+    header.eachCell((c) => Object.assign(c, headerStyle));
+
+    for (const p of metrics.slowest_products) {
+      sheet.addRow([p.product, p.items, secToMin(p.avg_seconds)]);
+    }
+
+    sheet.addRow([]);
+  }
+
+  // =========================
+  // PRODUCTOS RÁPIDOS
+  // =========================
+  if (metrics.fastest_products?.length) {
+    sheet.addRow(['Productos más rápidos']).font = { bold: true, size: 14 };
+
+    const header = sheet.addRow(['Producto', 'Items', 'Tiempo prom.']);
+    header.eachCell((c) => Object.assign(c, headerStyle));
+
+    for (const p of metrics.fastest_products) {
+      sheet.addRow([p.product, p.items, secToMin(p.avg_seconds)]);
+    }
+  }
+
+  // =========================
+  // AJUSTES FINALES
+  // =========================
+
+  sheet.columns.forEach((col) => {
+    col.width = 25; // ancho bonito tipo dashboard
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  return buffer;
+}
 
   async getCancellationsLog(
     dto: GetCancellationsDto,

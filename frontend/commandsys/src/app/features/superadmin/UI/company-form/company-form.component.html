@@ -21,6 +21,7 @@
     (ngSubmit)="submit()"
     class="flex-1 overflow-y-auto p-6 space-y-5 custom-scroll"
   >
+
     <!-- Nombre comercial -->
     <div class="space-y-1.5">
       <label class="text-sm font-semibold text-slate-700">Nombre comercial</label>
@@ -28,8 +29,11 @@
         type="text"
         formControlName="name"
         placeholder="Ej: Restaurante El Buen Sabor"
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        [ngClass]="{ 'border-red-500': isInvalid('name') }"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800
+               focus:ring-2 focus:ring-sky-200 transition"
       />
+      <p *ngIf="isInvalid('name')" class="text-xs text-red-600">{{ errorMsg('name') }}</p>
     </div>
 
     <!-- Razón social -->
@@ -39,8 +43,11 @@
         type="text"
         formControlName="legal_name"
         placeholder="Ej: Buen Sabor S.A. de C.V."
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        [ngClass]="{ 'border-red-500': isInvalid('legal_name') }"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800
+               focus:ring-2 focus:ring-sky-200 transition"
       />
+      <p *ngIf="isInvalid('legal_name')" class="text-xs text-red-600">{{ errorMsg('legal_name') }}</p>
     </div>
 
     <!-- RFC -->
@@ -49,153 +56,223 @@
       <input
         type="text"
         formControlName="rfc"
-        placeholder="Ej: BS123456789"
-        class="uppercase w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        placeholder="Ej: ABCD001122XYZ"
+        class="uppercase w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800
+               focus:ring-2 focus:ring-sky-200 transition"
+        [ngClass]="{ 'border-red-500': isInvalid('rfc') }"
       />
+      <p *ngIf="isInvalid('rfc')" class="text-xs text-red-600">{{ errorMsg('rfc') }}</p>
     </div>
 
     <!-- Dirección -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      
+      <!-- Calle -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Calle</label>
         <input
           type="text"
           formControlName="street"
           placeholder="Ej: Av. Principal"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('street') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('street')" class="text-xs text-red-600">{{ errorMsg('street') }}</p>
       </div>
+
+      <!-- Número -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Número</label>
         <input
           type="text"
           formControlName="num_ext"
           placeholder="Ej: 123"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
       </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Colonia -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Colonia</label>
         <input
           type="text"
           formControlName="colony"
           placeholder="Ej: Centro"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('colony') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('colony')" class="text-xs text-red-600">{{ errorMsg('colony') }}</p>
       </div>
+
+      <!-- CP -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Código postal</label>
         <input
           type="text"
           formControlName="cp"
           placeholder="Ej: 81200"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('cp') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('cp')" class="text-xs text-red-600">{{ errorMsg('cp') }}</p>
       </div>
     </div>
 
     <!-- Ciudad / Estado -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      
+      <!-- Ciudad -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Ciudad</label>
         <input
           type="text"
           formControlName="city"
           placeholder="Ej: Los Mochis"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('city') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('city')" class="text-xs text-red-600">{{ errorMsg('city') }}</p>
       </div>
+
+      <!-- Estado -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Estado</label>
         <input
           type="text"
           formControlName="state"
           placeholder="Ej: Sinaloa"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('state') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('state')" class="text-xs text-red-600">{{ errorMsg('state') }}</p>
       </div>
     </div>
 
     <!-- Contacto -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Teléfono -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Teléfono</label>
         <input
           type="text"
           formControlName="phone"
-          placeholder="Ej: (668) 123-4567"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          placeholder="Ej: 6681234567"
+          [ngClass]="{ 'border-red-500': isInvalid('phone') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('phone')" class="text-xs text-red-600">{{ errorMsg('phone') }}</p>
       </div>
+
+      <!-- Email -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Correo electrónico</label>
         <input
           type="email"
           formControlName="email"
           placeholder="contacto@empresa.com"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('email') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('email')" class="text-xs text-red-600">{{ errorMsg('email') }}</p>
       </div>
     </div>
 
-    <!-- Datos del administrador -->
+    <!-- Separador -->
     <hr class="my-4 border-slate-200" />
+
+    <!-- Usuario administrador -->
     <h3 class="text-slate-700 font-semibold">Usuario administrador</h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      
+      <!-- Nombre -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Nombre</label>
         <input
           type="text"
           formControlName="admin_name"
           placeholder="Ej: María"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('admin_name') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('admin_name')" class="text-xs text-red-600">{{ errorMsg('admin_name') }}</p>
       </div>
+
+      <!-- Apellido -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Primer apellido</label>
         <input
           type="text"
           formControlName="admin_last_name"
           placeholder="Ej: López"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('admin_last_name') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2
+                 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('admin_last_name')" class="text-xs text-red-600">
+          {{ errorMsg('admin_last_name') }}
+        </p>
       </div>
     </div>
 
+    <!-- Apellido opcional -->
     <div class="space-y-1.5">
       <label class="text-sm font-semibold text-slate-700">Segundo apellido (opcional)</label>
       <input
         type="text"
         formControlName="admin_last_name2"
         placeholder="Ej: Martínez"
-        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+        class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+               text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
       />
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      
+      <!-- Username -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Usuario</label>
         <input
           type="text"
           formControlName="admin_username"
           placeholder="Ej: maria.lopez"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('admin_username') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('admin_username')" class="text-xs text-red-600">
+          {{ errorMsg('admin_username') }}
+        </p>
       </div>
+
+      <!-- Contraseña -->
       <div class="space-y-1.5">
         <label class="text-sm font-semibold text-slate-700">Contraseña</label>
         <input
           type="password"
           formControlName="admin_password"
           placeholder="Mínimo 6 caracteres"
-          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-sky-200"
+          [ngClass]="{ 'border-red-500': isInvalid('admin_password') }"
+          class="w-full bg-white rounded-xl border border-slate-300 px-3 py-2 text-sm
+                 text-slate-800 focus:ring-2 focus:ring-sky-200 transition"
         />
+        <p *ngIf="isInvalid('admin_password')" class="text-xs text-red-600">
+          {{ errorMsg('admin_password') }}
+        </p>
       </div>
     </div>
+
   </form>
 
   <!-- Footer -->
@@ -208,6 +285,7 @@
     >
       Cancelar
     </button>
+
     <button
       type="submit"
       (click)="submit()"

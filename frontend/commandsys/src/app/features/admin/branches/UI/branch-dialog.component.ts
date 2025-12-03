@@ -49,15 +49,57 @@ export class BranchDialogComponent {
     this.editing.set(data?.mode === 'edit');
 
     this.form = this.fb.group({
-      name: [v.name ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(80), this.noOnlySpaces]],
-      email: [v.email ?? '', [Validators.email]],
-      street: [v.street ?? ''],
-      colony: [v.colony ?? ''],
-      num_ext: [v.num_ext ?? ''],
-      city: [v.city ?? ''],
-      state: [v.state ?? ''],
-      cp: [v.cp ?? '', [Validators.pattern(/^\d{5}$/)]],
-      phone: [v.phone ?? '', [Validators.required]],
+      name: [
+        v.name ?? '',
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.maxLength(80),
+          this.noOnlySpaces,
+          Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'\-()#&/]{2,80}$/),
+        ],
+      ],
+
+      email: [
+        v.email ?? '',
+        [
+          Validators.email,
+          Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+        ],
+      ],
+
+      street: [
+        v.street ?? '',
+        [Validators.minLength(3), Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'\-#]{0,80}$/)],
+      ],
+
+      colony: [
+        v.colony ?? '',
+        [Validators.minLength(3), Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'\-#]{0,80}$/)],
+      ],
+
+      num_ext: [
+        v.num_ext ?? '',
+        [Validators.pattern(/^[A-Za-z0-9\-\/]{0,10}$/)],
+      ],
+
+      city: [
+        v.city ?? '',
+        [Validators.minLength(3), Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'\-]{0,80}$/)],
+      ],
+
+      state: [
+        v.state ?? '',
+        [Validators.minLength(3), Validators.pattern(/^[A-Za-zÁÉÍÓÚÑÜ0-9 .,'\-]{0,80}$/)],
+      ],
+
+      cp: [
+        v.cp ?? '',
+        [Validators.pattern(/^\d{5}$/)],
+      ],
+
+      phone: [v.phone ?? '', [Validators.required, Validators.pattern(/^(?=(?:.*\d){10,})[0-9 +()-]{10,20}$/)]],
+
     });
   }
 
