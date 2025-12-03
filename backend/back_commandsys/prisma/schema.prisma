@@ -478,7 +478,7 @@ model alexa_devices {
   id_alexa_device Int         @id @default(autoincrement())
   id_branch       Int
   id_area         Int
-  device_id       String      @unique(map: "device_id_UNIQUE") @db.VarChar(175)
+  device_id       String      @unique(map: "device_id_UNIQUE") @db.VarChar(375)
   alias           String?     @db.VarChar(45)
   is_active       Boolean?    @default(true)
   created_at      DateTime?   @db.Timestamp(0)
