@@ -9,11 +9,12 @@ RUN npm install
 # Copiar el resto del código
 COPY . .
 
-# Generar build de Nest
-RUN npm run build
 
 # Generar Prisma Client
 RUN npx prisma generate
+
+# Generar build de Nest
+RUN npm run build
 
 # Etapa 2: Producción
 FROM node:18-alpine
