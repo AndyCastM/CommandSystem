@@ -312,7 +312,7 @@ export class Menu implements OnInit {
           items,
         };
 
-        console.log('PAYLOAD FINAL --- ', payload);
+        //console.log('PAYLOAD FINAL --- ', payload);
 
         const res = await this.orderApi.createOrder(payload);
         this.toast.success(res?.message || 'Comanda creada correctamente');
@@ -330,6 +330,35 @@ export class Menu implements OnInit {
         this.toast.error(msg);
       }
     });
+  }
+
+  removeEmptyGroup(group: number) {
+    // evita borrar grupo 1
+    if (group === 1) return;
+
+    // verifica si ese grupo tiene items en el cart
+    const hasItems = Array.from(this.cart().values()).some(
+      (item: any) => item.group_number === group
+    );
+
+    // si tiene items, no se elimina
+    if (hasItems) return;
+
+    // eliminar del array
+    const updated = this.groups().filter(g => g !== group);
+    this.groups.set(updated);
+
+    // si el grupo que se eliminó era el seleccionado, movernos al último válido
+    if (this.currentGroup() === group) {
+      const last = updated[updated.length - 1] || 1;
+      this.currentGroup.set(last);
+    }
+  }
+
+  cartHasGroup(g: number): boolean {
+    return Array.from(this.cart().values()).some(
+      (item: any) => item.group_number === g
+    );
   }
 
   openConfirmModal() {

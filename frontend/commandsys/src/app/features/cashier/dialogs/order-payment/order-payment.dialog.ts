@@ -41,6 +41,12 @@ export class OrderPaymentDialog {
     Math.max(0, this.totalPaid() - (this.total || 0))
   );
 
+  validateAmounts() {
+    if (this.cashAmount() < 0) this.cashAmount.set(0);
+    if (this.cardAmount() < 0) this.cardAmount.set(0);
+    if (this.transferAmount() < 0) this.transferAmount.set(0);
+  }
+
   constructor(
     private ref: MatDialogRef<OrderPaymentDialog>,
     @Inject(MAT_DIALOG_DATA) public data: any
@@ -56,25 +62,35 @@ export class OrderPaymentDialog {
   }
 
   confirm() {
-    // Validaciones básicas
-    if (this.totalPaid() <= 0) {
-      alert('Debes ingresar al menos un monto en algún método de pago.');
+    // Validación de negativos
+    if (
+      this.cashAmount() < 0 ||
+      this.cardAmount() < 0 ||
+      this.transferAmount() < 0
+    ) {
+      alert("Los montos no pueden ser negativos.");
       return;
     }
 
-    // Si NO quieres permitir que se pasen del total:
+    // Deben pagar AL MENOS algo
+    if (this.totalPaid() <= 0) {
+      alert('Debes ingresar un monto válido.');
+      return;
+    }
+
+    // No permitir pasarse del total
     if (this.totalPaid() > (this.total || 0)) {
       alert('La suma de los métodos no puede exceder el total.');
       return;
     }
 
-    // Si quisieras forzar que paguen el 100%:
+    // (Opcional) No permitir pagar menos del total
     // if (this.totalPaid() < (this.total || 0)) {
-    //   alert('La suma de los métodos debe cubrir el total.');
+    //   alert('El pago no cubre el total.');
     //   return;
     // }
 
-    // Construir array de pagos por método
+    // Construir array final de pagos
     const payments: { method: 'cash' | 'card' | 'transfer'; amount: number }[] = [];
 
     if (this.cashAmount() > 0) {
@@ -88,16 +104,10 @@ export class OrderPaymentDialog {
     }
 
     this.ref.close({
-      // Para pagos por orden
       id_order: this.orderId,
-
-      // Para pagos por sesión (mesa)
       id_session: this.idSession,
       id_orders: this.idOrders,
-
-      // Desglose por método
       payments,
-
     });
   }
 

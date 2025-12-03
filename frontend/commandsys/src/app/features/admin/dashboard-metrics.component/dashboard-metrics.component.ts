@@ -195,7 +195,7 @@ export class DashboardMetricsComponent implements OnInit, AfterViewInit, OnDestr
 
     if (diffDays > 30) {
       this.toast.error(`El rango máximo permitido es de 30 días`);
-      console.log('Dias seleccionados', diffDays);
+      //console.log('Dias seleccionados', diffDays);
 
       const newFrom = new Date(t);
       newFrom.setDate(t.getDate() - 29);

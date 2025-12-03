@@ -23,7 +23,18 @@
         [class.bg-sky-500]="currentGroup() !== g"
       ></span>
       <span>Grupo {{ g }}</span>
+
+      <!-- Botón borrar (sólo si está vacío y no es grupo 1) -->
+      <button
+        *ngIf="g !== 1 && grouped[g]?.length === 0"
+        (click)="removeEmptyGroup(g)"
+        class="ml-1 text-red-500 hover:text-red-700 text-xs"
+        title="Eliminar grupo vacío"
+      >
+        ✕
+      </button>
     </button>
+    
     
     <!-- Botón para crear nuevo grupo -->
     <button

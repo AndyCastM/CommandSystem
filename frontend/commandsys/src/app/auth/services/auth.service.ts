@@ -34,11 +34,11 @@ export class AuthService {
 
     // SSR-safe: solo ver cookies si estamos en browser
     if (isBrowser()) {
-      console.log('Cookies disponibles:', this.cookies.getAll());
+      //console.log('Cookies disponibles:', this.cookies.getAll());
 
       const saved = readUserCookie(this.cookies);
       if (saved) {
-        console.log('Usuario cargado desde cookie:', saved);
+        //console.log('Usuario cargado desde cookie:', saved);
         this.currentUser.set(saved);
       } else {
         console.log('No se encontró usuario en cookie');

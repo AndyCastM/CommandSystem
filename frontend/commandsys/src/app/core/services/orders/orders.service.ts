@@ -72,13 +72,13 @@ export class OrderService {
    */
   async createOrder(payload: CreateOrderPayload) {
     try {
-      console.log('Enviando orden al backend:', payload);
+      //console.log('Enviando orden al backend:', payload);
 
       const res = await firstValueFrom(
         this.http.post<any>(`${this.api_url}`, payload)
       );
 
-      console.log(' Orden creada:', res);
+      //console.log(' Orden creada:', res);
       return res;
     } catch (err: any) {
       console.error(' Error creando orden:', err);

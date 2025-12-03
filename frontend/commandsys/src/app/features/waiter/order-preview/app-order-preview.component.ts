@@ -21,6 +21,7 @@ export class OrderPreviewComponent {
   @Input() groups!: Signal<number[]>;
   @Input() currentGroup!: WritableSignal<number>;
   @Input() addGroup!: () => void;
+  @Input() removeEmptyGroup!: (group: number) => void;
 
   // grupos ya procesados por el padre
   @Input() groupKeys: number[] = [];

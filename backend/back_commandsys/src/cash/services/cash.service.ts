@@ -63,6 +63,8 @@ export class CashService {
         closed_at: this.getLocalDate(),
         closing_amount: counted_amount,
         notes,
+        expected_cash: expected,
+        difference: difference,
         is_closed: true
       }
     });

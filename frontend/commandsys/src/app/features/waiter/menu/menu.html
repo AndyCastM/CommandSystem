@@ -122,6 +122,7 @@
         [groups]="groups"
         [currentGroup]="currentGroup"
         [addGroup]="addGroup.bind(this)"
+        [removeEmptyGroup]="removeEmptyGroup.bind(this)"
       ></app-order-preview>
     </div>
   </div>
@@ -205,6 +206,16 @@
               [class.bg-sky-500]="currentGroup() !== g"
             ></span>
             <span>Grupo {{ g }}</span>
+              <!-- ✕ eliminar solo si está vacío y no es el grupo 1 -->
+              <button
+                *ngIf="g !== 1 && !cartHasGroup(g)"
+                (click)="removeEmptyGroup(g); $event.stopPropagation()"
+                class=" bg-red-500 text-white rounded-full 
+                      w-5 h-5 flex items-center justify-center text-xs shadow hover:bg-red-600"
+                title="Eliminar grupo"
+              >
+                ✕
+              </button>
           </button>
           
           <!-- Botón para crear nuevo grupo -->
@@ -228,6 +239,7 @@
             [removeFromCart]="$any(removeFromCart)"
             [confirmOrder]="confirmOrder.bind(this)"
             [isAdding]="isAdding"
+            [removeEmptyGroup]="removeEmptyGroup.bind(this)"
           ></app-order-preview-movil>
         </div>
         </div>

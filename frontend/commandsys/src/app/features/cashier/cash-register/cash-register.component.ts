@@ -9,6 +9,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 // Servicios
 import { CashService } from '../../../core/services/cash/cash.service';
@@ -35,6 +36,8 @@ export class CashRegisterComponent implements OnInit {
   private dialog = inject(MatDialog);
   private toast = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
+
+  private router = inject(Router);
 
   isBrowser = isPlatformBrowser(this.platformId);
 
@@ -172,7 +175,7 @@ formatDateTime(dateInput: string | Date): { date: string; time: string; full: st
         // mesas:  { type?: 'table', id_session, table, total, orders: number[], waiter_name?, ... }
         // takeout:{ type: 'takeout', id_order, customer_name, total, waiter_name?, ... }
         this.pendingRequests.update((list) => [...list, evt.data]);
-        console.log('NUEVA SOLICITUD DE CUENTA:', evt.data);
+        //console.log('NUEVA SOLICITUD DE CUENTA:', evt.data);
       }
     });
 
@@ -264,46 +267,50 @@ formatDateTime(dateInput: string | Date): { date: string; time: string; full: st
     });
   }
 
-  // CERRAR TURNO
-  askClose() {
-    const currentSession = this.session();
+// CERRAR TURNO
+askClose() {
+  const currentSession = this.session();
 
-    if (!currentSession) {
-      this.toast.error('No hay un turno de caja activo.');
-      return;
-    }
-
-    const totals = this.totals();
-
-    const ref = this.dialog.open(CloseSessionDialog, {
-      width: '380px',
-      disableClose: true,
-      data: {
-        totals,
-      },
-    });
-
-    ref.afterClosed().subscribe(async (counted: number | null) => {
-      if (counted == null) return;
-
-      try {
-        this.loading.set(true);
-
-        await this.cashApi.closeSession({ counted_amount: counted });
-        this.toast.success('Turno cerrado correctamente');
-
-        this.session.set(null);
-        this.payments.set([]);
-
-        this.openOpeningModal();
-      } catch (err) {
-        console.error(err);
-        this.toast.error('No se pudo cerrar el turno');
-      } finally {
-        this.loading.set(false);
-      }
-    });
+  if (!currentSession) {
+    this.toast.error('No hay un turno de caja activo.');
+    return;
   }
+
+  const totals = this.totals();
+
+  const ref = this.dialog.open(CloseSessionDialog, {
+    width: '380px',
+    disableClose: true,
+    data: {
+      totals,
+    },
+  });
+
+  ref.afterClosed().subscribe(async (counted: number | null) => {
+    if (counted == null) return;
+
+    try {
+      this.loading.set(true);
+
+      // Cierra turno en backend
+      await this.cashApi.closeSession({ counted_amount: counted });
+      this.toast.success('Turno cerrado correctamente');
+
+      // Limpia estado local
+      this.session.set(null);
+      this.payments.set([]);
+
+      // REDIRIGE AL LOGIN
+      this.router.navigate(['/login']);
+
+    } catch (err) {
+      console.error(err);
+      this.toast.error('No se pudo cerrar el turno');
+    } finally {
+      this.loading.set(false);
+    }
+  });
+}
 
   // ======================
   // MANEJO DE CUENTAS SOLICITADAS
@@ -328,7 +335,7 @@ formatDateTime(dateInput: string | Date): { date: string; time: string; full: st
     try {
       this.loading.set(true);
 
-      console.log('Abriendo dialogo de pago por sesión:', req);
+      //console.log('Abriendo dialogo de pago por sesión:', req);
 
       const dialogModule = await import('../dialogs/order-payment/order-payment.dialog');
 
@@ -369,7 +376,7 @@ formatDateTime(dateInput: string | Date): { date: string; time: string; full: st
     try {
       this.loading.set(true);
 
-      console.log('Abriendo dialogo de pago para llevar:', req);
+      //console.log('Abriendo dialogo de pago para llevar:', req);
 
       const dialogModule = await import('../dialogs/order-payment/order-payment.dialog');
 

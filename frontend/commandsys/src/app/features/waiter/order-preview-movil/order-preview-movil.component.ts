@@ -17,11 +17,12 @@ export class OrderPreviewMovilComponent {
   @Input() removeFromCart!: (key: string) => void;
   @Input() confirmOrder!: () => void;
   @Input() isAdding = false;
+  @Input() removeEmptyGroup!: (g: number) => void;
 
   // Notas generales de la comanda (las lees desde el menú con .generalNotes)
   generalNotes: string = '';
 
-  // 🔹 Agrupar items por group_number (1, 2, 3...)
+  //  Agrupar items por group_number (1, 2, 3...)
   // Resultado: { 1: [ {key, value}, ... ], 2: [ ... ], ... }
   get groupedByGroup() {
     const map: Record<number, { key: string; value: any }[]> = {};

@@ -6,7 +6,6 @@ import { order_items_status } from 'generated/prisma';
 
 @Injectable()
 export class ChangeGroupStatusHandler implements RequestHandler {
-
   constructor(
     private readonly ordersService: OrdersService,
     private readonly alexaDevicesService: AlexaDevicesService,
@@ -29,13 +28,13 @@ export class ChangeGroupStatusHandler implements RequestHandler {
     if (!orderIdSlot || !groupNumberSlot || !statusSlot?.value) {
       return handlerInput.responseBuilder
         .speak('Necesito el número de comanda, el grupo y el estado.')
-        .reprompt("¿Quieres intentarlo de nuevo?")
+        .reprompt('¿Quieres intentarlo de nuevo?')
         .withShouldEndSession(false)
         .getResponse();
     }
 
-    const orderId = parseInt(orderIdSlot, 10);
-    const groupNumber = parseInt(groupNumberSlot, 10);
+    const orderId = Number(orderIdSlot);
+    const groupNumber = Number(groupNumberSlot);
     const spokenStatus = statusSlot.value.toLowerCase();
 
     const statusMap: Record<string, order_items_status> = {
@@ -51,18 +50,17 @@ export class ChangeGroupStatusHandler implements RequestHandler {
     if (!backendStatus) {
       return handlerInput.responseBuilder
         .speak(`No entiendo el estado ${spokenStatus}.`)
-        .reprompt("¿Quieres intentarlo de nuevo?")
+        .reprompt('¿Quieres intentarlo de nuevo?')
         .withShouldEndSession(false)
         .getResponse();
     }
 
-    const deviceId =
-      requestEnvelope.context?.System?.device?.deviceId ?? null;
-
+    // ========= VALIDACIÓN DEL DISPOSITIVO =========
+    const deviceId = requestEnvelope.context?.System?.device?.deviceId ?? null;
     if (!deviceId) {
       return handlerInput.responseBuilder
         .speak('No pude identificar el dispositivo de cocina o bar.')
-        .reprompt("¿Quieres intentarlo de nuevo?")
+        .reprompt('¿Quieres intentarlo de nuevo?')
         .withShouldEndSession(false)
         .getResponse();
     }
@@ -72,7 +70,7 @@ export class ChangeGroupStatusHandler implements RequestHandler {
     if (!deviceConfig || deviceConfig.is_active !== true) {
       return handlerInput.responseBuilder
         .speak('Este dispositivo no está configurado con un área de producción.')
-        .reprompt("¿Quieres intentarlo de nuevo?")
+        .reprompt('¿Quieres intentarlo de nuevo?')
         .withShouldEndSession(false)
         .getResponse();
     }
@@ -80,6 +78,36 @@ export class ChangeGroupStatusHandler implements RequestHandler {
     const areaId = deviceConfig.id_area;
     const areaName = deviceConfig.print_areas?.name ?? 'el área asignada';
 
+    // ========= OBTENER ITEMS DEL GRUPO =========
+    const items = await this.ordersService.getItemsByGroup(
+      orderId,
+      groupNumber,
+      areaId,
+      true // incluir cancelados
+    );
+
+    if (!items || items.length === 0) {
+      return handlerInput.responseBuilder
+        .speak(`No encontré el grupo ${groupNumber} en la comanda ${orderId}.`)
+        .reprompt('¿Qué más deseas hacer?')
+        .withShouldEndSession(false)
+        .getResponse();
+    }
+
+    const cancelled = items.filter(i => i.status === 'cancelled');
+    const active = items.filter(i => i.status !== 'cancelled');
+
+    if (active.length === 0) {
+      return handlerInput.responseBuilder
+        .speak(
+          `El grupo ${groupNumber} de la comanda ${orderId} está completamente cancelado. No hay nada que actualizar.`
+        )
+        .reprompt('¿Qué más deseas hacer?')
+        .withShouldEndSession(false)
+        .getResponse();
+    }
+
+    // ========= ACTUALIZAR SOLO ACTIVOS =========
     await this.ordersService.updateGroupStatus(
       orderId,
       groupNumber,
@@ -87,11 +115,21 @@ export class ChangeGroupStatusHandler implements RequestHandler {
       areaId,
     );
 
-    const speakMsg = `Listo. Marqué el grupo ${groupNumber} de la comanda ${orderId} como ${spokenStatus} en ${areaName}.`;
+    // ========= ARMAR MENSAJE DETALLADO =========
+    let speakMsg =
+      `Listo. Actualicé el grupo ${groupNumber} de la comanda ${orderId} a ${spokenStatus} en ${areaName}.`;
+
+    if (cancelled.length > 0) {
+      const formatted = cancelled
+        .map(i => `${i.quantity} ${i.branch_products?.company_products?.name ?? 'producto'}`)
+        .join(', ');
+
+      speakMsg += ` Se omitieron ${cancelled.length} productos cancelados: ${formatted}.`;
+    }
 
     return handlerInput.responseBuilder
       .speak(speakMsg)
-      .reprompt("¿Qué más deseas hacer?")
+      .reprompt('¿Qué más deseas hacer?')
       .withShouldEndSession(false)
       .getResponse();
   }

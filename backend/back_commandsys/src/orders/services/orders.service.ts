@@ -313,6 +313,39 @@ export class OrdersService {
     });
   }
 
+  // OrdersService
+
+async getItemsByGroup(
+  id_order: number,
+  group_number: number,
+  areaId: number,
+  includeCancelled = false
+) {
+  return this.prisma.order_items.findMany({
+    where: {
+      id_order,
+      group_number,
+      ...(includeCancelled
+        ? {} // incluir todos
+        : { status: { not: 'cancelled' } }),
+
+      branch_products: {
+        company_products: {
+          id_area: areaId
+        }
+      }
+    },
+    include: {
+      branch_products: {
+        include: {
+          company_products: true
+        }
+      }
+    }
+  });
+}
+
+
 async updateGroupStatus(
   id_order: number,
   group_number: number,

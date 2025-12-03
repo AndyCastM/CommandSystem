@@ -62,7 +62,6 @@ export class BranchesApi {
     const res = await firstValueFrom(
       this.http.patch<{ message: string }>(`${this.baseUrl}/branches/${id_branch}/activate`, {}, { withCredentials: true })
     );
-    // si tu backend devuelve la branch, puedes actualizar la lista aquí.
     return res;
   }
 
@@ -70,7 +69,6 @@ export class BranchesApi {
     const res = await firstValueFrom(
       this.http.delete<{ message: string }>(`${this.baseUrl}/branches/${id_branch}`, { withCredentials: true })
     );
-    // si tu backend devuelve la branch o status, puedes sincronizar aquí si no usas optimismo.
     return res;
   }
   

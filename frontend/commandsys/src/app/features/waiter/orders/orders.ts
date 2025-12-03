@@ -49,7 +49,7 @@ export class Orders implements OnInit{
       this.loading.set(true);
 
       const data = await this.ordersApi.getActiveOrdersByBranch();
-      console.log('ORDENES RECIBIDAS --- ', data);
+      //console.log('ORDENES RECIBIDAS --- ', data);
 
       const parsed = data.map(order => {
 
@@ -229,7 +229,7 @@ export class Orders implements OnInit{
   }
 
   async requestPrebill(order: any) {
-    console.log("ID DE LA ORDEN:", order.id);
+    //console.log("ID DE LA ORDEN:", order.id);
 
     if (!order?.id) {
       this.toast.error('No se pudo identificar la orden.');

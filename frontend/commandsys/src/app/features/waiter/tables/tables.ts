@@ -296,7 +296,7 @@ export class Tables implements OnInit {
   }
 
   async requestPrebill(table: any) {
-    console.log("SESSIONNN:", table.id_session);
+    //console.log("SESSIONNN:", table.id_session);
 
     if (!table?.id_session) {
       this.toast.error('No se pudo identificar la mesa.');
