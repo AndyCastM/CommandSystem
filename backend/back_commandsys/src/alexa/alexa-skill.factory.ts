@@ -9,6 +9,7 @@ import { FallbackIntentHandler } from './intents/fallback.handler';
 import { ChangeCommandStatusIntentHandler } from './intents/change-command-status.handler';
 import { ChangeItemStatusIntentHandler } from './intents/change-item-status.handler';
 import { SessionEndedRequestHandler } from './intents/session-ended.handler';
+import { ChangeGroupStatusHandler } from './intents/change-group.handler';
 
 @Injectable()
 export class AlexaSkillFactory {
@@ -20,6 +21,7 @@ export class AlexaSkillFactory {
     private readonly fallbackHandler: FallbackIntentHandler,
     private readonly changeOrder: ChangeCommandStatusIntentHandler,
     private readonly changeItem: ChangeItemStatusIntentHandler,
+    private readonly changeGroupStatus: ChangeGroupStatusHandler,
     private readonly sessionEnded: SessionEndedRequestHandler,
   ) {}
 
@@ -30,6 +32,7 @@ export class AlexaSkillFactory {
         this.helloworldHandler,
         this.changeOrder,
         this.changeItem,
+        this.changeGroupStatus,
         this.helpHandler,
         this.cancelStopHandler,
         this.fallbackHandler,

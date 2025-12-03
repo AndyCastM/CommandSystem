@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, Post } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Post, BadRequestException, Req } from '@nestjs/common';
 import { OrdersService } from '../services/orders.service';
 import { UpdateOrderStatusDto } from '../dto/update-order-status.dto';
 import { CreateOrderDto } from '../dto/create-order.dto';
@@ -8,10 +8,11 @@ import { order_items_status } from 'generated/prisma';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { CancelItemDto } from '../dto/cancel-item.dto';
+import { AlexaDevicesService } from 'src/alexa/alexa-devices.service';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService, private readonly alexaDevicesService: AlexaDevicesService) {}
 
   @Post()
   @Roles(Role.Mesero, Role.Gerente)
@@ -105,4 +106,54 @@ export class OrdersController {
   async getSessionSummary(@Param('id_session') id_session: number, @CurrentUser() user: any) {
     return this.ordersService.getSessionSummary(+id_session);
   }
+
+  @Patch(':id_order/groups/:group_number/status')
+  async updateGroupStatus(
+    @Param('id_order') id_order: string,
+    @Param('group_number') group_number: string,
+    @Body('status') status: order_items_status,
+    @Req() req,
+  ) {
+    const validStatuses: order_items_status[] = [
+      'pending',
+      'in_preparation',
+      'ready',
+      'delivered',
+    ];
+
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException('Estado de grupo inválido');
+    }
+
+    // Alexa manda el deviceId en req.headers['alexa-device-id']
+    const deviceId = req.headers['alexa-device-id'];
+
+    if (!deviceId) {
+      throw new BadRequestException(
+        'Falta el deviceId de Alexa para determinar el área.',
+      );
+    }
+
+    // Buscar área configurada para este Alexa
+    const device = await this.alexaDevicesService.findByDeviceId(deviceId);
+
+    if (!device) {
+      throw new BadRequestException('Este Alexa no está ligado a ningún área.');
+    }
+
+    const id_area = device.id_area;
+
+    const result = await this.ordersService.updateGroupStatus(
+      Number(id_order),
+      Number(group_number),
+      status,
+      id_area,
+    );
+
+    return {
+      message: `Grupo ${group_number} actualizado a ${status} desde Alexa (${device.print_areas.name})`,
+      updated_count: result.count,
+    };
+  }
+
 }

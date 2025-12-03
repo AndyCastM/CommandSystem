@@ -17,22 +17,37 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
 
   const skip = req.context.get(SKIP_AUTH_REDIRECT);
 
-  //  Rutas que nunca deben redirigir, porque by definition retornan 401
+  // Endpoints que NUNCA deben gatillar redirect
   const excluded =
     req.url.includes('/auth/login') ||
     req.url.includes('/auth/logout') ||
+    req.url.includes('/auth/waiter_sessions') ||   // 🔥 lo agregamos
     req.url.includes('/auth/me');
 
   const LOGIN_PATH = '/login';
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401 && isBrowser && !skip && !excluded) {
+      
+      // ❌ No redirigir jamás si es ruta excluida
+      if (excluded) {
+        return throwError(() => err);
+      }
+
+      // ❌ No redirigir por 400 o 403 (errores de negocio)
+      if (err.status === 400 || err.status === 403) {
+        return throwError(() => err);
+      }
+
+      // ✔ Solo redirigir cuando es 401 (token inválido / vencido)
+      if (err.status === 401 && isBrowser && !skip) {
+        console.warn("INTERCEPTOR: redirigiendo por 401");
         const current = router.routerState.snapshot.url || '/';
         if (!current.startsWith(LOGIN_PATH)) {
           router.navigate([LOGIN_PATH], { queryParams: { redirect: current } });
         }
       }
+
       return throwError(() => err);
     })
   );

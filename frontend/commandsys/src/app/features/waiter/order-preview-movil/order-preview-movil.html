@@ -11,90 +11,105 @@
       <p class="text-slate-400 text-xs mt-2">Agrega productos desde el menú</p>
     </div>
 
-    <!-- Productos en el carrito -->
-    <div *ngIf="cart().size > 0" class="space-y-4">
-      <div
-        *ngFor="let item of cart() | keyvalue"
-        class="bg-slate-50 rounded-xl p-4 border border-slate-200"
-      >
-        <!-- Nombre y precio -->
-        <div class="flex justify-between items-start mb-2">
-          <div class="flex-1 pr-2">
-            <h3 class="font-semibold text-slate-800 text-base leading-tight">
-              {{ item.value.product.name }}
-            </h3>
-            <p class="text-xs text-slate-500 mt-1 line-clamp-2">
-              {{ item.value.product.description || 'Sin descripción' }}
-            </p>
-          </div>
-          <span class="text-sky-600 font-bold text-base whitespace-nowrap">
-            {{ formatPrice(itemSubtotal(item.value)) }}
-          </span>
-        </div>
+    <!-- Productos en el carrito, agrupados por grupo -->
+    <div *ngIf="cart().size > 0" class="space-y-6">
 
-        <!-- Opciones seleccionadas -->
-        <div *ngIf="item.value.options && item.value.options.length > 0" 
-             class="mb-3 pl-3 border-l-2 border-slate-300 space-y-1">
-          <div *ngFor="let opt of item.value.options" 
-               class="text-xs text-slate-600 flex items-center gap-1">
-            <span class="w-1 h-1 rounded-full bg-slate-400"></span>
-            <span>{{ getOptionNames(opt) }}</span>
-          </div>
-        </div>
+      <!-- Recorremos grupos: 1, 2, 3... -->
+      <div *ngFor="let group of groupedByGroup | keyvalue">
 
-        <!-- Notas especiales -->
-        <div *ngIf="item.value.notes" 
-             class="mb-3 bg-amber-50 border border-amber-200 rounded-lg p-2">
-          <p class="text-xs text-amber-800">
-            <mat-icon class="!text-sm align-middle mr-1">edit_note</mat-icon>
-            <strong>Nota:</strong> {{ item.value.notes }}
-          </p>
-        </div>
+        <!-- Encabezado del grupo -->
+        <h3 class="text-sm font-bold text-slate-700 mb-2 pl-1">
+          Grupo {{ group.key }}
+        </h3>
 
-        <!-- Controles de cantidad y eliminar -->
-        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-200">
-          
-          <!-- Cantidad -->
-          <div class="flex items-center gap-2">
-            <button
-              (click)="updateQuantity(item.key, -1)"
-              class="w-9 h-9 rounded-full bg-white border border-slate-300 hover:bg-slate-100 
-                     flex items-center justify-center active:scale-95 transition shadow-sm"
-            >
-              <mat-icon class="!text-lg text-slate-700">remove</mat-icon>
-            </button>
-
-            <span class="text-base font-bold text-slate-800 min-w-[2rem] text-center">
-              {{ item.value.quantity }}
-            </span>
-
-            <button
-              (click)="updateQuantity(item.key, 1)"
-              class="w-9 h-9 rounded-full bg-white border border-slate-300 hover:bg-slate-100 
-                     flex items-center justify-center active:scale-95 transition shadow-sm"
-            >
-              <mat-icon class="!text-lg text-slate-700">add</mat-icon>
-            </button>
-          </div>
-
-          <!-- Botón eliminar -->
-          <button
-            (click)="removeFromCart(item.key)"
-            class="text-red-500 hover:text-red-700 text-sm font-medium 
-                   flex items-center gap-1 active:scale-95 transition"
+        <!-- Productos del grupo -->
+        <div class="space-y-4">
+          <div
+            *ngFor="let item of group.value"
+            class="bg-slate-50 rounded-xl p-4 border border-slate-200"
           >
-            <mat-icon class="!text-base">delete_outline</mat-icon>
-            <span>Eliminar</span>
-          </button>
+            <!-- Nombre y precio -->
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex-1 pr-2">
+                <h3 class="font-semibold text-slate-800 text-base leading-tight">
+                  {{ item.value.product.name }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-1 line-clamp-2">
+                  {{ item.value.product.description || 'Sin descripción' }}
+                </p>
+              </div>
+              <span class="text-sky-600 font-bold text-base whitespace-nowrap">
+                {{ formatPrice(itemSubtotal(item.value)) }}
+              </span>
+            </div>
+
+            <!-- Opciones seleccionadas -->
+            <div *ngIf="item.value.options && item.value.options.length > 0" 
+                class="mb-3 pl-3 border-l-2 border-slate-300 space-y-1">
+              <div *ngFor="let opt of item.value.options" 
+                  class="text-xs text-slate-600 flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-slate-400"></span>
+                <span>{{ getOptionNames(opt) }}</span>
+              </div>
+            </div>
+
+            <!-- Notas especiales -->
+            <div *ngIf="item.value.notes" 
+                class="mb-3 bg-amber-50 border border-amber-200 rounded-lg p-2">
+              <p class="text-xs text-amber-800">
+                <mat-icon class="!text-sm align-middle mr-1">edit_note</mat-icon>
+                <strong>Nota:</strong> {{ item.value.notes }}
+              </p>
+            </div>
+
+            <!-- Controles de cantidad y eliminar -->
+            <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-200">
+              
+              <!-- Cantidad -->
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="updateQuantity(item.key, -1)"
+                  class="w-9 h-9 rounded-full bg-white border border-slate-300 hover:bg-slate-100 
+                        flex items-center justify-center active:scale-95 transition shadow-sm"
+                >
+                  <mat-icon class="!text-lg text-slate-700">remove</mat-icon>
+                </button>
+
+                <span class="text-base font-bold text-slate-800 min-w-[2rem] text-center">
+                  {{ item.value.quantity }}
+                </span>
+
+                <button
+                  (click)="updateQuantity(item.key, 1)"
+                  class="w-9 h-9 rounded-full bg-white border border-slate-300 hover:bg-slate-100 
+                        flex items-center justify-center active:scale-95 transition shadow-sm"
+                >
+                  <mat-icon class="!text-lg text-slate-700">add</mat-icon>
+                </button>
+              </div>
+
+              <!-- Botón eliminar -->
+              <button
+                (click)="removeFromCart(item.key)"
+                class="text-red-500 hover:text-red-700 text-sm font-medium 
+                      flex items-center gap-1 active:scale-95 transition"
+              >
+                <mat-icon class="!text-base">delete_outline</mat-icon>
+                <span>Eliminar</span>
+              </button>
+            </div>
+
+          </div>
         </div>
 
       </div>
+
     </div>
   </div>
 
   <!-- Footer: Notas generales, Total y botón confirmar -->
   <div *ngIf="cart().size > 0" 
-       class="border-t-2 border-slate-200 pt-4 mt-4 bg-white sticky bottom-0">
+      class="border-t-2 border-slate-200 pt-4 mt-4 bg-white sticky bottom-0">
     
     <!-- Notas generales de la comanda -->
     <div class="mb-4">
@@ -107,8 +122,8 @@
         placeholder="Ej: Sin cebolla en toda la orden, mesa cerca de la ventana..."
         rows="2"
         class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm 
-               focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent
-               placeholder:text-slate-400 resize-none"
+              focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent
+              placeholder:text-slate-400 resize-none"
       ></textarea>
     </div>
 
@@ -131,9 +146,9 @@
       (click)="confirmOrder()"
       [disabled]="cart().size === 0"
       class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white 
-             py-4 rounded-xl font-bold text-base hover:opacity-90 
-             transition disabled:opacity-50 disabled:cursor-not-allowed
-             shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+            py-4 rounded-xl font-bold text-base hover:opacity-90 
+            transition disabled:opacity-50 disabled:cursor-not-allowed
+            shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
     >
       <mat-icon class="!text-xl">check_circle</mat-icon>
       <span>Confirmar Comanda</span>

@@ -1,12 +1,10 @@
 <div
-  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden
-         w-full sm:w-[380px] md:w-[520px] lg:w-[560px] max-w-[92vw]
-         max-h-[85dvh]"
+  class="flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden max-h-[85dvh]"
   [ngClass]="{
-    'w-[550px] max-w-[95vw] grid-cols-1': !form.controls.is_customizable.value,
-    'md:w-[1100px] max-w-[95vw] grid md:grid-cols-2': form.controls.is_customizable.value
+    'w-full sm:w-[450px] md:w-[650px] lg:w-[700px] max-w-[92vw]': !form.controls.is_customizable.value,
+    'w-full md:w-[1600px] lg:w-[1800px] max-w-[98vw] grid md:grid-cols-2': form.controls.is_customizable.value
   }"
-> 
+>
   <!-- === Panel Izquierdo: Datos del producto === -->
   <form (ngSubmit)="submit()"
         class="space-y-4 overflow-y-auto p-4"

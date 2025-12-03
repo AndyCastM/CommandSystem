@@ -1,22 +1,30 @@
-import { Component, OnInit, inject, signal, PLATFORM_ID, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, ViewChild, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelect, MatOption } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+
 import { ToastService } from '../../../shared/UI/toast.service';
 import { MenuService } from '../../../core/services/menu/menu.service';
-import { MatDialog } from '@angular/material/dialog';
-import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
-import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
-import { MatOption, MatSelect } from '@angular/material/select';
-import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm/order-confirm.modal';
 import { OrderService, CreateOrderPayload } from '../../../core/services/orders/orders.service';
-import { isPlatformBrowser } from '@angular/common';
+import { ProductDetailDialogComponent } from '../../../shared/modals/product-detail-dialog.component/product-detail-dialog.component';
+import { OrderConfirmModal, OrderConfirmResult } from '../UI/order-confirm/order-confirm.modal';
+
+import { OrderPreviewComponent } from '../order-preview/app-order-preview.component';
 import { OrderPreviewMovilComponent } from '../order-preview-movil/order-preview-movil.component';
 
 @Component({
   selector: 'app-menu-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule, OrderPreviewComponent, MatSelect, MatOption, OrderPreviewMovilComponent],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatSelect,
+    MatOption,
+    OrderPreviewComponent,
+    OrderPreviewMovilComponent,
+  ],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
@@ -27,9 +35,9 @@ export class Menu implements OnInit {
   private menuApi = inject(MenuService);
   private orderApi = inject(OrderService);
   private dialog = inject(MatDialog);
-
   private platformId = inject(PLATFORM_ID);
-  isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  isBrowser = isPlatformBrowser(this.platformId);
 
   menu = signal<any[]>([]);
   loading = signal(false);
@@ -37,51 +45,77 @@ export class Menu implements OnInit {
   id_session: number | null = null;
   orderType: 'dine_in' | 'takeout' | null = null;
   isDineInLocked = false;
-
-  // para siempre agregar productos:
   isAdding: boolean = true;
 
+  // ======== GRUPOS ========
+  groups = signal<number[]>([1]);
+  currentGroup = signal(1);
+
+  get groupKeys(): number[] {
+    return this.groups();
+  }
+
+  get grouped(): { [group: number]: { key: string; value: any }[] } {
+    const result: { [group: number]: { key: string; value: any }[] } = {};
+
+    // inicializar
+    for (const g of this.groupKeys) {
+      result[g] = [];
+    }
+
+    for (const [key, value] of this.cart().entries()) {
+      const g = value.group_number || 1;
+      if (!result[g]) result[g] = [];
+      result[g].push({ key, value });
+    }
+
+    return result;
+  }
+
+  addGroup() {
+    const current = this.groups();
+    const next = Math.max(...current) + 1;
+    this.groups.set([...current, next]);
+    this.currentGroup.set(next);
+  }
+
+  // ======== CARRITO ========
   cart = signal<Map<string, any>>(new Map());
   selectedArea: any = {};
   drawerOpen = false;
 
-  // ViewChild para acceder al componente móvil y desktop
   @ViewChild(OrderPreviewMovilComponent) orderPreviewMovil?: OrderPreviewMovilComponent;
   @ViewChild(OrderPreviewComponent) orderPreviewDesktop?: OrderPreviewComponent;
 
   ngOnInit() {
     let state: any = null;
 
-    //  Solo tocar `history` cuando estás en navegador
     if (isPlatformBrowser(this.platformId)) {
       state = history.state;
     }
 
-    // 1) CONSULTA — si no viene nada en el state
+    // 1) Consulta simple (sin sesión ni tipo)
     if (!state?.id_session && !state?.type && !state?.mode) {
       this.isAdding = false;
       this.id_session = null;
       this.orderType = null;
       this.isDineInLocked = false;
     }
-
-    // 2) CONSULTA explícita
+    // 2) Modo vista
     else if (state?.mode === 'view') {
       this.isAdding = false;
       this.id_session = null;
       this.orderType = null;
       this.isDineInLocked = false;
     }
-
-    // 3) DINE-IN
+    // 3) Dine-in
     else if (state?.id_session) {
       this.isAdding = true;
       this.id_session = state.id_session;
       this.orderType = 'dine_in';
       this.isDineInLocked = true;
     }
-
-    // 4) TAKEOUT
+    // 4) Takeout
     else if (state?.type) {
       this.isAdding = true;
       this.id_session = null;
@@ -89,14 +123,7 @@ export class Menu implements OnInit {
       this.isDineInLocked = false;
     }
 
-    console.log('Menu loaded with:', {
-      isAdding: this.isAdding,
-      idSession: this.id_session,
-      orderType: this.orderType,
-      isDineInLocked: this.isDineInLocked
-    });
-
-    if (!this.isBrowser) return;  // ← evita 401 SSR
+    if (!this.isBrowser) return;
     this.loadMenu();
   }
 
@@ -113,27 +140,19 @@ export class Menu implements OnInit {
     }
   }
 
-  onOrderTypeChange(type: 'dine_in' | 'takeout' ) {
-    console.log("Cambio detectado:", type);
-    console.log("isDineInLocked:", this.isDineInLocked);
-
-    if (this.isDineInLocked) {
-      return; //  no permitir cambiar tipo en dine_in
-    }
+  onOrderTypeChange(type: 'dine_in' | 'takeout') {
+    if (this.isDineInLocked) return;
 
     this.orderType = type;
 
-    // takeout/delivery activan modo agregar
     if (type === 'takeout') {
       this.isAdding = true;
       this.id_session = null;
     }
 
-    // volver a dine_in sin sesión = consulta
     if (type === 'dine_in' && !this.id_session) {
       this.isAdding = false;
     }
-    console.log("Tipo cambiado:", this.orderType, "Modo agregar:", this.isAdding);
   }
 
   selectArea(area: any) {
@@ -168,22 +187,22 @@ export class Menu implements OnInit {
     });
   }
 
-  generateCartKey(product: any, options: any[], notes: string): string {
+  generateCartKey(product: any, options: any[], notes: string, groupNumber: number): string {
     const baseId = product.id_branch_product;
     const opt = JSON.stringify(options || []);
     const note = notes || '';
-    return `${baseId}--${opt}--${note}`;
+    return `${baseId}--${opt}--${note}--group:${groupNumber}`;
   }
 
   addProductToCart(productData: any) {
     const key = this.generateCartKey(
       productData.product,
       productData.options,
-      productData.notes
+      productData.notes,
+       this.currentGroup(),
     );
 
-    const cartMap = this.cart(); // Map actual
-
+    const cartMap = this.cart();
     const existing = cartMap.get(key);
 
     if (existing) {
@@ -194,10 +213,10 @@ export class Menu implements OnInit {
         quantity: productData.quantity,
         options: productData.options,
         notes: productData.notes,
+        group_number: this.currentGroup(), // 🔥 aquí marcamos el grupo
       });
     }
 
-    // actualizar señal
     this.cart.set(new Map(cartMap));
   }
 
@@ -222,23 +241,11 @@ export class Menu implements OnInit {
       let extras = 0;
 
       for (const opt of item.options || []) {
-        const optTotal = opt.values?.reduce(
+        const optTotal = (opt.values || []).reduce(
           (acc: number, v: any) => acc + (v.extra_price || 0),
           0
         );
         extras += optTotal || 0;
-
-        const optionDetail = item.product.options.find(
-          (pOpt: any) => pOpt.id_option === opt.id_option
-        );
-
-        if (optionDetail?.tiers?.length > 0) {
-          const selectedCount = opt.values?.length || 0;
-          const tier = optionDetail.tiers.find(
-            (t: any) => selectedCount === t.selection_count
-          );
-          if (tier) extras += tier.extra_price;
-        }
       }
 
       const subtotal = (base + extras) * item.quantity;
@@ -259,15 +266,11 @@ export class Menu implements OnInit {
       return;
     }
 
-    // Abre el modal usando tu función ya creada
     this.openConfirmModal().subscribe(async (result: OrderConfirmResult | null) => {
-      if (!result) return; // Cancelado
+      if (!result) return;
 
       try {
-        // --- MAPEO COMPLETO DE ITEMS ---
         const items = Array.from(this.cart().values()).map((item: any) => {
-          
-          // opciones normales
           const optionValues =
             (item.options || [])
               .flatMap((opt: any) => opt.values || [])
@@ -275,7 +278,6 @@ export class Menu implements OnInit {
                 id_option_value: v.id_option_value,
               })) || [];
 
-          // combos si existen
           const comboGroups =
             item.combo_groups?.map((cg: any) => ({
               id_combo_group: cg.id_combo_group,
@@ -293,20 +295,19 @@ export class Menu implements OnInit {
             notes: item.notes ?? null,
             options: optionValues,
             combo_groups: comboGroups,
+            group_number: item.group_number || 1, // 🔥 se envía al backend
           };
         });
 
-        //  Obtener notas generales desde el componente que esté activo
-        const generalNotes = 
-          this.orderPreviewMovil?.generalNotes || 
-          this.orderPreviewDesktop?.generalNotes || 
+        const generalNotes =
+          this.orderPreviewMovil?.generalNotes ||
+          this.orderPreviewDesktop?.generalNotes ||
           null;
-          
-        // --- PAYLOAD FINAL ---
+
         const payload: CreateOrderPayload = {
           order_type: this.orderType!,
           id_session: this.orderType === 'dine_in' ? this.id_session : null,
-          notes: generalNotes, // ← Aquí van las notas generales
+          notes: generalNotes,
           customer_name: this.orderType === 'takeout' ? result.customer_name : null,
           items,
         };
@@ -314,16 +315,13 @@ export class Menu implements OnInit {
         console.log('PAYLOAD FINAL --- ', payload);
 
         const res = await this.orderApi.createOrder(payload);
-
         this.toast.success(res?.message || 'Comanda creada correctamente');
 
-        // limpiar todo
         this.cart.set(new Map());
         this.router.navigate(['/mesero/mesas']);
 
       } catch (err: any) {
         console.error(err);
-
         const msg =
           err?.error?.message ||
           err?.message ||

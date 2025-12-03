@@ -37,8 +37,20 @@ export class AuthController {
     }
     
     @Post('logout')
-    async logout(@Res({ passthrough: true }) res: express.Response) {
+    async logout(@Res({ passthrough: true }) res: express.Response, @CurrentUser() user: any) {
         res.clearCookie('access_token');
         return { ok: true };
     }
+
+   @Get('waiter_sessions')
+async logoutWaiter(@CurrentUser() user: any){
+  console.log("ENTRÓ A WAITER_SESSIONS");
+  console.log("USER:", user);
+
+  const activeSessions = await this.authService.validateSessionsActive(user);
+  console.log("ANSWER:", activeSessions);
+
+  return activeSessions;
+}
+
 }

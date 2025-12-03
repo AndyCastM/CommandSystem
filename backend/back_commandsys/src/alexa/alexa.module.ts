@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AlexaController } from './alexa.controller';
 import { AlexaSkillFactory } from './alexa-skill.factory';
 import { ChangeCommandStatusIntentHandler } from './intents/change-command-status.handler';
@@ -11,20 +11,26 @@ import { SessionEndedRequestHandler } from './intents/session-ended.handler';
 
 import { OrdersModule } from 'src/orders/orders.module';
 import { HelloWorldIntentHandler } from './intents/hello-world.handler';
+import { ChangeGroupStatusHandler } from './intents/change-group.handler';
+import { AlexaDevicesService } from './alexa-devices.service';
+import { AlexaDevicesModule } from './alexa-devices.module';
 
 @Module({
-  imports: [OrdersModule], // para poder usar el servicio
+  imports: [AlexaDevicesModule, forwardRef(() => OrdersModule)],
   controllers: [AlexaController],
     providers: [
     AlexaSkillFactory,
+    AlexaDevicesService,
     LaunchRequestHandler,
     HelloWorldIntentHandler,
     ChangeCommandStatusIntentHandler,
     ChangeItemStatusIntentHandler,
+    ChangeGroupStatusHandler,
     FallbackIntentHandler,
     CancelAndStopIntentHandler,
     HelpIntentHandler,
     SessionEndedRequestHandler,
     ],
+  exports:[AlexaDevicesService],
 })
 export class AlexaModule {}

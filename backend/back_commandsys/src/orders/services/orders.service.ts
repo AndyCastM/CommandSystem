@@ -167,6 +167,7 @@ export class OrdersService {
             subtotal: unit_price,
             status: 'pending',
             created_at: this.getLocalDate(),
+            group_number: item.group_number ?? 1,
           }
         });
 
@@ -311,6 +312,104 @@ export class OrdersService {
       },
     });
   }
+
+async updateGroupStatus(
+  id_order: number,
+  group_number: number,
+  status: order_items_status,
+  areaId: number,
+) {
+
+  // 1) OBTENER SOLO ITEMS DE ESE GRUPO Y ESA ÁREA
+  const items = await this.prisma.order_items.findMany({
+    where: {
+      id_order,
+      group_number,
+      status: { not: 'cancelled' },
+      branch_products: {
+        company_products: {
+          id_area: areaId,
+        },
+      },
+    },
+    include: {
+      orders: {
+        include: {
+          table_sessions: { include: { tables: true } },
+          users: true,
+        }
+      },
+      branch_products: {
+        include: {
+          company_products: true,
+        }
+      }
+    }
+  });
+
+  // Si NO hay items de esa área → no actualizar nada
+  if (items.length === 0) {
+    return { count: 0, area_filtered: true };
+  }
+
+  const now = this.nowLocal();
+
+  // 2) UPDATE SOLO EN ESA ÁREA
+  const result = await this.prisma.order_items.updateMany({
+    where: {
+      id_order,
+      group_number,
+      status: { not: 'cancelled' },
+      branch_products: {
+        company_products: {
+          id_area: areaId,
+        },
+      },
+    },
+    data: {
+      status,
+      ...(status === 'in_preparation' ? { start_time: now } : {}),
+      ...(status === 'ready'         ? { ready_time: now } : {}),
+      ...(status === 'delivered'     ? { delivered_time: now } : {}),
+    },
+  });
+
+  // 3) NOTIFICAR SOLO SI ES "ready"
+  if (status === 'ready') {
+
+    const waiterId = items[0].orders.id_user!;
+    const tableNumber = items[0].orders.table_sessions?.tables?.number ?? null;
+
+    // Construir texto amigable
+    const itemsText = items
+      .map(i => `${i.quantity}× ${i.branch_products!.company_products.name}`)
+      .join(', ');
+
+    const message = `Grupo ${group_number} listo • Mesa ${tableNumber ?? 'N/A'} • ${itemsText}`;
+
+    this.notif.emitToUser(
+      waiterId,
+      'order:group-ready',
+      {
+        order: id_order,
+        group: group_number,
+        table: tableNumber,
+        items: items.map(i => ({
+          product: i.branch_products!.company_products.name,
+          qty: i.quantity,
+        })),
+        message,
+      }
+    );
+  }
+
+  return {
+    updated_count: result.count,
+    area_filtered: false,
+  };
+}
+
+
 
   async getActiveOrdersByBranch(id_branch: number, id_user: number) {
   const orders = await this.prisma.orders.findMany({
@@ -1009,6 +1108,7 @@ export class OrdersService {
           id_order_item: i.id_order_item,
           quantity: i.quantity,
           name: i.branch_products.company_products.name,
+          group: i.group_number ?? 1,
           options: i.order_item_options.map(o => o.product_option_values.name),
           notes: i.notes ?? undefined
         }))

@@ -10,7 +10,8 @@ import { Subscription } from 'rxjs';
 import { OrdersEventsService } from '../../core/services/orders/orders-event.service';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-
+import { ToastService } from '../../shared/UI/toast.service';
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-waiter-shell',
   standalone: true,
@@ -31,6 +32,7 @@ export class WaiterShellComponent implements OnInit {
   private ordersEvents = inject(OrdersEventsService);
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private toast = inject(ToastService);
 
   async ngOnInit(){
     if (!this.isBrowser) return; // evita que socket falle en SSR
@@ -45,8 +47,14 @@ export class WaiterShellComponent implements OnInit {
       this.ordersEvents.triggerRefresh(); // manda la señal global
     });
 
+    this.sub = this.notif.onGroupReady().subscribe(() => {
+      this.ordersEvents.triggerRefresh();
+    })
   }
 
+   get user() {
+    return this.auth.getUserFromCookie();
+  }
   // constructor() {
   //   console.log("SHELL CREADO");
   // }
@@ -57,12 +65,29 @@ export class WaiterShellComponent implements OnInit {
 
   private auth = inject(AuthService);
   currentUser = computed(() => this.auth.currentUser());
+  private router = inject(Router);
 
   sidebarOpen = false; // móvil
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
   closeSidebar() { this.sidebarOpen = false; }
 
-  onLogout() {
-    this.auth.logout()    
+  async onLogout() {
+  try {
+    const sessions = await this.auth.logoutWaiter();
+
+    if (sessions && sessions.length > 0) {
+      this.toast.warning('No puedes cerrar sesión con mesas abiertas.');
+      this.router.navigate(['/mesero/mesas']);
+      return;
+    }
+
+    // SIN MESAS → logout real
+    await this.auth.logout();
+  } catch (err) {
+    console.error(err);
+    this.toast.error('Error verificando el estado de mesas');
   }
+}
+
+
  }

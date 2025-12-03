@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
 import * as bcrypt from 'bcrypt';
@@ -135,4 +135,21 @@ export class AuthService {
             throw new ForbiddenException('La sucursal está desactivada. Contacte al administrador.');
         }
     }
+
+    async validateSessionsActive(user: any){
+    console.log("USER EN VALIDACION:", user);
+
+    const activeSessions = await this.prisma.table_sessions.findMany({
+        where: { 
+        id_user: user.sub,
+        status: { not: 'closed' }
+        },
+        select: { status: true, id_session: true },
+    });
+    
+    console.log("RESULTADO VALIDACION:", activeSessions);
+
+    return activeSessions;
+}
+
 }

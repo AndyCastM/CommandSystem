@@ -18,6 +18,10 @@ export interface ItemReadyAlert {
   qty: number;
 }
 
+export interface GroupReadyAlert {
+  message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
   private socket!: Socket;
@@ -25,6 +29,7 @@ export class NotificationsService {
 
   private alerts$ = new BehaviorSubject<TableAlert | null>(null);
   private itemReady$ = new BehaviorSubject<ItemReadyAlert | null>(null);
+  private onGroupReady$ = new BehaviorSubject<GroupReadyAlert | null>(null);
 
   private apiUrl = 'http://localhost:3000'; // API_URL CAMBIAR DESPUES
   private _events$ = new BehaviorSubject<any>(null);
@@ -74,6 +79,14 @@ export class NotificationsService {
       });
     });
 
+    this.socket.on('order:group-ready', (data: GroupReadyAlert) => {
+      //console.log(payload.message);
+      this.zone.run(() => {
+        this.toast.success(data.message);
+        this.onGroupReady$.next(data);
+      });
+    });
+
     /** ===== COMANDA ENTREGADA ===== */
     this.socket.on('order:delivered', (data) => {
       this.zone.run(() => {
@@ -102,6 +115,9 @@ export class NotificationsService {
     return this.itemReady$.asObservable();
   }
 
+  onGroupReady(){
+    return this.onGroupReady$.asObservable();
+  }
   disconnect() {
     this.socket?.disconnect();
     this.connected = false;

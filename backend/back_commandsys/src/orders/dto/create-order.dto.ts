@@ -54,6 +54,8 @@ export class OrderItemDto {
   @IsOptional()
   notes?: string;
 
+  group_number?: number;
+
   @IsOptional() 
   @IsArray()
   @ValidateNested({ each: true })

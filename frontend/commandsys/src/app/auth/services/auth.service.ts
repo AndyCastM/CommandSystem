@@ -80,6 +80,12 @@ export class AuthService {
     }
   }
 
+  async logoutWaiter(): Promise<any[]> {
+  return await firstValueFrom(
+    this.http.get<any[]>(`${this.apiUrl}/auth/waiter_sessions`)
+  );
+}
+
   // Token NO debería existir aquí (es HttpOnly), pero lo dejamos por compatibilidad
   get token(): string | null {
     return isBrowser() ? this.cookies.get('access_token') || null : null;
@@ -103,6 +109,17 @@ export class AuthService {
   isLoggedIn$() {
     return this.ensureSession$().pipe(map(Boolean));
   }
+
+  getUserFromCookie() {
+    if (!isBrowser()) return null;
+    try {
+      const raw = this.cookies.get('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
 }
 
 function readUserCookie(cookies: SafeCookieService) {

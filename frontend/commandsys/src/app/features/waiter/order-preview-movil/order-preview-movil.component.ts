@@ -10,25 +10,37 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './order-preview-movil.html'
 })
 export class OrderPreviewMovilComponent {
-  @Input() cart!: Signal<Map<number, any>>;
+
+  @Input() cart!: Signal<Map<string, any>>;
   @Input() totalAmount!: () => number;
-  @Input() updateQuantity!: (id: number, change: number) => void;
-  @Input() removeFromCart!: (id: number) => void;
+  @Input() updateQuantity!: (key: string, change: number) => void;
+  @Input() removeFromCart!: (key: string) => void;
   @Input() confirmOrder!: () => void;
   @Input() isAdding = false;
 
+  // Notas generales de la comanda (las lees desde el menú con .generalNotes)
   generalNotes: string = '';
+
+  // 🔹 Agrupar items por group_number (1, 2, 3...)
+  // Resultado: { 1: [ {key, value}, ... ], 2: [ ... ], ... }
+  get groupedByGroup() {
+    const map: Record<number, { key: string; value: any }[]> = {};
+
+    for (const [key, value] of this.cart().entries()) {
+      const groupNumber = value.group_number || 1;
+      if (!map[groupNumber]) {
+        map[groupNumber] = [];
+      }
+      map[groupNumber].push({ key, value });
+    }
+
+    return map;
+  }
 
   getOptionNames(opt: any): string {
     if (!opt?.values || opt.values.length === 0) return '';
     return opt.values.map((v: any) => v.name).join(', ');
   }
-
-//   getOptionNames(opt: any): string {
-//   if (!opt?.values?.length) return '';
-//   const values = opt.values.map((v: any) => v.name).join(', ');
-//   return `${opt.name}: ${values}`;
-// }
 
   formatPrice(value: number): string {
     return '$' + Number(value).toFixed(2);
@@ -60,7 +72,7 @@ export class OrderPreviewMovilComponent {
     return (base + extras) * item.quantity;
   }
 
-    getGeneralNotes(): string {
-        return this.generalNotes;
-    }
+  getGeneralNotes(): string {
+    return this.generalNotes;
+  }
 }

@@ -38,6 +38,7 @@ model branches {
   created_at            DateTime?               @default(now()) @db.Timestamp(0)
   updated_at            DateTime?               @default(now()) @db.Timestamp(0)
   is_active             Int?                    @default(1) @db.TinyInt
+  alexa_devices         alexa_devices[]
   branch_print_stations branch_print_stations[]
   branch_products       branch_products[]
   branch_schedules      branch_schedules[]
@@ -67,6 +68,7 @@ model order_items {
   start_time               DateTime?                  @db.Timestamp(0)
   ready_time               DateTime?                  @db.Timestamp(0)
   delivered_time           DateTime?                  @db.Timestamp(0)
+  group_number             Int?                       @default(1)
   order_item_cancellations order_item_cancellations[]
   order_item_options       order_item_options[]
   combos                   combos?                    @relation(fields: [id_combo], references: [id_combo], onDelete: NoAction, onUpdate: NoAction, map: "fk:combo_orditems")
@@ -267,7 +269,7 @@ model company_products {
   id_area                Int
   id_category            Int
   name                   String                   @db.VarChar(45)
-  description            String?                  @db.VarChar(100)
+  description            String?                  @db.VarChar(250)
   base_price             Decimal                  @db.Decimal(10, 2)
   image_url              String?                  @db.VarChar(255)
   preparation_time       Int?
@@ -341,6 +343,7 @@ model print_areas {
   id_company            Int
   name                  String                  @db.VarChar(20)
   is_active             Int                     @default(1) @db.TinyInt
+  alexa_devices         alexa_devices[]
   branch_print_stations branch_print_stations[]
   company_products      company_products[]
   companies             companies               @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_printareas")
@@ -469,6 +472,22 @@ model cash_sessions {
 
   @@index([id_branch], map: "fk_idbranch_cash_session_idx")
   @@index([id_user], map: "fk_iduser_cash_session_idx")
+}
+
+model alexa_devices {
+  id_alexa_device Int         @id @default(autoincrement())
+  id_branch       Int
+  id_area         Int
+  device_id       String      @unique(map: "device_id_UNIQUE") @db.VarChar(175)
+  alias           String?     @db.VarChar(45)
+  is_active       Boolean?    @default(true)
+  created_at      DateTime?   @db.Timestamp(0)
+  updated_at      DateTime?   @db.Timestamp(0)
+  print_areas     print_areas @relation(fields: [id_area], references: [id_area], onDelete: NoAction, onUpdate: NoAction, map: "fk_alexa_area")
+  branches        branches    @relation(fields: [id_branch], references: [id_branch], onDelete: NoAction, onUpdate: NoAction, map: "fk_alexa_branch")
+
+  @@index([id_area], map: "fk_alexa_area_idx")
+  @@index([id_branch], map: "fk_alexa_branch_idx")
 }
 
 enum order_items_status {
