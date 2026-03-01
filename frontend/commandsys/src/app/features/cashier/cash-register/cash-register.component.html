@@ -24,19 +24,20 @@
 
   <div class="space-y-3">
     <div
-  *ngFor="let req of pendingRequests()"
-  class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
->
-  <div>
-    <!-- LABEL PRINCIPAL: MESA o PARA LLEVAR -->
-    <p class="font-semibold text-slate-800">
-      <ng-container *ngIf="req.type === 'takeout'; else mesaLabel">
-        Para llevar · {{ req.customer || 'Cliente sin nombre' }}
-      </ng-container>
-      <ng-template #mesaLabel>
-        Mesa {{ req.table }}
-      </ng-template>
-    </p>
+      *ngFor="let req of pendingRequests()"
+      class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
+    >
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+      <p class="font-semibold text-slate-800">
+        <ng-container *ngIf="req.type === 'takeout'; else mesaLabel">
+          Para llevar · {{ req.customer || 'Cliente sin nombre' }}
+        </ng-container>
+        <ng-template #mesaLabel>
+          Mesa {{ req.table }}
+        </ng-template>
+      </p>
+    </div>
 
     <!-- TOTAL -->
     <p class="text-sm text-slate-600">
@@ -63,13 +64,31 @@
     </p>
   </div>
 
-  <!-- BOTÓN -->
-  <button
-    class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
-    (click)="onRequestClick(req)"
-  >
-    {{ req.type === 'takeout' ? 'Cobrar' : 'Cobrar mesa' }}
-  </button>
+  <div class="flex items-center gap-2">
+    <!-- Botón PDF -->
+    <button
+      (click)="req.type === 'takeout'
+                ? downloadTakeoutPrebill(req)
+                : downloadTablePrebill(req)"
+      class="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium
+            hover:bg-slate-100 transition flex items-center gap-1"
+    >
+      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">
+        picture_as_pdf
+      </mat-icon>
+      PDF
+    </button>
+
+    <!-- Botón Cobrar -->
+    <button
+      class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium
+            hover:bg-indigo-700 transition shadow-sm"
+      (click)="onRequestClick(req)"
+    >
+      {{ req.type === 'takeout' ? 'Cobrar' : 'Cobrar mesa' }}
+    </button>
+
+  </div>
 </div>
   </div>
 </div>

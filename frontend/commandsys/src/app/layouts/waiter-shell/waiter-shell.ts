@@ -1,6 +1,6 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { NgFor, NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../auth/services/auth.service';
 import { CapitalizePipe } from '../../shared/pipes/capitalize.pipe';
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-waiter-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgFor, NgIf, MatIconModule, CapitalizePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgFor, NgIf, MatIconModule, CapitalizePipe, CommonModule],
   templateUrl: './waiter-shell.html',
   styleUrl: './waiter-shell.css',
 })
@@ -68,26 +68,28 @@ export class WaiterShellComponent implements OnInit {
   private router = inject(Router);
 
   sidebarOpen = false; // móvil
+  sidebarCollapsed = false;
+
+  toggleCollapse() { this.sidebarCollapsed = !this.sidebarCollapsed;}
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
   closeSidebar() { this.sidebarOpen = false; }
 
   async onLogout() {
-  try {
-    const sessions = await this.auth.logoutWaiter();
+    try {
+      const sessions = await this.auth.logoutWaiter();
 
-    if (sessions && sessions.length > 0) {
-      this.toast.warning('No puedes cerrar sesión con mesas abiertas.');
-      this.router.navigate(['/mesero/mesas']);
-      return;
+      if (sessions && sessions.length > 0) {
+        this.toast.warning('No puedes cerrar sesión con mesas abiertas.');
+        this.router.navigate(['/mesero/mesas']);
+        return;
+      }
+
+      // SIN MESAS → logout real
+      await this.auth.logout();
+    } catch (err) {
+      console.error(err);
+      this.toast.error('Error verificando el estado de mesas');
     }
-
-    // SIN MESAS → logout real
-    await this.auth.logout();
-  } catch (err) {
-    console.error(err);
-    this.toast.error('Error verificando el estado de mesas');
   }
-}
-
 
  }

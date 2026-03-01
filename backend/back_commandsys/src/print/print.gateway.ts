@@ -21,7 +21,7 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // @SubscribeMessage('register-printer')
   // handleRegister(client: Socket, data: { branchId?: number }) {
   //   if (!data?.branchId) {
-  //     console.log('❌ Printer intentó registrarse sin branchId');
+  //     console.log(' Printer intentó registrarse sin branchId');
   //     return;
   //   }
 
@@ -29,14 +29,14 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
   //   client.join(room);
 
   //   console.log(
-  //     `🖨️ Printer ${client.id} se unió al room de sucursal ${room}`,
+  //     ` Printer ${client.id} se unió al room de sucursal ${room}`,
   //   );
   // }
 
   // // Método para mandar ticket a una sucursal
   // emitTicketToBranch(branchId: number, payload: any) {
   //   const room = `branch-${branchId}`;
-  //   console.log(`📤 Enviando ticket a room: ${room}`);
+  //   console.log(`Enviando ticket a room: ${room}`);
   //   this.server.to(room).emit('print-ticket', {
   //     payload,
   //   });
@@ -52,7 +52,7 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     if (!branchId) {
-      console.log("❌ Impresora rechazada: no envió branchId");
+      console.log(" Impresora rechazada: no envió branchId");
       client.disconnect();
       return;
     }
@@ -65,7 +65,7 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   sendToBranch(branchId: number, payload: any) {
-    console.log(`📤 Enviando ticket a sucursal ${branchId}...`);
+    console.log(` Enviando ticket a sucursal ${branchId}...`);
 
     this.server.sockets.sockets.forEach((socket: any) => {
       const info = this.clients.get(socket.id);
@@ -73,7 +73,7 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // FILTRO POR SUCURSAL
       if (info.branchId === branchId) {
-        console.log(`➡️ Enviando ticket a socket ${socket.id}`);
+        console.log(` Enviando ticket a socket ${socket.id}`);
         socket.emit("print-ticket", { payload });
       }
     });
@@ -82,17 +82,17 @@ export class PrintGateway implements OnGatewayConnection, OnGatewayDisconnect {
   sendToPrinters(payload: any) {
     // Emitir a TODAS las impresoras conectadas
     this.server.emit('print-ticket', { payload });
-    console.log('📨 Ticket enviado a impresoras');
+    console.log('Ticket enviado a impresoras');
   }
 
   // Escuchar confirmaciones de impresión
   @SubscribeMessage('print-success')
   handlePrintSuccess(client: Socket, data: any) {
-    console.log('✅ Impresión exitosa:', data);
+    console.log(' Impresión exitosa:', data);
   }
 
   @SubscribeMessage('print-error')
   handlePrintError(client: Socket, data: any) {
-    console.error('❌ Error de impresión:', data);
+    console.error(' Error de impresión:', data);
   }
 }

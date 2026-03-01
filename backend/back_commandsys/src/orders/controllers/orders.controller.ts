@@ -33,9 +33,10 @@ export class OrdersController {
   }
 
   @Get('/branch/active')
-  @Roles(Role.Mesero, Role.Gerente)
+  @Roles(Role.Mesero, Role.Gerente, Role.Cocina)
   async getActiveOrders(@CurrentUser() user: any ) {
-    return this.ordersService.getActiveOrdersByBranch(+user.id_branch, +user.sub);
+    const filterByUser = user.role === Role.Mesero;
+    return this.ordersService.getActiveOrdersByBranch(+user.id_branch, +user.sub, filterByUser);
   }
 
   @Patch(':id/status')
@@ -152,6 +153,35 @@ export class OrdersController {
 
     return {
       message: `Grupo ${group_number} actualizado a ${status} desde Alexa (${device.print_areas.name})`,
+      updated_count: result.count,
+    };
+  }
+
+  @Patch(':id_order/groups/:group_number/status/manual')
+  @Roles(Role.Cocina, Role.Gerente)
+  async updateGroupStatusManual(
+    @Param('id_order') id_order: string,
+    @Param('group_number') group_number: string,
+    @Body('status') status: order_items_status,
+    @Body('id_area') id_area?: number,
+  ) {
+    const validStatuses: order_items_status[] = [
+      'pending', 'in_preparation', 'ready', 'delivered',
+    ];
+
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException('Estado de grupo inválido');
+    }
+
+    const result = await this.ordersService.updateGroupStatus(
+      Number(id_order),
+      Number(group_number),
+      status,
+      id_area,
+    );
+
+    return {
+      message: `Grupo ${group_number} actualizado a ${status}`,
       updated_count: result.count,
     };
   }

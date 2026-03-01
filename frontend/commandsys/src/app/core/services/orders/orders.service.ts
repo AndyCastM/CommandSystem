@@ -60,6 +60,39 @@ export interface PrebillResponse {
   total: number;
 }
 
+export interface ActiveOrderItem {
+  id_order_item: number;
+  status: OrderItemStatus;
+  notes: string | null;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  group_number: number;
+  branch_products: {
+    company_products: {
+      id_company_product: number;
+      id_area: number;
+      name: string;
+    };
+  } | null;
+  order_item_options: {
+    product_option_values: { name: string };
+  }[];
+}
+
+export interface ActiveOrder {
+  id_order: number;
+  created_at: string;
+  status: string;
+  order_type: 'dine_in' | 'takeout';
+  customer_name: string | null;
+  total: number;
+  table_sessions: {
+    tables: { number: string };
+  } | null;
+  order_items: ActiveOrderItem[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -140,5 +173,32 @@ export class OrderService {
     return firstValueFrom(
       this.http.get<SessionSummary>(`${this.api_url}/summary/${id_session}`, {withCredentials: true}), 
     )
+  }
+
+  updateGroupStatus(
+    id_order: number,
+    group_number: number,
+    status: OrderItemStatus,
+    id_area?: number
+  ) {
+
+    const body: any = { status };
+
+    if (id_area !== undefined) {
+      body.id_area = id_area;
+    }
+
+    return firstValueFrom(
+      this.http.patch(
+        `${this.api_url}/${id_order}/groups/${group_number}/status/manual`,
+        body
+      )
+    );
+  }
+
+  updateItemStatus(id_order_item: number, status: OrderItemStatus) {
+    return firstValueFrom(
+      this.http.patch(`${this.api_url}/items/${id_order_item}/status`, { status })
+    );
   }
 }

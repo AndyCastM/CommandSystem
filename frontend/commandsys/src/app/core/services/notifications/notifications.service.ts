@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject } from 'rxjs';
 import { ToastService } from '../../../shared/UI/toast.service';
 import { API_URL } from '../constants';
+import { OrderItemStatus } from '../orders/orders.service';
 
 export interface TableAlert {
   table: string;
@@ -20,6 +21,18 @@ export interface ItemReadyAlert {
 
 export interface GroupReadyAlert {
   message: string;
+}
+
+export interface NewOrderAlert {
+  id_order: number;
+  order_type: 'dine_in' | 'takeout';
+  mesa: string;
+  order_items: any[]; // usa ActiveOrderItem si quieres tiparlo fuerte
+}
+
+export interface ItemStatusChangedAlert {
+  id_order_item: number;
+  status: OrderItemStatus;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -100,6 +113,27 @@ export class NotificationsService {
       this.zone.run(() => {
         console.log('PREBILL RECIBIDO ===>', data);
         this._events$.next({ type: 'prebill', data });
+      });
+    });
+
+     /** ===== NUEVA ORDEN (cocina) ===== */
+    this.socket.on('order:new', (data: NewOrderAlert) => {
+      this.zone.run(() => {
+        this._events$.next({ type: 'order:new', data });
+      });
+    });
+
+    /** ===== CAMBIO DE STATUS DE ITEM (cocina) ===== */
+    this.socket.on('order_item:status', (data: ItemStatusChangedAlert) => {
+      this.zone.run(() => {
+        this._events$.next({ type: 'order_item:status', data });
+      });
+    });
+
+    /** ===== CANCELACION DE ITEM ===== */
+    this.socket.on('order:item-cancelled', (data) => {
+      this.zone.run(() => {
+        this._events$.next({ type: 'order:item-cancelled', data });
       });
     });
 

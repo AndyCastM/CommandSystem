@@ -49,7 +49,7 @@ export class Orders implements OnInit{
       this.loading.set(true);
 
       const data = await this.ordersApi.getActiveOrdersByBranch();
-      //console.log('ORDENES RECIBIDAS --- ', data);
+      console.log('ORDENES RECIBIDAS --- ', data);
 
       const parsed = data.map(order => {
 
@@ -94,6 +94,7 @@ export class Orders implements OnInit{
           time: this.timeSince(localDate.toISOString()),
           type: orderType,
           total,
+          payment_status: order.payment_status,
 
           // ================================
           //   ITEMS — CORREGIDO COMPLETO
@@ -129,12 +130,29 @@ export class Orders implements OnInit{
       });
 
       // Filtrar órdenes que tengan al menos 1 item activo
+      console.log('ANTES DEL FILTRO', parsed);
       this.orders.set(
-        parsed.filter(order =>
-          order.products.some((p: any) => p.status !== 'entregado')
-        )
-      );
+      parsed.filter(order => {
+        const activeProducts = order.products.filter(
+          (p: any) => p.status !== 'cancelado'
+        );
 
+        const allDelivered =
+          activeProducts.length > 0 &&
+          activeProducts.every((p: any) => p.status === 'entregado');
+          const isPaid = order.payment_status === "paid";
+
+          console.log({
+          id: order.id,
+          type: order.type,
+          payment: order.payment_status,
+        });
+        // Desaparece SOLO si está todo entregado Y pagado
+        return !(allDelivered && isPaid);
+      })
+    );
+
+    
       this.splitByStatus();
 
     } catch (err) {

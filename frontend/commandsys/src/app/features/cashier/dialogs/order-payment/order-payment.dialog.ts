@@ -1,7 +1,8 @@
-import { Component, Inject, signal, computed } from '@angular/core';
+import { Component, Inject, signal, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastService } from '../../../../shared/UI/toast.service';
 
 @Component({
   selector: 'app-order-payment-dialog',
@@ -12,6 +13,8 @@ import { FormsModule } from '@angular/forms';
 export class OrderPaymentDialog {
   // Datos que enviamos desde el componente que cobra
   total!: number;
+
+  private toast = inject(ToastService);
 
   // Puede venir por orden o por sesión
   orderId?: number;
@@ -68,27 +71,27 @@ export class OrderPaymentDialog {
       this.cardAmount() < 0 ||
       this.transferAmount() < 0
     ) {
-      alert("Los montos no pueden ser negativos.");
+      this.toast.error("Los montos no pueden ser negativos.");
       return;
     }
 
     // Deben pagar AL MENOS algo
     if (this.totalPaid() <= 0) {
-      alert('Debes ingresar un monto válido.');
+      this.toast.error('Debes ingresar un monto válido.');
       return;
     }
 
     // No permitir pasarse del total
     if (this.totalPaid() > (this.total || 0)) {
-      alert('La suma de los métodos no puede exceder el total.');
-      return;
+       this.toast.error('La suma de los métodos no puede exceder el total.');
+       return;
     }
 
-    // (Opcional) No permitir pagar menos del total
-    // if (this.totalPaid() < (this.total || 0)) {
-    //   alert('El pago no cubre el total.');
-    //   return;
-    // }
+    // No permitir pagar menos del total
+     if (this.totalPaid() < (this.total || 0)) {
+       this.toast.error('El pago no cubre el total.');
+       return;
+    }
 
     // Construir array final de pagos
     const payments: { method: 'cash' | 'card' | 'transfer'; amount: number }[] = [];

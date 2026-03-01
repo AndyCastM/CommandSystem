@@ -27,6 +27,9 @@ export class AdminShellComponent {
 
   private auth = inject(AuthService);
   sidebarOpen = false; // móvil
+  sidebarCollapsed = false;
+  
+  toggleCollapse() { this.sidebarCollapsed = !this.sidebarCollapsed;}
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
   closeSidebar() { this.sidebarOpen = false; }
 

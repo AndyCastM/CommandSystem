@@ -27,6 +27,9 @@ export class ManagerShellComponent {
   currentUser = computed(() => this.auth.currentUser());
 
   sidebarOpen = false; // móvil
+  sidebarCollapsed = false;
+  
+  toggleCollapse() { this.sidebarCollapsed = !this.sidebarCollapsed;}
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
   closeSidebar() { this.sidebarOpen = false; }
 

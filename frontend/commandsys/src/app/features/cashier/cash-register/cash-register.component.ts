@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  PLATFORM_ID,
-} from '@angular/core';
+import { Component, OnInit, inject, signal, computed, PLATFORM_ID,} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +14,8 @@ import { NotificationsService } from '../../../core/services/notifications/notif
 import { OpenSessionDialog } from '../dialogs/open-session.dialog';
 import { CloseSessionDialog } from '../dialogs/close-session.dialog';
 import { MatIconModule } from '@angular/material/icon';
+
+import { API_URL } from '../../../core/services/constants';
 
 @Component({
   selector: 'app-cash-register',
@@ -47,6 +42,15 @@ export class CashRegisterComponent implements OnInit {
   pendingRequests = signal<any[]>([]);
   loading = signal(false);
 
+  downloadTakeoutPrebill(req: any) {
+    const url = API_URL + `/documents/prebill/takeout/${req.id_order}`;
+    window.open(url, '_blank');
+  }
+
+  downloadTablePrebill(req: any) {
+    const url = API_URL+ `/documents/prebill/table/${req.id_session}`;
+    window.open(url, '_blank');
+  }
   // ======================
   // LABELS Y ESTILOS
   // ======================
@@ -301,7 +305,7 @@ askClose() {
       this.payments.set([]);
 
       // REDIRIGE AL LOGIN
-      this.router.navigate(['/login']);
+      this.router.navigate(['/']);
 
     } catch (err) {
       console.error(err);

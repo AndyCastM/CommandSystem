@@ -74,6 +74,8 @@ export class Login {
       this.router.navigate(['/mesero/mesas']);  // Panel mesero
     } else if (role === 'Cajero'){
       this.router.navigate(['/cajero/caja']);    // Panel cajero
+    } else if (role === 'Cocina'){
+      this.router.navigate(['/cocina']); //Panel cocina
     }
   }
 }

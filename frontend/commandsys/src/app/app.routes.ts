@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Login } from './auth/login/login';
 import { authGuard } from './core/guards/auth.guard';
+import { Kitchen } from './features/kitchen/kitchen';
 
 export const routes: Routes = [
     { path : '', component: Login },
@@ -28,5 +29,8 @@ export const routes: Routes = [
       path:'cajero',
       loadComponent:() => import('./layouts/cashier-shell/cashier-shell').then(m => m.CashierShell),
       loadChildren: () => import('./features/cashier/cashier.routes').then(m => m.CASHIER_ROUTES),
+    },
+    {
+      path: 'cocina', component: Kitchen
     }
 ];

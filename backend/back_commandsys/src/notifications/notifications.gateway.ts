@@ -62,7 +62,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`❌ Cliente desconectado: ${client.id}`);
+    console.log(`Cliente desconectado: ${client.id}`);
   }
 
   //  Método helper para emitir notificaciones a toda la sucursal

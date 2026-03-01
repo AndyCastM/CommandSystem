@@ -220,11 +220,20 @@ export class OrdersService {
 
     // recalcular total general
     await this.recalcTotal(order.id_order);
-    await this.printOrder(order.id_order);
+    //await this.printOrder(order.id_order);
     
+    const [_, display] = await Promise.all([
+      this.printOrder(order.id_order),
+      this.getOrderDisplay(order.id_order)
+    ]);
+
+    // A pantallas Angular (cocina, meseros)
+    this.notif.emitToBranch(order.id_branch, 'order:new', display);
+
     return {
       message: 'Comanda creada correctamente',
-      order: fullOrder
+      order: fullOrder,
+      display
     };
   }
 
@@ -350,8 +359,23 @@ async updateGroupStatus(
   id_order: number,
   group_number: number,
   status: order_items_status,
-  areaId: number,
+  areaId?: number,
 ) {
+
+  const whereCondition: any = {
+    id_order,
+    group_number,
+    status: { not: 'cancelled' },
+  };
+
+  // Solo agregar filtro por área si viene definido
+  if (areaId) {
+    whereCondition.branch_products = {
+      company_products: {
+        id_area: areaId,
+      },
+    };
+  }
 
   // 1) OBTENER SOLO ITEMS DE ESE GRUPO Y ESA ÁREA
   const items = await this.prisma.order_items.findMany({
@@ -444,72 +468,91 @@ async updateGroupStatus(
 
 
 
-  async getActiveOrdersByBranch(id_branch: number, id_user: number) {
-  const orders = await this.prisma.orders.findMany({
-    where: {
-      id_branch,
-      id_user,
-      status: { in: ['pending', 'in_progress', 'ready'] }, // excluye canceladas/cerradas
-    },
-    orderBy: { created_at: 'asc' },
-    include: {
-      table_sessions: {
-        include: {
-          tables: true,
-        },
+  async getActiveOrdersByBranch(id_branch: number, id_user?: number, filterByUser = false) {
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        id_branch,
+        // id_user,
+        ...(filterByUser && id_user ? { id_user } : {}), // solo filtra si es mesero
+        OR:[
+          // Ordenes de mesa estan activas por status
+          {
+            order_type : 'dine_in',
+            status: {in: ['pending', 'in_progress', 'ready']},
+          },
+          // Ordenes para llevar estan activas mientras no esten pagadas
+          {
+            order_type: 'takeout',
+            status: {not: 'cancelled'},
+            OR: [
+              { payment_status: null },
+              { payment_status: { not: 'paid' } }
+            ]
+          },
+        ]
+        //status: { in: ['pending', 'in_progress', 'ready'] }, // excluye canceladas/cerradas
       },
-      order_items: {
-        include: {
-          branch_products: {
-            include: {
-              company_products: true,
+      orderBy: { created_at: 'asc' },
+      include: {
+        table_sessions: {
+          include: {
+            tables: true,
+          },
+        },
+        order_items: {
+          include: {
+            branch_products: {
+              include: {
+                company_products: true,
+              },
+            },
+            order_item_options: {
+              include: {
+                product_option_values: true,
+              },
             },
           },
-          order_item_options: {
-            include: {
-              product_option_values: true,
-            },
-          },
         },
       },
-    },
-  });
+    });
 
-  // transformar + calcular total dinámico
-  return orders.map((o) => {
-    // total solo de items no cancelados
-    const total = o.order_items
-      .filter((i) => i.status !== 'cancelled')
-      .reduce((acc, i) => acc + Number(i.subtotal ?? 0), 0);
+    // transformar + calcular total dinámico
+    return orders.map((o) => {
+      // total solo de items no cancelados
+      const total = o.order_items
+        .filter((i) => i.status !== 'cancelled')
+        .reduce((acc, i) => acc + Number(i.subtotal ?? 0), 0);
 
-    return {
-      id_order: o.id_order,
-      created_at: o.created_at,
-      status: o.status,
-      order_type: o.order_type,
-      customer_name: o.customer_name,
-      total, // <-- este es el que usas en el front
+      return {
+        id_order: o.id_order,
+        created_at: o.created_at,
+        status: o.status,
+        order_type: o.order_type,
+        customer_name: o.customer_name,
+        total, // <-- este es el que usas en el front
+        payment_status: o.payment_status,
 
-      table_sessions: o.table_sessions,
-      order_items: o.order_items.map((oi) => ({
-        id_order_item: oi.id_order_item,
-        status: oi.status,
-        notes: oi.notes,
-        quantity: oi.quantity, // ahora siempre 1
-        unit_price: Number(oi.unit_price ?? 0),
-        subtotal: Number(oi.subtotal ?? 0),
+        table_sessions: o.table_sessions,
+        order_items: o.order_items.map((oi) => ({
+          id_order_item: oi.id_order_item,
+          status: oi.status,
+          notes: oi.notes,
+          quantity: oi.quantity, // ahora siempre 1
+          unit_price: Number(oi.unit_price ?? 0),
+          subtotal: Number(oi.subtotal ?? 0),
+          group_number: oi.group_number ?? 1,
 
-        branch_products: oi.branch_products && {
-          company_products: oi.branch_products.company_products,
-        },
+          branch_products: oi.branch_products && {
+            company_products: oi.branch_products.company_products,
+          },
 
-        order_item_options: oi.order_item_options.map((opt) => ({
-          product_option_values: opt.product_option_values,
+          order_item_options: oi.order_item_options.map((opt) => ({
+            product_option_values: opt.product_option_values,
+          })),
         })),
-      })),
-    };
-  });
-}
+      };
+    });
+  }
 
 
   async updateOrderStatus(id_order: number, status: orders_status) {
@@ -572,6 +615,15 @@ async updateGroupStatus(
         }
       }
     });
+
+    this.notif.emitToBranch(
+      item.orders.id_branch,
+      'order_item:status',
+      {
+        id_order_item: item.id_order_item,
+        status: item.status,
+      }
+    );
 
     //console.log('NOTIF ES:', this.notif);
 
@@ -683,11 +735,11 @@ async updateGroupStatus(
     }
 
     // notificación
-    // this.notif.emitToBranch(
-    //   updated.orders.id_branch,
-    //   'order:item-cancelled',
-    //   { id_order_item, id_order: updated.id_order, reason: dto.reason, user: id_user },
-    // );
+    this.notif.emitToBranch(
+       updated.orders.id_branch,
+       'order:item-cancelled',
+       { id_order_item, id_order: updated.id_order, reason: dto.reason, user: id_user },
+    );
 
     //  recalcular total
     await this.recalcTotal(updated.id_order);
@@ -1155,6 +1207,88 @@ async updateGroupStatus(
     }
 
     return { ok: true };
+  }
+
+  async getOrderDisplay(orderId: number) {
+    const order = await this.prisma.orders.findUnique({
+      where: { id_order: orderId },
+      include: {
+        order_items: {
+          include: {
+            branch_products: {
+              include: {
+                company_products: {
+                  include: { print_areas: true }
+                }
+              }
+            },
+            order_item_options: {
+              include: {
+                product_option_values: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!order) throw new Error("Orden no encontrada");
+
+    // Agrupar por group_number -> area
+    const groups: Record<number, {
+      group_number: number;
+      stations: Record<number, {
+        areaId: number;
+        areaName: string;
+        items: any[];
+      }>;
+    }> = {};
+
+    for (const item of order.order_items) {
+      const companyProduct = item.branch_products?.company_products;
+      if (!companyProduct) continue;
+
+      const areaId   = companyProduct.id_area;
+      const areaName = companyProduct.print_areas.name;
+      const group    = item.group_number ?? 1;
+
+      if (!groups[group]) {
+        groups[group] = { group_number: group, stations: {} };
+      }
+
+      if (!groups[group].stations[areaId]) {
+        groups[group].stations[areaId] = { areaId, areaName, items: [] };
+      }
+
+      groups[group].stations[areaId].items.push({
+        id_order_item: item.id_order_item,
+        name:          companyProduct.name,
+        quantity:      item.quantity,
+        options:       item.order_item_options.map(o => o.product_option_values.name),
+        notes:         item.notes ?? undefined,
+        status:        item.status, // pending | in_preparation | ready | delivered | cancelled
+      });
+    }
+
+    // Convertir a arrays y separar por columna kanban
+    const allItems = Object.values(groups).flatMap(g =>
+      Object.values(g.stations).flatMap(s =>
+        s.items.map(i => ({ ...i, group_number: g.group_number, areaId: s.areaId, areaName: s.areaName }))
+      )
+    );
+
+    return {
+      id_order: order.id_order,
+      groups: Object.values(groups).map(g => ({
+        group_number: g.group_number,
+        stations: Object.values(g.stations)
+      })),
+      kanban: {
+        pending:        allItems.filter(i => i.status === 'pending'),
+        in_preparation: allItems.filter(i => i.status === 'in_preparation'),
+        ready:          allItems.filter(i => i.status === 'ready'),
+      }
+    };
   }
 
 }

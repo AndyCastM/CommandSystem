@@ -25,6 +25,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { CashModule } from './cash/cash.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrintModule } from './print/print.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import { PrintModule } from './print/print.module';
     BranchesModule, TablesModule, CompaniesModule, 
     BranchSchedulesModule, TableLocationsModule, TableSessionsModule, 
     ProductCategoriesModule, PrintAreasModule, CombosModule, CloudinaryModule, 
-    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule, CashModule, PaymentsModule, PrintModule],
+    AiModule, ScheduleModule.forRoot(), OrdersModule, AlexaModule, MetricsModule, CashModule, PaymentsModule, PrintModule, DocumentsModule],
   providers: [{
     provide: APP_GUARD,
     useClass: JwtAuthGuard,

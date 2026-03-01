@@ -1,110 +1,131 @@
-<!-- Topbar (móvil) -->
 <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white shadow">
-  <button (click)="toggleSidebar()" aria-label="Abrir menú" class="material-icons">menu</button>
+  <button (click)="toggleSidebar()" class="material-icons">
+    menu
+  </button>
   <img src="assets/logo.png" alt="Logo" class="h-8 w-8 object-contain" />
 </header>
 
-<!-- Overlay móvil -->
-<div *ngIf="sidebarOpen" (click)="closeSidebar()" class="fixed inset-0 bg-black/30 z-30 md:hidden"></div>
+<div
+  *ngIf="sidebarOpen"
+  (click)="closeSidebar()"
+  class="fixed inset-0 bg-black/30 z-30 md:hidden">
+</div>
 
-<!-- Layout en grid  -->
-<div class="min-h-screen grid grid-cols-1 md:grid-cols-[16rem_1fr] bg-slate-100">
+<div class="h-screen flex bg-slate-100 overflow-hidden transition-all duration-300">
 
-  <!-- Sidebar -->
   <aside
-  class="fixed md:static z-40 md:z-auto inset-y-0 left-0 w-64 md:w-auto transform transition-transform duration-200 md:translate-x-0
-         md:flex md:flex-col bg-white border-r border-slate-200 shadow-[4px_0_16px_-4px_rgba(0,0,0,0.09)]"
-  [class.-translate-x-full]="!sidebarOpen">
+    class="fixed md:relative z-40 inset-y-0 left-0
+           bg-white border-r border-slate-200
+           transform transition-transform duration-300 flex flex-col
+           h-screen md:h-full
+           -translate-x-full md:translate-x-0"
+    [class.w-64]="!sidebarCollapsed"
+    [class.w-20]="sidebarCollapsed"
+    [class.translate-x-0]="sidebarOpen"
+  >
 
-    <!-- Header azul con gradiente -->
-    <div class="px-8 py-6 gap-2 border-b border-white/10 bg-gradient-to-r from-[#16a3bd] to-[#283996] text-white flex items-center gap-3"> <!-- Colores ajustados para suavizar -->
+    <div class="relative px-4 py-5 border-b bg-gradient-to-r from-[#16a3bd] to-[#283996] text-white flex items-center gap-3">
+
       <img
         src="assets/logo.png"
         alt="Logo"
-        class="h-10 w-10 rounded-full object-cover ring-1 ring-white/20 shadow-sm bg-white/10 p-0.5"
+        class="h-10 w-10 rounded-full object-cover bg-white/10 p-1"
       />
-      <div class="leading-tight">
-        <div class="text-base font-semibold tracking-wide">{{currentUser()?.username | capitalize }}</div>
-        <div class="text-[12px] opacity-80">Mesero</div>
+
+      <div *ngIf="!sidebarCollapsed" class="leading-tight">
+        <div class="text-base font-semibold tracking-wide">
+          {{ currentUser()?.username | capitalize }}
+        </div>
+        <div class="text-xs opacity-80">Mesero</div>
       </div>
+
+      <button
+        (click)="toggleCollapse()"
+        class="absolute -right-3 top-1/2 -translate-y-1/2 bg-white text-indigo-600 rounded-full shadow-md p-1
+               hover:scale-110 transition hidden md:flex items-center justify-center z-50 border border-slate-100"
+      >
+        <mat-icon class="text-base">
+          {{ sidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
+        </mat-icon>
+      </button>
+
     </div>
 
-    <!-- Navegación -->
     <nav class="flex-1 py-3 overflow-y-auto">
+
       <ng-container *ngFor="let item of nav">
+
         <a
           [routerLink]="item.path"
-          [routerLinkActiveOptions]="{ exact: false }"
           routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: false }"
           class="group relative flex items-center gap-3 mx-2 my-1 px-3 py-2 rounded-md transition
-                text-slate-800 hover:bg-[#0a2cb3]/80 hover:text-white
-                focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                 text-slate-800 hover:bg-indigo-600 hover:text-white"
         >
-          <!-- Indicador lateral -->
+
           <span
             class="h-5 w-1 rounded-full mr-1 bg-transparent transition-colors
-                  group-hover:bg-indigo-400
-                  group-[.is-active]:bg-indigo-500"
-          ></span>
+                   group-hover:bg-indigo-400
+                   group-[.is-active]:bg-indigo-500">
+          </span>
 
-          <!-- Icono -->
           <mat-icon
             class="transition-colors text-indigo-600
-                  group-hover:text-white
-                  group-[.is-active]:text-white"
+                   group-hover:text-white
+                   group-[.is-active]:text-white z-10"
           >
             {{ item.icon }}
           </mat-icon>
 
-          <!-- Label -->
-          <span
-            class="flex-1 transition-colors
-                  group-[.is-active]:text-white"
-          >
+          <span *ngIf="!sidebarCollapsed" class="flex-1 transition-colors
+                  group-[.is-active]:text-white z-10">
             {{ item.label }}
           </span>
 
-          <!-- Chevron -->
           <span
-            class="ml-auto transition opacity-0 group-hover:opacity-100
-                  material-icons text-indigo-600
-                  group-[.is-active]:text-white"
-          >
+            *ngIf="!sidebarCollapsed"
+            class="ml-auto opacity-0 group-hover:opacity-100 material-icons text-indigo-600 group-[.is-active]:text-white z-10">
             chevron_right
           </span>
 
-          <!-- Fondo activo (pill) -->
           <span
-            class="pointer-events-none absolute inset-0 rounded-md -z-10
-                  group-[.is-active]:bg-[#09269b]
-                  group-[.is-active]:ring-2 group-[.is-active]:ring-[#4c6ef5]/60"
-          ></span>
+            class="pointer-events-none absolute inset-0 rounded-md -z-0
+                   group-[.is-active]:bg-[#09269b]
+                   group-[.is-active]:ring-2 group-[.is-active]:ring-[#4c6ef5]/60">
+          </span>
 
         </a>
+
       </ng-container>
+
     </nav>
 
-    <!-- Footer -->
-    <div class="mt-auto px-5 py-4 border-t border-slate-200 bg-slate-50">
+    <div class="mt-auto px-4 py-4 border-t border-slate-200 bg-slate-50">
+
       <button
         (click)="onLogout()"
-        [routerLink]="'/'"
-        class="group w-full flex items-center justify-center gap-2 text-sm font-medium text-rose-600 border border-rose-200
-               rounded-lg px-4 py-2 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] hover:bg-rose-600 hover:text-white hover:shadow-[0_4px_12px_-1px_rgba(244,63,94,0.4)]
-               active:scale-[0.98] transition-all duration-300"
+        class="group w-full flex items-center justify-center gap-2 text-sm font-medium
+               text-rose-600 border border-rose-200 rounded-lg px-4 py-2 bg-white
+               hover:bg-rose-600 hover:text-white active:scale-[0.98]
+               transition-all duration-300"
       >
         <mat-icon class="text-base transition-transform group-hover:rotate-[-15deg] group-hover:scale-110">
           logout
         </mat-icon>
-        <span>Cerrar sesión</span>
+
+        <span *ngIf="!sidebarCollapsed">
+          Cerrar sesión
+        </span>
       </button>
+
     </div>
+
   </aside>
 
-  <!-- Main -->
-  <main class="bg-white">
+  <main class="flex-1 bg-white overflow-y-auto">
     <div class="p-6">
-      <router-outlet />
+      <router-outlet></router-outlet>
     </div>
   </main>
+
 </div>

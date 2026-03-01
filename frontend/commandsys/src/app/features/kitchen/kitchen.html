@@ -1,0 +1,139 @@
+<div class="min-h-screen bg-gray-900 text-white p-4">
+
+  <h1 class="text-2xl font-bold mb-6 text-center tracking-widest uppercase">
+     PEDIDOS
+  </h1>
+
+  <div class="grid grid-cols-3 gap-4">
+
+    <!-- PENDIENTE -->
+    <div class="bg-gray-800 rounded-xl p-4">
+      <h2 class="text-sm font-bold mb-4 uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+        Pendiente
+        <span class="ml-auto bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
+          {{ pending().length }}
+        </span>
+      </h2>
+
+      <div class="flex flex-col gap-3">
+        @for (group of pending(); track group.id_order) {
+          <div class="bg-gray-700 rounded-lg p-3 border-l-4 border-yellow-400">
+            <ng-container [ngTemplateOutlet]="itemCard"
+              [ngTemplateOutletContext]="{ $implicit: group, col: 'pending' }"/>
+          </div>
+        } @empty {
+          <p class="text-gray-500 text-sm text-center py-10">Sin pedidos</p>
+        }
+      </div>
+    </div>
+
+    <!-- EN PREPARACIÓN -->
+    <div class="bg-gray-800 rounded-xl p-4">
+      <h2 class="text-sm font-bold mb-4 uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+        En preparación
+        <span class="ml-auto bg-blue-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
+          {{ in_preparation().length }}
+        </span>
+      </h2>
+
+      <div class="flex flex-col gap-3">
+        @for (group of in_preparation(); track group.id_order) {
+          <div class="bg-gray-700 rounded-lg p-3 border-l-4 border-blue-400">
+            <ng-container [ngTemplateOutlet]="itemCard"
+              [ngTemplateOutletContext]="{ $implicit: group, col: 'in_preparation' }"/>
+          </div>
+        } @empty {
+          <p class="text-gray-500 text-sm text-center py-10">Nada en preparación</p>
+        }
+      </div>
+    </div>
+
+    <!-- LISTO -->
+    <div class="bg-gray-800 rounded-xl p-4">
+      <h2 class="text-sm font-bold mb-4 uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+        Listo
+        <span class="ml-auto bg-green-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
+          {{ ready().length }}
+        </span>
+      </h2>
+
+      <div class="flex flex-col gap-3">
+        @for (group of ready(); track group.id_order) {
+          <div class="bg-gray-700 rounded-lg p-3 border-l-4 border-green-400">
+            <ng-container [ngTemplateOutlet]="itemCard"
+              [ngTemplateOutletContext]="{ $implicit: group, col: 'ready' }"/>
+          </div>
+        } @empty {
+          <p class="text-gray-500 text-sm text-center py-10">Nada listo aún</p>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<ng-template #itemCard let-group let-col="col">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-start mb-2">
+    <span class="font-semibold text-sm">
+      Grupo #{{ group.group_number }}
+    </span>
+
+    <span class="text-xs bg-gray-600 px-2 py-0.5 rounded-full">
+      @if (group.order_type === 'dine_in') {
+        Mesa {{ group.mesa }}
+      } @else {
+        🥡 {{ group.customer_name || ('Orden #' + group.id_order) }}
+      }
+</span>
+  </div>
+
+  <!-- ITEMS DEL GRUPO -->
+  <div class="flex flex-col gap-2 mb-3">
+
+    @for (i of group.items; track i.name) {
+      <div class="bg-gray-800 rounded-md p-2">
+
+        <div class="text-sm font-medium">
+          {{ i.quantity }} × {{ i.name }}
+        </div>
+
+        @if (i.options.length > 0) {
+          <div class="text-xs text-blue-300 mt-1">
+            {{ i.options.join(' · ') }}
+          </div>
+        }
+
+        @if (i.notes) {
+          <div class="text-xs text-yellow-300 italic mt-1">
+            {{ i.notes }}
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="flex gap-2 mt-3">
+    @if (col === 'pending') {
+      <button (click)="changeGroupStatus(group, 'in_preparation')"
+        class="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg transition-colors">
+        Iniciar
+      </button>
+    }
+
+    @if (col === 'in_preparation') {
+      <button (click)="changeGroupStatus(group, 'ready')"
+        class="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-lg transition-colors">
+        ✓ Listo
+      </button>
+    }
+  </div>
+
+</ng-template>

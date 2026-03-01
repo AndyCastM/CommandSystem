@@ -6,7 +6,7 @@ import { ToastService } from '../../shared/UI/toast.service';
 import { SafeCookieService } from '../../core/utils/ssr-cookie';
 import { isBrowser } from '../../core/utils/platform';
 import { API_URL } from '../../core/services/constants';
-
+import { Router } from '@angular/router';
 export type Role = 'Admin' | 'Gerente' | 'Cajero' | 'Mesero' | 'Superadmin';
 
 export interface LoginResponse {
@@ -25,6 +25,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private cookies = inject(SafeCookieService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   currentUser = signal<LoginResponse['user'] | null>(null);
 
@@ -74,6 +75,9 @@ export class AuthService {
 
       this.currentUser.set(null);
       this.toast.success('Sesión cerrada correctamente');
+
+      await this.router.navigate(['/']);
+
     } catch (err) {
       console.error(err);
       this.toast.error('Error al cerrar sesión');

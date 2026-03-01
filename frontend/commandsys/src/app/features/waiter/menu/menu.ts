@@ -213,7 +213,7 @@ export class Menu implements OnInit {
         quantity: productData.quantity,
         options: productData.options,
         notes: productData.notes,
-        group_number: this.currentGroup(), // 🔥 aquí marcamos el grupo
+        group_number: this.currentGroup(), // aquí marcamos el grupo
       });
     }
 
@@ -295,7 +295,7 @@ export class Menu implements OnInit {
             notes: item.notes ?? null,
             options: optionValues,
             combo_groups: comboGroups,
-            group_number: item.group_number || 1, // 🔥 se envía al backend
+            group_number: item.group_number || 1, //  se envía al backend
           };
         });
 

@@ -31,7 +31,18 @@ export class OrderPreviewComponent {
 
   getOptionNames(opt: any): string {
     if (!opt?.values || opt.values.length === 0) return '';
-    return opt.values.map((v: any) => v.name).join(', ');
+
+    return opt.values
+      .map((v: any) => {
+        const extra = Number(v.extra_price ?? 0);
+
+        if (extra > 0) {
+          return `${v.name} (+$${extra.toFixed(2)})`;
+        }
+
+        return v.name;
+      })
+      .join(', ');
   }
 
   formatPrice(value: number): string {
