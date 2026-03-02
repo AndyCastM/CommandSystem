@@ -160,6 +160,11 @@ export class DocumentsService {
   private printHeader(doc: PDFDocument, company: any) {
     doc.font('Courier').fontSize(8);
 
+    if (company.ticket_header) {
+      doc.text(company.ticket_header.toUpperCase(), { align: 'center' });
+      doc.moveDown(0.5);
+    }
+
     doc.text(company.name.toUpperCase(), { align: 'center' });
     doc.text(company.legal_name.toUpperCase(), { align: 'center' });
     doc.text(`RFC: ${company.rfc}`, { align: 'center' });

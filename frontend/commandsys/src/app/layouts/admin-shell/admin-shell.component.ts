@@ -17,7 +17,7 @@ export class AdminShellComponent {
     { icon: 'dashboard', label: 'Dashboard', path: '/admin/dashboard' },
     { icon: 'people', label: 'Usuarios', path: '/admin/usuarios' },
     { icon: 'inventory_2', label: 'Productos', path: '/admin/productos' },
-    { icon: 'food_bank', label: 'Combos', path: '/admin/combos' },
+    //{ icon: 'food_bank', label: 'Combos', path: '/admin/combos' },
     { icon: 'face_2', label: 'Generador IA', path: '/admin/generador-ia'},
     { icon: 'apartment', label: 'Sucursales', path: '/admin/sucursales' },
     { icon: 'settings', label: 'Configuración', path: '/admin/configuracion' },
