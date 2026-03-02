@@ -50,17 +50,28 @@ export class OrderPreviewComponent {
   }
 
   itemSubtotal(item: any): number {
-    const base = item.product.base_price || 0;
-    let extras = 0;
+    const base = Number(item.product?.base_price || 0);
+    let extraValuesTotal = 0;
+    let tiersTotal = 0;
 
     for (const opt of item.options || []) {
-      extras += (opt.values || []).reduce(
-        (acc: number, v: any) => acc + (v.extra_price || 0),
+      // Suma de valores individuales
+      extraValuesTotal += (opt.values || []).reduce(
+        (acc: number, v: any) => acc + Number(v.extra_price || 0),
         0
       );
+
+      // Suma de Tiers adicionales
+      if (opt.multi_select && opt.tiers?.length > 0) {
+        const count = (opt.values || []).length;
+        const matchingTier = opt.tiers.find((t: any) => Number(t.selection_count) === count);
+        if (matchingTier) {
+          tiersTotal += Number(matchingTier.extra_price || 0);
+        }
+      }
     }
 
-    return (base + extras) * item.quantity;
+    return (base + extraValuesTotal + tiersTotal) * Number(item.quantity || 1);
   }
 
   getGeneralNotes(): string {

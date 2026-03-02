@@ -86,6 +86,22 @@
           </li>
         </ul>
 
+        <div class="ml-1 space-y-0.5">
+          <ng-container *ngFor="let opt of item.value.options">
+            <div *ngIf="opt.multi_select && opt.tiers?.length > 0" class="text-[10px]">
+              <div *ngFor="let tier of opt.tiers">
+                <div *ngIf="tier.selection_count === opt.values.length" 
+                     class="flex justify-between items-center bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100 mt-1">
+                  <span class="flex items-center gap-1">
+                    Extra por {{ tier.selection_count }} selecciones
+                  </span>
+                  <span class="font-bold">+{{ formatPrice(tier.extra_price) }}</span>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
            <!-- Total final del producto -->
           <div class="flex justify-between items-center pt-1 border-t border-slate-100 mt-2">
             <span class="text-xs text-slate-500">

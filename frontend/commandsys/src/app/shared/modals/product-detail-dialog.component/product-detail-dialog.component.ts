@@ -84,21 +84,33 @@ export class ProductDetailDialogComponent implements OnInit {
       return;
     }
     
-    const selected = Array.from(this.selectedOptions.entries()).map(([id_option, values]) => ({
-      id_option,
-      values: values.map((v: any) => ({
-        id_option_value: v.id_value,
-        name: v.name,
-        extra_price: v.extra_price,
-      })),
-    }));
+    // Obtenemos el producto actual para buscar los tiers originales
+    const productData = this.product();
 
-    // Devolver los datos al padre (producto, cantidad, opciones y notas)
+    const selected = Array.from(this.selectedOptions.entries()).map(([id_option, selectedValues]) => {
+      // Buscamos la opción original en el producto para recuperar sus tiers y flags
+      const originalOption = productData.options.find((o: any) => o.id_option === id_option);
+
+      return {
+        id_option,
+        name: originalOption?.name, // Útil para el resumen
+        multi_select: originalOption?.multi_select, // ¡Indispensable!
+        // Recuperamos los tiers de la base de datos (asegúrate del nombre de la propiedad según tu API)
+        tiers: originalOption?.product_option_tiers || originalOption?.tiers || [], 
+        values: selectedValues.map((v: any) => ({
+          id_option_value: v.id_value,
+          name: v.name,
+          extra_price: v.extra_price,
+        })),
+      };
+    });
+
+    // Devolver los datos al padre
     this.dialogRef.close({
-      product: this.product(),
+      product: productData,
       quantity: this.quantity(),
       options: selected,
-      notes: this.orderNotes,  // Añadir las notas
+      notes: this.orderNotes,
     });
   }
 

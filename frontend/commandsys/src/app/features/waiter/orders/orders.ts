@@ -53,20 +53,10 @@ export class Orders implements OnInit{
 
       const parsed = data.map(order => {
 
-        // === CALCULAR TOTAL SIN CANCELADOS ===
+        // === EL TOTAL ES LA SUMA SIMPLE DE LOS SUBTOTALES DEL BACKEND ===
         const total = order.order_items
           .filter((oi: any) => oi.status !== 'cancelled')
-          .reduce((acc: number, oi: any) => {
-            const base = Number(oi.branch_products.company_products.base_price);
-
-            const optionsExtra = oi.order_item_options.reduce(
-              (acc2: number, o: any) =>
-                acc2 + Number(o.product_option_values.extra_price),
-              0
-            );
-
-            return acc + (base + optionsExtra) * oi.quantity;
-          }, 0);
+          .reduce((acc: number, oi: any) => acc + Number(oi.subtotal || 0), 0);
 
         // Parsear la fecha que viene de la BD como hora local
         const dateStr = order.created_at.replace(' ', 'T'); // Convertir a formato ISO
@@ -113,8 +103,8 @@ export class Orders implements OnInit{
             const extra = options.reduce((acc: number, o: any) => acc + o.extra, 0);
 
             // subtotal por item
-            const subtotal = (base + extra) * oi.quantity;
-
+            const subtotal = oi.subtotal;
+            
             return {
               id_order_item: oi.id_order_item,
               name: oi.branch_products.company_products.name,

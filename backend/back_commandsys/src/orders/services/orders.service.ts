@@ -529,7 +529,7 @@ async updateGroupStatus(
         status: o.status,
         order_type: o.order_type,
         customer_name: o.customer_name,
-        total, // <-- este es el que usas en el front
+        total, 
         payment_status: o.payment_status,
 
         table_sessions: o.table_sessions,

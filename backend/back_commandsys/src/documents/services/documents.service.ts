@@ -25,7 +25,15 @@ export class DocumentsService {
               include: { company_products: true },
             },
             order_item_options: {
-              include: { product_option_values: true },
+              include: { 
+                product_option_values: {
+                  include: {
+                    product_options: { // <--- Necesario para saber a qué grupo pertenece la opción
+                      include: { product_option_tiers: true } // <--- Necesario para ver los precios extra por cantidad
+                    }
+                  }
+                } 
+              },
             },
           },
         },
@@ -92,7 +100,15 @@ export class DocumentsService {
                   include: { company_products: true },
                 },
                 order_item_options: {
-                  include: { product_option_values: true },
+                  include: { 
+                    product_option_values: {
+                      include: {
+                        product_options: { // <--- Necesario para saber a qué grupo pertenece la opción
+                          include: { product_option_tiers: true } // <--- Necesario para ver los precios extra por cantidad
+                        }
+                      }
+                    } 
+                  },
                 },
               },
             },
@@ -142,142 +158,182 @@ export class DocumentsService {
   //  HEADER
   // =====================================================
   private printHeader(doc: PDFDocument, company: any) {
-    doc.font('Courier');
-    doc.fontSize(8);
-
-    if (company.ticket_header) {
-      doc.text(company.ticket_header, { align: 'center' });
-      doc.moveDown(0.5);
-    }
-
-    doc.font('Courier-Bold').fontSize(11);
-    doc.text(company.name, { align: 'center' });
-
     doc.font('Courier').fontSize(8);
-    doc.text(company.legal_name, { align: 'center' });
+
+    doc.text(company.name.toUpperCase(), { align: 'center' });
+    doc.text(company.legal_name.toUpperCase(), { align: 'center' });
     doc.text(`RFC: ${company.rfc}`, { align: 'center' });
 
-    doc.moveDown(0.3);
-    doc.text(
-      `${company.street} ${company.num_ext ?? ''}, ${company.colony}`,
-      { align: 'center' }
-    );
-    doc.text(
-      `${company.city}, ${company.state} CP: ${company.cp}`,
-      { align: 'center' }
-    );
-    doc.text(`Tel: ${company.phone}`, { align: 'center' });
+    doc.moveDown(0.2);
 
-    this.separator(doc);
+    doc.text(
+      `${company.street} ${company.num_ext ?? ''}, ${company.colony}`.toUpperCase(),
+      { align: 'center' }
+    );
+
+    doc.text(
+      `${company.city}, ${company.state} CP ${company.cp}`.toUpperCase(),
+      { align: 'center' }
+    );
+
+    doc.text(`TEL ${company.phone}`, { align: 'center' });
+
+    doc.text('----------------------------------------');
   }
 
-  // =====================================================
-  //  ITEMS AGRUPADOS
-  // =====================================================
   private printItems(doc: PDFDocument, items: any[]): number {
     type Line = {
-        qty: number;
-        name: string;
-        basePrice: number;
-        modifiers: { name: string; extra: number }[];
-        subtotal: number;
+      qty: number;
+      name: string;
+      basePrice: number;
+      modifiers: { name: string; extra: number }[];
+      tiers: { name: string; extra: number }[];      subtotal: number;
     };
 
     const agg = new Map<string, Line>();
-    let total = 0;
+    let totalOrder = 0;
 
     for (const item of items) {
-        if (item.status === 'cancelled') continue;
+      if (item.status === 'cancelled') continue;
 
-        const name = item.branch_products?.company_products?.name ?? 'Producto';
-        const basePrice = Number(item.branch_products?.company_products?.base_price ?? 0);
+      const name = item.branch_products?.company_products?.name ?? 'PRODUCTO';
+      const basePrice = Number(item.branch_products?.company_products?.base_price ?? 0);
+      const subtotal = Number(item.subtotal ?? 0);
+      const qty = Number(item.quantity ?? 1);
 
-        const modifiers =
-        (item.order_item_options ?? [])
-            .map((x: any) => ({
-            name: x.product_option_values?.name ?? '',
-            extra: Number(x.product_option_values?.extra_price ?? 0),
-            }))
-            .filter((m: any) => m.extra > 0); // solo los que cuestan
+      const modifiers: { name: string; extra: number }[] = [];
+      const tiersFound: { name: string; extra: number }[] = [];
+      const optionsByGroup = new Map<number, any[]>();
 
-        // clave para agrupar (producto + modificadores)
-        const modKey = modifiers
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((m) => `${m.name}:${m.extra}`)
-        .join('|');
+      for (const opt of item.order_item_options ?? []) {
+        const val = opt.product_option_values;
+        if (!val) continue;
 
-        const key = `${name}||${basePrice}||${modKey}`;
-
-        const qty = Number(item.quantity ?? 1);
-
-        // subtotal real ya viene de BD (incluye extras)
-        const subtotal = Number(item.subtotal ?? 0);
-
-        const current = agg.get(key);
-        if (current) {
-        current.qty += qty;
-        current.subtotal += subtotal;
-        } else {
-        agg.set(key, {
-            qty,
-            name,
-            basePrice,
-            modifiers,
-            subtotal,
-        });
+        const extra = Number(val.extra_price ?? 0);
+        if (extra > 0) {
+          modifiers.push({
+            name: val.name.toUpperCase(),
+            extra
+          });
         }
 
-        total += subtotal;
+        // Agrupación para Tiers
+        const groupId = val.id_option;
+        if (!optionsByGroup.has(groupId)) optionsByGroup.set(groupId, []);
+        optionsByGroup.get(groupId)!.push(val);
+      }
+
+      // Lógica de Tiers
+      for (const [groupId, selectedValues] of optionsByGroup) {
+        const groupDef = selectedValues[0]?.product_options;
+        if (groupDef?.multi_select && groupDef.product_option_tiers?.length > 0) {
+          const count = selectedValues.length;
+          const tier = groupDef.product_option_tiers.find(t => t.selection_count === count);
+          if (tier && Number(tier.extra_price) > 0) {
+            tiersFound.push({ 
+              name: `${count} ${groupDef.name.toUpperCase()}`, 
+              extra: Number(tier.extra_price) 
+            });
+          }
+        }
+      }
+
+      const modKey = modifiers.map(m => `${m.name}:${m.extra}`).join('|');
+      const key = `${name}||${basePrice}||${modKey}`;
+
+      const current = agg.get(key);
+      if (current) {
+        current.qty += qty;
+        current.subtotal += subtotal;
+      } else {
+        agg.set(key, {
+          qty,
+          name: name.toUpperCase(),
+          basePrice,
+          modifiers,
+          tiers: tiersFound, 
+          subtotal
+        });
+      }
+
+      totalOrder += subtotal;
     }
 
     doc.font('Courier').fontSize(8);
 
+    // HEADER COLUMNAS
+    doc.text('CANT.  DESCRIPCION               IMPORTE');
+    doc.text('----------------------------------------');
+
     for (const [, line] of agg) {
-        // Producto principal
-        doc.font('Courier-Bold');
-        doc.text(`${line.qty}x ${line.name}`);
 
-        // Precio base
+      const qty = line.qty.toString().padStart(3, ' ');
+      const desc = line.name.substring(0, 22).padEnd(22, ' ');
+      const amount = line.subtotal.toFixed(2).padStart(8, ' ');
+
+      doc.text(`${qty}   ${desc}   ${amount}`);
+
+      // BASE
+      doc.text(
+        `      BASE (${line.basePrice.toFixed(2)})`
+      );
+
+      // MODIFICADORES
+      for (const mod of line.modifiers) {
+        doc.text(
+          `      + ${mod.name} (+${mod.extra.toFixed(2)})`
+        );
+      }
+
+      // Render de Tiers
+      for (const tier of line.tiers) {
+        doc.font('Courier').text(`      * ${tier.name} (+${tier.extra.toFixed(2)})`);
         doc.font('Courier');
-        doc.text(`   $${line.basePrice.toFixed(2)}`);
+      }
 
-        // Modificadores
-        for (const mod of line.modifiers) {
-        doc.text(
-            `   + ${mod.name}   $${mod.extra.toFixed(2)}`
-        );
-        }
-
-        // Subtotal de esa línea
-        doc.moveDown(0.2);
-        doc.text(
-        `   SUBTOTAL: $${line.subtotal.toFixed(2)}`,
-        { align: 'right' }
-        );
-
-        doc.moveDown(0.5);
+      doc.moveDown(0.2);
     }
 
-    return total;
-    }
+    const totalArticulos = Array.from(agg.values())
+      .reduce((sum, item) => sum + item.qty, 0);
+
+    doc.text('----------------------------------------');
+    doc.text(`ARTICULOS: ${totalArticulos}`);
+    
+    return totalOrder;
+  }
+
   // =====================================================
   //  TOTALS
   // =====================================================
   private printTotals(doc: PDFDocument, total: number, taxPercentage: number) {
-    this.separator(doc);
+      doc.text('----------------------------------------');
 
     const subtotal = total / (1 + taxPercentage / 100);
     const tax = total - subtotal;
 
-    doc.fontSize(8);
-    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, { align: 'right' });
-    doc.text(`IVA ${taxPercentage}%: $${tax.toFixed(2)}`, { align: 'right' });
+    doc.text(
+      'SUBTOTAL:'.padEnd(30, ' ') +
+      subtotal.toFixed(2).padStart(8, ' ')
+    );
 
-    doc.font('Courier-Bold').fontSize(11);
-    doc.text(`TOTAL: $${total.toFixed(2)}`, { align: 'right' });
+    doc.text(
+      `IVA ${taxPercentage}%:`.padEnd(30, ' ') +
+      tax.toFixed(2).padStart(8, ' ')
+    );
 
-    doc.font('Courier');
+    doc.text('----------------------------------------');
+
+    doc.font('Courier-Bold').fontSize(10);
+
+    doc.text(
+      'TOTAL:'.padEnd(30, ' ') +
+      total.toFixed(2).padStart(8, ' ')
+    );
+
+    doc.font('Courier').fontSize(8);
+
+    doc.text('----------------------------------------');
   }
 
   // =====================================================
@@ -296,8 +352,8 @@ export class DocumentsService {
   //  SEPARATOR
   // =====================================================
   private separator(doc: PDFDocument) {
-    doc.moveDown(0.5);
-    doc.text('--------------------------------');
-    doc.moveDown(0.5);
+    doc.moveDown(0.2);
+    doc.text('------------------------------------------', { align: 'center' });
+    doc.moveDown(0.2);
   }
 }

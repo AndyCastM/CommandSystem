@@ -61,6 +61,8 @@ export class ProductDialogComponent {
   private catSrv = inject(ProductCategoriesService);
   private cdr = inject(ChangeDetectorRef);
 
+  collapsed = false;
+  
   saving = signal(false);
   imagePreview = signal<string | null>(null);
   editing = signal<boolean>(false);

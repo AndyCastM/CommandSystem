@@ -65,52 +65,47 @@ export class OrderPaymentDialog {
   }
 
   confirm() {
-    // Validación de negativos
-    if (
-      this.cashAmount() < 0 ||
-      this.cardAmount() < 0 ||
-      this.transferAmount() < 0
-    ) {
+    const total = this.total || 0;
+    const paid = this.totalPaid();
+    const epsilon = 0.01; // Para evitar errores de decimales
+
+    // Validar negativos
+    if (this.cashAmount() < 0 || this.cardAmount() < 0 || this.transferAmount() < 0) {
       this.toast.error("Los montos no pueden ser negativos.");
       return;
     }
 
-    // Deben pagar AL MENOS algo
-    if (this.totalPaid() <= 0) {
+    //  Validar que no esté vacío
+    if (paid <= 0) {
       this.toast.error('Debes ingresar un monto válido.');
       return;
     }
 
-    // No permitir pasarse del total
-    if (this.totalPaid() > (this.total || 0)) {
-       this.toast.error('La suma de los métodos no puede exceder el total.');
-       return;
+    // No permitimos que Tarjeta o Transferencia solas excedan el total
+    if ((this.cardAmount() + this.transferAmount()) > total + epsilon) {
+      this.toast.error('El monto en tarjeta/transferencia no puede exceder el total.');
+      return;
     }
 
-    // No permitir pagar menos del total
-     if (this.totalPaid() < (this.total || 0)) {
-       this.toast.error('El pago no cubre el total.');
-       return;
+    //  VALIDAR QUE CUBRA EL TOTAL
+    if (paid < total - epsilon) {
+      this.toast.error(`El pago no cubre el total. Faltan ${(total - paid)}`);
+      return;
     }
 
-    // Construir array final de pagos
     const payments: { method: 'cash' | 'card' | 'transfer'; amount: number }[] = [];
 
-    if (this.cashAmount() > 0) {
-      payments.push({ method: 'cash', amount: this.cashAmount() });
-    }
-    if (this.cardAmount() > 0) {
-      payments.push({ method: 'card', amount: this.cardAmount() });
-    }
-    if (this.transferAmount() > 0) {
-      payments.push({ method: 'transfer', amount: this.transferAmount() });
-    }
+    // se guarda el monto REAL recibido.
+    if (this.cashAmount() > 0) payments.push({ method: 'cash', amount: this.cashAmount() });
+    if (this.cardAmount() > 0) payments.push({ method: 'card', amount: this.cardAmount() });
+    if (this.transferAmount() > 0) payments.push({ method: 'transfer', amount: this.transferAmount() });
 
     this.ref.close({
       id_order: this.orderId,
       id_session: this.idSession,
       id_orders: this.idOrders,
       payments,
+      change: this.change() // Enviamos el cambio calculado para el ticket
     });
   }
 

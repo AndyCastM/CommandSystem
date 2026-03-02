@@ -237,18 +237,34 @@ export class Menu implements OnInit {
     let total = 0;
 
     for (const item of this.cart().values()) {
-      const base = item.product.base_price;
-      let extras = 0;
+      const base = Number(item.product?.base_price || 0);
+      let extraValuesPrice = 0;
+      let tiersPrice = 0;
 
+      // 1. Calcular la suma de TODOS los valores individuales seleccionados
+      // (Igual que el primer bucle de tu backend)
       for (const opt of item.options || []) {
-        const optTotal = (opt.values || []).reduce(
-          (acc: number, v: any) => acc + (v.extra_price || 0),
+        extraValuesPrice += (opt.values || []).reduce(
+          (acc: number, v: any) => acc + Number(v.extra_price || 0),
           0
         );
-        extras += optTotal || 0;
       }
 
-      const subtotal = (base + extras) * item.quantity;
+      // 2. Calcular los TIERS (Igual que el segundo bucle de tu backend)
+      // Se SUMAN al total, no reemplazan a los valores.
+      for (const opt of item.options || []) {
+        const count = (opt.values || []).length;
+        
+        if (opt.multi_select && opt.tiers && opt.tiers.length > 0) {
+          const matchingTier = opt.tiers.find((t: any) => Number(t.selection_count) === count);
+          if (matchingTier) {
+            tiersPrice += Number(matchingTier.extra_price || 0);
+          }
+        }
+      }
+
+      // El subtotal es (Base + Extras + Tiers) * Cantidad
+      const subtotal = (base + extraValuesPrice + tiersPrice) * Number(item.quantity || 1);
       total += subtotal;
     }
 

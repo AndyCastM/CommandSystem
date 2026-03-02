@@ -4,6 +4,8 @@ import { Subscription } from 'rxjs';
 import { OrderService, ActiveOrder, ActiveOrderItem, OrderItemStatus } from '../../core/services/orders/orders.service';
 import { NotificationsService } from '../../core/services/notifications/notifications.service';
 import { isPlatformBrowser } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from '../../auth/services/auth.service';
 
 export interface KanbanGroup {
   id_order: number;
@@ -25,14 +27,14 @@ export interface KanbanGroup {
 @Component({
   selector: 'app-kitchen',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './kitchen.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Kitchen implements OnInit, OnDestroy {
-  private ordersService       = inject(OrderService);
+  private ordersService = inject(OrderService);
   private notificationsService = inject(NotificationsService);
-
+  private auth = inject(AuthService);
   private sub = new Subscription();
 
   orders = signal<ActiveOrder[]>([]);
@@ -183,4 +185,7 @@ export class Kitchen implements OnInit, OnDestroy {
     );
   }
 
+  onLogout() {
+    this.auth.logout()    
+  }
 }

@@ -23,7 +23,6 @@ interface CloseSessionTotals {
   imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule],
   template: `
     <div class="p-6">
-      <!-- Header -->
       <div class="mb-6">
         <div class="flex items-center gap-3 mb-2">
           <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -36,7 +35,28 @@ interface CloseSessionTotals {
         <p class="text-sm text-slate-500">Realiza el corte de caja y confirma el efectivo</p>
       </div>
 
-      <!-- Total esperado -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <div class="flex items-center gap-2 mb-1">
+            <mat-icon fontIcon="credit_card" class="!text-[18px] !w-[18px] !h-[18px] text-indigo-600"></mat-icon>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tarjeta</span>
+          </div>
+          <p class="text-lg font-bold text-slate-800">
+            {{ data.totals.card | currency : 'MXN' : 'symbol' : '1.2-2' }}
+          </p>
+        </div>
+        
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <div class="flex items-center gap-2 mb-1">
+            <mat-icon fontIcon="account_balance" class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600"></mat-icon>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Transferencia</span>
+          </div>
+          <p class="text-lg font-bold text-slate-800">
+            {{ data.totals.transfer | currency : 'MXN' : 'symbol' : '1.2-2' }}
+          </p>
+        </div>
+      </div>
+
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div class="flex items-center justify-between">
           <div>
@@ -49,7 +69,6 @@ interface CloseSessionTotals {
         </div>
       </div>
 
-      <!-- Monto contado -->
       <div class="mb-6">
         <label class="text-sm font-medium text-slate-700 mb-2 block">
           Efectivo contado en caja
@@ -72,7 +91,6 @@ interface CloseSessionTotals {
         </p>
       </div>
 
-      <!-- Diferencia -->
       <div
         *ngIf="counted > 0"
         class="rounded-lg p-4 mb-6 border-2 transition-all"
@@ -148,7 +166,6 @@ interface CloseSessionTotals {
         </div>
       </div>
 
-      <!-- Advertencia -->
       <div
         *ngIf="counted === 0"
         class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 flex items-start gap-2"
@@ -165,7 +182,6 @@ interface CloseSessionTotals {
         </div>
       </div>
 
-      <!-- Botones -->
       <div class="flex gap-3">
         <button
           mat-dialog-close
@@ -209,7 +225,6 @@ export class CloseSessionDialog {
 
   confirm() {
     if (this.counted > 0) {
-      // devolvemos el monto contado al componente padre
       this.dialogRef.close(this.counted);
     }
   }
